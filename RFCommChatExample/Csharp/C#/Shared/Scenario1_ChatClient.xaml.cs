@@ -20,6 +20,8 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 
+using System.Diagnostics;
+
 using SDKTemplate;
 
 namespace BluetoothRfcommChat
@@ -31,7 +33,12 @@ namespace BluetoothRfcommChat
     {
         // Wearhaus UUID for GAIA: 00001107-D102-11E1-9B23-00025B00A5A5
         // Only looking for this UUID e.g. App only looks for Wearhaus Arc!
-        private static readonly Guid RfcommChatServiceUuid = Guid.Parse("00001107-D102-11E1-9B23-00025B00A5A5");
+        private static readonly Guid RfcommChatServiceUuid = Guid.Parse("00001107-D102-11E1-9B23-00025B00A5A5"); // "CSR Gaia Service"
+        //private static readonly Guid RfcommChatServiceUuid = Guid.Parse("00001101-0000-1000-8000-00805F9B34FB"); // "SPP Service (not on ARC)"
+        //private static readonly Guid RfcommChatServiceUuid = Guid.Parse("00001108-0000-1000-8000-00805F9B34FB"); // "Bluetooth Headset Service"
+        //private static readonly Guid RfcommChatServiceUuid = Guid.Parse("0000111E-0000-1000-8000-00805F9B34FB"); // "Bluetooth Handsfree Service"
+        //private static readonly Guid RfcommChatServiceUuid = Guid.Parse("0000110A-0000-1000-8000-00805F9B34FB"); // "Bluetooth A2DP Source Service"
+        //private static readonly Guid RfcommChatServiceUuid = Guid.Parse("0000110B-0000-1000-8000-00805F9B34FB"); // "Bluetooth A2DP Sink Service"
 
         // The Id of the Service Name SDP attribute
         private const UInt16 SdpServiceNameAttributeId = 0x100;
@@ -89,7 +96,6 @@ namespace BluetoothRfcommChat
                 {
                     items.Add(chatServiceInfo.Name);
                     //Added to print services!
-                    //System.Diagnostics.Debug.WriteLine("DEBUG - Found Device: " + chatServiceInfo.Name);
                 }
                 cvs.Source = items;
                 ServiceSelector.Visibility = Windows.UI.Xaml.Visibility.Visible;
@@ -110,17 +116,16 @@ namespace BluetoothRfcommChat
                 ServiceSelector.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
 
                 var chatServiceInfo = chatServiceInfoCollection[ServiceList.SelectedIndex];
-                //System.Diagnostics.Debug.WriteLine("DEBUG - Clicked on Device: " + chatServiceInfo.Name);
-                //System.Diagnostics.Debug.WriteLine("DEBUG - Device keys: " + string.Join(",  ", chatServiceInfo.Properties.Keys.ToArray() ));
-                //System.Diagnostics.Debug.WriteLine("DEBUG - Device values: " + string.Join(",  ", chatServiceInfo.Properties.Values.ToArray() ));
 
                 // Potential Bug Fix?? Wrap FromIdAsync call in the UI Thread, as per the instructions of:
                 // http://blogs.msdn.com/b/wsdevsol/archive/2014/11/10/why-doesn-t-the-windows-8-1-bluetooth-rfcomm-chat-sample-work.aspx
+                // EDIT: Actually may not work as all this does is bring the exception thrown outside of this thread, so the exception is unhandled...
 
-                await Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () =>
-                {
-                    chatService = await RfcommDeviceService.FromIdAsync(chatServiceInfo.Id);
-                });
+                //await Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () =>
+                //{
+                chatService = await RfcommDeviceService.FromIdAsync(chatServiceInfo.Id);
+                //});
+                Debug.WriteLine("AHHHHHHHHHHHHHHHHHHHH!");
 
                 if (chatService == null)
                 {

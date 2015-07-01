@@ -1,1 +1,1 @@
-C:\Workspace\Wearhaus\windows_app\RFCommChatExample\Csharp\C#\WindowsPhone\BluetoothRfcommChat.WindowsPhone.csproj;neutral
+C:\Workspace\Wearhaus\WindowsApp\RFCommChatExample\Csharp\C#\WindowsPhone\BluetoothRfcommChat.WindowsPhone.csproj;neutral

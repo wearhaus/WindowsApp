@@ -24,7 +24,8 @@ namespace BluetoothRfcommChat
     public sealed partial class Scenario2_ChatServer : Page
     {
         // The Chat Server's custom service Uuid: 34B1CF4D-1069-4AD6-89B6-E161D79BE4D8
-        private static readonly Guid RfcommChatServiceUuid = Guid.Parse("34B1CF4D-1069-4AD6-89B6-E161D79BE4D8");
+        // Wearhaus GAIA UUID: 00001107-D102-11E1-9B23-00025B00A5A5
+        private static readonly Guid RfcommChatServiceUuid = Guid.Parse("00001107-D102-11E1-9B23-00025B00A5A5");
 
         // The Id of the Service Name SDP attribute
         private const UInt16 SdpServiceNameAttributeId = 0x100;

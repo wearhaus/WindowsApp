@@ -1,0 +1,1 @@
+C:\Workspace\Wearhaus\WindowsApp\RFCommChatExample\Csharp\C#\Windows\BluetoothRfcommChat.Windows.csproj;neutral
