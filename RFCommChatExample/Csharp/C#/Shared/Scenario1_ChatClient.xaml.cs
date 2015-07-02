@@ -34,11 +34,6 @@ namespace BluetoothRfcommChat
         // Wearhaus UUID for GAIA: 00001107-D102-11E1-9B23-00025B00A5A5
         // Only looking for this UUID e.g. App only looks for Wearhaus Arc!
         private static readonly Guid RfcommChatServiceUuid = Guid.Parse("00001107-D102-11E1-9B23-00025B00A5A5"); // "CSR Gaia Service"
-        //private static readonly Guid RfcommChatServiceUuid = Guid.Parse("00001101-0000-1000-8000-00805F9B34FB"); // "SPP Service (not on ARC)"
-        //private static readonly Guid RfcommChatServiceUuid = Guid.Parse("00001108-0000-1000-8000-00805F9B34FB"); // "Bluetooth Headset Service"
-        //private static readonly Guid RfcommChatServiceUuid = Guid.Parse("0000111E-0000-1000-8000-00805F9B34FB"); // "Bluetooth Handsfree Service"
-        //private static readonly Guid RfcommChatServiceUuid = Guid.Parse("0000110A-0000-1000-8000-00805F9B34FB"); // "Bluetooth A2DP Source Service"
-        //private static readonly Guid RfcommChatServiceUuid = Guid.Parse("0000110B-0000-1000-8000-00805F9B34FB"); // "Bluetooth A2DP Sink Service"
 
         // The Id of the Service Name SDP attribute
         private const UInt16 SdpServiceNameAttributeId = 0x100;
@@ -54,6 +49,12 @@ namespace BluetoothRfcommChat
         private RfcommDeviceService chatService;
         private DeviceInformationCollection chatServiceInfoCollection;
 
+
+        // GAIA FRAMING PARAMS
+        private const byte GAIA_FRAME_START = 0xff;
+        private const byte GAIA_PROTOCOL_VER = 0x01;
+        private const byte GAIA_FLAG_CHECK = 0x01;
+        private const ushort GAIA_CSR_VENDOR_ID = 0x000a;
 
         private MainPage rootPage;
 
@@ -125,7 +126,6 @@ namespace BluetoothRfcommChat
                 //{
                 chatService = await RfcommDeviceService.FromIdAsync(chatServiceInfo.Id);
                 //});
-                Debug.WriteLine("AHHHHHHHHHHHHHHHHHHHH!");
 
                 if (chatService == null)
                 {
@@ -257,12 +257,18 @@ namespace BluetoothRfcommChat
         {
             try
             {
-                chatWriter.WriteUInt32((uint)MessageTextBox.Text.Length);
+                /*chatWriter.WriteUInt32((uint)MessageTextBox.Text.Length);
                 chatWriter.WriteString(MessageTextBox.Text);
 
                 await chatWriter.StoreAsync();
                 ConversationList.Items.Add("Sent: " + MessageTextBox.Text);
+                */
 
+                byte[] s = { GAIA_FRAME_START, GAIA_PROTOCOL_VER, 0x00, 0x00, GAIA_CSR_VENDOR_ID >> 8, GAIA_CSR_VENDOR_ID & 0xff, (ushort)GaiaCommand.GET_RSSI >> 8, (ushort)GaiaCommand.GET_RSSI & 0xff};
+                chatWriter.WriteBytes(s);
+                await chatWriter.StoreAsync();
+
+                ConversationList.Items.Add("Sent: " + BitConverter.ToString(s));
                 MessageTextBox.Text = "";
             }
             catch (Exception ex)
@@ -270,6 +276,14 @@ namespace BluetoothRfcommChat
                 MainPage.Current.NotifyUser("Error: " + ex.HResult.ToString() + " - " + ex.Message,
                     NotifyType.StatusMessage);
             }
+        }
+
+        private enum GaiaCommand : ushort
+        {
+            NOOP = 0x0700,
+            GET_APP_VERSION = 0x0304,
+            GET_RSSI = 0x0301,
+
         }
     }
 }

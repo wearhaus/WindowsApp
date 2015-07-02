@@ -26,7 +26,7 @@
   <ItemGroup>
     <AppxPackagedFile Include="C:\Workspace\Wearhaus\WindowsApp\RFCommChatExample\Csharp\C#\Windows\bin\Debug\BluetoothRfcommChat.Windows.exe">
       <PackagePath>BluetoothRfcommChat.Windows.exe</PackagePath>
-      <Modified>2015-06-25T21:37:02.861</Modified>
+      <Modified>2015-07-01T23:32:16.160</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Workspace\Wearhaus\WindowsApp\RFCommChatExample\Csharp\C#\Shared\Assets\mediumtile-sdk.png">
       <PackagePath>Assets\mediumtile-sdk.png</PackagePath>
@@ -95,7 +95,7 @@
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Workspace\Wearhaus\WindowsApp\RFCommChatExample\Csharp\C#\Windows\bin\Debug\BluetoothRfcommChat.Windows.xr.xml">
       <PackagePath>BluetoothRfcommChat.Windows.xr.xml</PackagePath>
-      <Modified>2015-06-13T00:12:47.000</Modified>
+      <Modified>2015-06-13T00:12:47.516</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Workspace\Wearhaus\WindowsApp\RFCommChatExample\Csharp\C#\Windows\bin\Debug\resources.pri">
       <PackagePath>resources.pri</PackagePath>

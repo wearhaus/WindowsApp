@@ -655,3 +655,4 @@ namespace SDKTemplate.BluetoothRfcommChat_Windows_XamlTypeInfo
 }
 
 
+
