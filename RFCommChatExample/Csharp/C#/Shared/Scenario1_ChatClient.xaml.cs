@@ -187,6 +187,7 @@ namespace BluetoothRfcommChat
         {
             try
             {
+                /*
                 uint size = await chatReader.LoadAsync(sizeof(uint));
                 if (size < sizeof(uint))
                 {
@@ -201,8 +202,36 @@ namespace BluetoothRfcommChat
                     // The underlying socket was closed before we were able to read the whole data
                     return;
                 }
+                */
 
-                ConversationList.Items.Add("Received: \"" + chatReader.ReadString(stringLength) + "\"");
+                //ConversationList.Items.Add("Received: \"" + chatReader.ReadString(stringLength) + "\"");
+
+                uint frameLen = 8;
+
+                uint size = await chatReader.LoadAsync(frameLen);
+                if (size < frameLen)
+                {
+                    return;
+                }
+                string receivedStr = "";
+                byte[] receivedFrame = new byte[frameLen];
+                chatReader.ReadBytes(receivedFrame);
+                receivedStr += BitConverter.ToString(receivedFrame);
+                byte payloadLen = receivedFrame[3];
+
+                if (payloadLen > 0)
+                {
+                    byte[] payload = new byte[payloadLen];
+                    await chatReader.LoadAsync(payloadLen);
+                    chatReader.ReadBytes(payload);
+                    receivedStr += " Payload: " + BitConverter.ToString(payload); 
+                }
+
+                //await chatReader.LoadAsync(sizeof(byte));
+                //byte checksum = chatReader.ReadByte();
+
+
+                ConversationList.Items.Add("Received: " + receivedStr );
 
                 ReceiveStringLoop(chatReader);
             }
@@ -259,10 +288,8 @@ namespace BluetoothRfcommChat
             {
                 /*chatWriter.WriteUInt32((uint)MessageTextBox.Text.Length);
                 chatWriter.WriteString(MessageTextBox.Text);
-
                 await chatWriter.StoreAsync();
-                ConversationList.Items.Add("Sent: " + MessageTextBox.Text);
-                */
+                ConversationList.Items.Add("Sent: " + MessageTextBox.Text);*/
 
                 byte[] s = { GAIA_FRAME_START, GAIA_PROTOCOL_VER, 0x00, 0x00, GAIA_CSR_VENDOR_ID >> 8, GAIA_CSR_VENDOR_ID & 0xff, (ushort)GaiaCommand.GET_RSSI >> 8, (ushort)GaiaCommand.GET_RSSI & 0xff};
                 chatWriter.WriteBytes(s);
