@@ -282,6 +282,16 @@ namespace BluetoothRfcommChat
             MainPage.Current.NotifyUser("Disconnected", NotifyType.StatusMessage);
         }
 
+        private byte Checksum(byte[] b)
+        {
+            byte checkSum = b[0];
+            for (int i = 1; i < b.Length; i++)
+            {
+                checkSum ^= b[i];
+            }
+            return checkSum;
+        }
+
         private async void SendButton_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -290,12 +300,16 @@ namespace BluetoothRfcommChat
                 chatWriter.WriteString(MessageTextBox.Text);
                 await chatWriter.StoreAsync();
                 ConversationList.Items.Add("Sent: " + MessageTextBox.Text);*/
+                if (MessageTextBox.Text == "") { return; }
+                ushort usrCmd = Convert.ToUInt16(MessageTextBox.Text, 16);
 
-                byte[] s = { GAIA_FRAME_START, GAIA_PROTOCOL_VER, 0x00, 0x00, GAIA_CSR_VENDOR_ID >> 8, GAIA_CSR_VENDOR_ID & 0xff, (ushort)GaiaCommand.GET_RSSI >> 8, (ushort)GaiaCommand.GET_RSSI & 0xff};
+                byte[] s = { GAIA_FRAME_START, GAIA_PROTOCOL_VER, 0x00, 0x00, GAIA_CSR_VENDOR_ID >> 8, GAIA_CSR_VENDOR_ID & 0xff, (byte)(usrCmd >> 8), (byte)(usrCmd & 0xff) };
                 chatWriter.WriteBytes(s);
+                byte checkSum = Checksum(s);
+                chatWriter.WriteByte(checkSum);
                 await chatWriter.StoreAsync();
 
-                ConversationList.Items.Add("Sent: " + BitConverter.ToString(s));
+                ConversationList.Items.Add("Sent: " + BitConverter.ToString(s) + " Checksum: " + checkSum.ToString("X2"));
                 MessageTextBox.Text = "";
             }
             catch (Exception ex)
@@ -307,10 +321,27 @@ namespace BluetoothRfcommChat
 
         private enum GaiaCommand : ushort
         {
-            NOOP = 0x0700,
-            GET_APP_VERSION = 0x0304,
-            GET_RSSI = 0x0301,
-
+            NoOp = 0x0700,
+            GetAppVersion = 0x0304,
+            GetRssi = 0x0301,
+            SetLED = 0x0101,
+            GetLED = 0x0181,
+            SetTone = 0x0102,
+            GetTone = 0x0182,
+            SetDefaultVolume = 0x0103,
+            GetDefaultVolume = 0x0183,
+            ChangeVolume = 0x0201,
+            ToggleBassBoost = 0x0218,
+            Toggle3DEnhancement = 0x0219,
+            SetLEDControl = 0x0207,
+            GetLEDControl = 0x0287,
+            DeviceReset = 0x0202,
+            PowerOff = 0x0204,
+            GetBattery = 0x0302,
+            GetModuleID = 0x0303,
+            GetAppVer = 0x0304,
+            DFURequest = 0x0630,
+            DFUBegin = 0x0631
         }
     }
 }
