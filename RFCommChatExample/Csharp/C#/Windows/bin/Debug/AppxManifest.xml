@@ -35,19 +35,6 @@
     </Application>
   </Applications>
   <Capabilities>
-    <Capability Name="enterpriseAuthentication" />
-    <Capability Name="internetClient" />
-    <Capability Name="internetClientServer" />
-    <Capability Name="musicLibrary" />
-    <Capability Name="picturesLibrary" />
-    <Capability Name="privateNetworkClientServer" />
-    <Capability Name="removableStorage" />
-    <Capability Name="videosLibrary" />
-    <Capability Name="sharedUserCertificates" />
-    <DeviceCapability Name="location" />
-    <DeviceCapability Name="microphone" />
-    <DeviceCapability Name="proximity" />
-    <DeviceCapability Name="webcam" />
     <m2:DeviceCapability Name="bluetooth.rfcomm">
       <m2:Device Id="any">
         <m2:Function Type="serviceId:00001107-D102-11E1-9B23-00025B00A5A5" />

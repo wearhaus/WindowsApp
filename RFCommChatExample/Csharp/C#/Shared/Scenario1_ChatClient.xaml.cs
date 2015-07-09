@@ -24,6 +24,8 @@ using System.Diagnostics;
 
 using SDKTemplate;
 
+using GaiaDFU;
+
 namespace BluetoothRfcommChat
 {
     /// <summary>
@@ -339,7 +341,6 @@ namespace BluetoothRfcommChat
             PowerOff = 0x0204,
             GetBattery = 0x0302,
             GetModuleID = 0x0303,
-            GetAppVer = 0x0304,
             DFURequest = 0x0630,
             DFUBegin = 0x0631
         }
