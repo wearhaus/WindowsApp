@@ -8,7 +8,7 @@
     <PackageArchitecture>neutral</PackageArchitecture>
     <PackageIdentityName>Microsoft.SDKSamples.BluetoothRfcommChat.CS</PackageIdentityName>
     <IntermediateOutputPath>C:\Workspace\Wearhaus\WindowsApp\RFCommChatExample\Csharp\C#\Windows\obj\Debug\</IntermediateOutputPath>
-    <RegisteredManifestChecksum>9B71E3C424D544C436DF9392D4C3BFF87F7CED16D8E7E5C1BFB41453DCC9AA4E</RegisteredManifestChecksum>
+    <RegisteredManifestChecksum>ADA92D9EC73808D000B4BD6BFAB402391FD78396CF8C15956F71C58ACFC37D6B</RegisteredManifestChecksum>
     <RegisteredPackageMoniker>Microsoft.SDKSamples.BluetoothRfcommChat.CS_1.0.0.0_neutral__8wekyb3d8bbwe</RegisteredPackageMoniker>
     <RegisteredUserModeAppID>Microsoft.SDKSamples.BluetoothRfcommChat.CS_8wekyb3d8bbwe!SDKSample.App</RegisteredUserModeAppID>
     <RegisteredPackageID>Microsoft.SDKSamples.BluetoothRfcommChat.CS</RegisteredPackageID>
@@ -20,13 +20,13 @@
     <AppXManifest Include="C:\Workspace\Wearhaus\WindowsApp\RFCommChatExample\Csharp\C#\Windows\bin\Debug\AppxManifest.xml">
       <PackagePath>AppxManifest.xml</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2015-07-07T23:38:26.627</Modified>
+      <Modified>2015-07-10T00:00:37.725</Modified>
     </AppXManifest>
   </ItemGroup>
   <ItemGroup>
     <AppxPackagedFile Include="C:\Workspace\Wearhaus\WindowsApp\RFCommChatExample\Csharp\C#\Windows\bin\Debug\BluetoothRfcommChat.Windows.exe">
       <PackagePath>BluetoothRfcommChat.Windows.exe</PackagePath>
-      <Modified>2015-07-08T00:03:53.339</Modified>
+      <Modified>2015-07-10T00:38:34.575</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Workspace\Wearhaus\WindowsApp\RFCommChatExample\Csharp\C#\Shared\Assets\mediumtile-sdk.png">
       <PackagePath>Assets\mediumtile-sdk.png</PackagePath>
@@ -75,23 +75,23 @@
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Workspace\Wearhaus\WindowsApp\RFCommChatExample\Csharp\C#\Windows\bin\Debug\App.xbf">
       <PackagePath>App.xbf</PackagePath>
-      <Modified>2015-06-16T01:08:32.122</Modified>
+      <Modified>2015-07-10T00:00:37.272</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Workspace\Wearhaus\WindowsApp\RFCommChatExample\Csharp\C#\Windows\bin\Debug\Scenario1_ChatClient.xbf">
       <PackagePath>Scenario1_ChatClient.xbf</PackagePath>
-      <Modified>2015-06-16T01:08:32.123</Modified>
+      <Modified>2015-07-10T00:00:37.275</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Workspace\Wearhaus\WindowsApp\RFCommChatExample\Csharp\C#\Windows\bin\Debug\MainPage.xbf">
       <PackagePath>MainPage.xbf</PackagePath>
-      <Modified>2015-06-16T01:08:32.122</Modified>
+      <Modified>2015-07-10T00:00:37.273</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Workspace\Wearhaus\WindowsApp\RFCommChatExample\Csharp\C#\Windows\bin\Debug\Scenario2_ChatServer.xbf">
       <PackagePath>Scenario2_ChatServer.xbf</PackagePath>
-      <Modified>2015-06-16T01:08:32.123</Modified>
+      <Modified>2015-07-10T00:00:37.273</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Workspace\Wearhaus\WindowsApp\RFCommChatExample\Csharp\C#\Windows\bin\Debug\Styles\Styles.xbf">
       <PackagePath>Styles\Styles.xbf</PackagePath>
-      <Modified>2015-06-16T01:08:32.123</Modified>
+      <Modified>2015-07-10T00:00:37.273</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Workspace\Wearhaus\WindowsApp\RFCommChatExample\Csharp\C#\Windows\bin\Debug\BluetoothRfcommChat.Windows.xr.xml">
       <PackagePath>BluetoothRfcommChat.Windows.xr.xml</PackagePath>
@@ -99,7 +99,7 @@
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Workspace\Wearhaus\WindowsApp\RFCommChatExample\Csharp\C#\Windows\bin\Debug\resources.pri">
       <PackagePath>resources.pri</PackagePath>
-      <Modified>2015-07-07T23:38:26.562</Modified>
+      <Modified>2015-07-10T00:00:37.648</Modified>
     </AppxPackagedFile>
   </ItemGroup>
   <ItemGroup>

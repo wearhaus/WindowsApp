@@ -44,7 +44,6 @@ namespace BluetoothRfcommChat
         private RfcommServiceProvider rfcommProvider;
         private StreamSocketListener socketListener;
 
-        Windows.Storage.Streams.FileInputStream fs = new FileInputStream()
         // A pointer back to the main page.  This is needed if you want to call methods in MainPage such
         // as NotifyUser()
         MainPage rootPage = MainPage.Current;
