@@ -44,6 +44,8 @@
                         <StackPanel Orientation="Vertical">
                             <TextBlock x:Name="ServiceName" Style="{StaticResource SampleHeaderTextStyle}" Text="Current Service Name" TextWrapping="Wrap" Margin="0,0,0,10"/>
                             <Button x:Name="DisconnectButton" Content="Disconnect" Click="DisconnectButton_Click"/>
+                            <Button x:Name="PickFileButton" Content="Pick DFU File" Click="PickFileButton_Click"/>
+                            <Button x:Name="SendDFUButton" Content="Send DFU" Click="SendDFUButton_Click"/>
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />

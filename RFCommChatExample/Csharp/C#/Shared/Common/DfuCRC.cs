@@ -63,13 +63,15 @@ namespace GaiaDFU
             return crc;
         }
 
-        protected async static void fileCrc(DataReader dataReader) {
-            //Use the passed in dataReader instead of creting one so that the CRC can actually return a long!
 
-            StorageFolder x = await StorageFolder.GetFolderFromPathAsync(".");
-            StorageFile sf = await x.GetFileAsync("");
-            var buf = await FileIO.ReadBufferAsync(sf);
-            DataReader dr = DataReader.FromBuffer(buf);
+
+        public static long fileCrc(StorageFile dfuFile) {
+            //Use the passed in dataReader instead of creting one so that the CRC can actually return a long!
+            return 5;
+
+            //var buf = await FileIO.ReadBufferAsync(dfuFile);
+            //DataReader dr = DataReader.FromBuffer(buf);
+
             //get 4 bytes offset length of file
             /*byte b = dr.LoadAsync();
             byte[] buffer = new byte[sf.length]

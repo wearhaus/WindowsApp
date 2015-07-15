@@ -5,12 +5,15 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using Windows.ApplicationModel.Activation;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Devices.Bluetooth.Rfcomm;
 using Windows.Devices.Enumeration;
 using Windows.Networking.Sockets;
+using Windows.Storage;
 using Windows.Storage.Streams;
+using Windows.Storage.Pickers;
 using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -23,6 +26,7 @@ using Windows.UI.Xaml.Navigation;
 using System.Diagnostics;
 
 using SDKTemplate;
+using SDKTemplate.Common;
 
 using GaiaDFU;
 
@@ -31,7 +35,11 @@ namespace BluetoothRfcommChat
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
+#if WINDOWS_PHONE_APP
+    public sealed partial class Scenario1_ChatClient : Page, IFileOpenPickerContinuable
+#else
     public sealed partial class Scenario1_ChatClient : Page
+#endif
     {
         // Wearhaus UUID for GAIA: 00001107-D102-11E1-9B23-00025B00A5A5
         // Only looking for this UUID e.g. App only looks for Wearhaus Arc!
@@ -51,6 +59,8 @@ namespace BluetoothRfcommChat
         private RfcommDeviceService chatService;
         private DeviceInformationCollection chatServiceInfoCollection;
         private GaiaDfu DFUHandler;
+        private StorageFile dfuFile;
+        private DataReader dfuReader;
 
         private MainPage rootPage;
 
@@ -81,6 +91,7 @@ namespace BluetoothRfcommChat
 
         private async void RunButton_Click(object sender, RoutedEventArgs e)
         {
+
             // Clear any previous messages
             MainPage.Current.NotifyUser("", NotifyType.StatusMessage);
 
@@ -105,6 +116,7 @@ namespace BluetoothRfcommChat
                     "No chat services were found. Please pair with a device that is advertising the chat service.",
                     NotifyType.ErrorMessage);
             }
+
         }
 
         private async void ServiceList_Tapped(object sender, TappedRoutedEventArgs e)
@@ -115,6 +127,7 @@ namespace BluetoothRfcommChat
                 ServiceSelector.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
 
                 var chatServiceInfo = chatServiceInfoCollection[ServiceList.SelectedIndex];
+
 
                 // Potential Bug Fix?? Wrap FromIdAsync call in the UI Thread, as per the instructions of:
                 // http://blogs.msdn.com/b/wsdevsol/archive/2014/11/10/why-doesn-t-the-windows-8-1-bluetooth-rfcomm-chat-sample-work.aspx
@@ -174,6 +187,8 @@ namespace BluetoothRfcommChat
 
                 DataReader chatReader = new DataReader(chatSocket.InputStream);
                 ReceiveStringLoop(chatReader);
+                
+
             }
             catch (Exception ex)
             {
@@ -181,6 +196,35 @@ namespace BluetoothRfcommChat
                 MainPage.Current.NotifyUser("Error: " + ex.HResult.ToString() + " - " + ex.Message, 
                     NotifyType.ErrorMessage);
             }
+        }
+        private void Disconnect()
+        {
+            if (chatWriter != null)
+            {
+                chatWriter.DetachStream();
+                chatWriter = null;
+            }
+
+            lock (this)
+            {
+                if (chatSocket != null)
+                {
+                    chatSocket.Dispose();
+                    chatSocket = null;
+                }
+            }
+
+            RunButton.IsEnabled = true;
+            ServiceSelector.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+            ChatBox.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+            ConversationList.Items.Clear();
+        }
+
+        private void DisconnectButton_Click(object sender, RoutedEventArgs e)
+        {
+            Disconnect();
+
+            MainPage.Current.NotifyUser("Disconnected", NotifyType.StatusMessage);
         }
 
         private async void ReceiveStringLoop(DataReader chatReader)
@@ -206,7 +250,7 @@ namespace BluetoothRfcommChat
 
                 //ConversationList.Items.Add("Received: \"" + chatReader.ReadString(stringLength) + "\"");
 
-                uint frameLen = 8;
+                byte frameLen = GaiaDfu.GAIA_FRAME_LEN;
 
                 uint size = await chatReader.LoadAsync(frameLen);
                 if (size < frameLen)
@@ -252,38 +296,6 @@ namespace BluetoothRfcommChat
             }
         }
 
-        private void Disconnect()
-        {
-            if (chatWriter != null)
-            {
-                chatWriter.DetachStream();
-                chatWriter = null;
-            }
-
-            lock (this)
-            {
-                if (chatSocket != null)
-                {
-                    chatSocket.Dispose();
-                    chatSocket = null;
-                }
-            }
-
-            RunButton.IsEnabled = true;
-            ServiceSelector.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-            ChatBox.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-            ConversationList.Items.Clear();
-        }
-
-        private void DisconnectButton_Click(object sender, RoutedEventArgs e)
-        {
-            Disconnect();
-
-            MainPage.Current.NotifyUser("Disconnected", NotifyType.StatusMessage);
-        }
-
-        
-
         private async void SendButton_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -295,15 +307,8 @@ namespace BluetoothRfcommChat
                 if (MessageTextBox.Text == "") { return; }
                 ushort usrCmd = Convert.ToUInt16(MessageTextBox.Text, 16);
 
-
                 byte[] msg = DFUHandler.CreateGaiaCommand(usrCmd);
-                chatWriter.WriteBytes(msg);
-                byte checkSum = GaiaDfu.Checksum(msg);
-                chatWriter.WriteByte(checkSum);
-                await chatWriter.StoreAsync();
-
-                ConversationList.Items.Add("Sent: " + BitConverter.ToString(msg) + " Checksum: " + checkSum.ToString("X2"));
-                MessageTextBox.Text = "";
+                SendGaiaMessage(msg);
             }
             catch (Exception ex)
             {
@@ -311,6 +316,66 @@ namespace BluetoothRfcommChat
                     NotifyType.StatusMessage);
             }
         }
+
+        private async void SendGaiaMessage(byte[] msg)
+        {
+            chatWriter.WriteBytes(msg);
+            byte checkSum = GaiaDfu.Checksum(msg);
+            chatWriter.WriteByte(checkSum);
+            await chatWriter.StoreAsync();
+
+            ConversationList.Items.Add("Sent: " + BitConverter.ToString(msg) + " Checksum: " + checkSum.ToString("X2"));
+            MessageTextBox.Text = "";
+        } 
+
+#if WINDOWS_PHONE_APP
+        /// <summary> 
+        /// Handle the returned files from file picker 
+        /// This method is triggered by ContinuationManager based on ActivationKind 
+        /// </summary> 
+        /// <param name="args">File open picker continuation activation argment. It cantains the list of files user selected with file open picker </param> 
+        public void ContinueFileOpenPicker(FileOpenPickerContinuationEventArgs args)
+        {
+            if (args.Files.Count > 0)
+            {
+                dfuFile = args.Files[0];
+                MainPage.Current.NotifyUser("Picked File: " + dfuFile.Name, NotifyType.StatusMessage);
+            }
+            else
+            {
+                dfuFile = null;
+                MainPage.Current.NotifyUser("Not a Valid File / No File Chosen!", NotifyType.StatusMessage);
+            }
+        } 
+#endif
+
+        private async void PickFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Open DFU File Buffer and DataReader
+            FileOpenPicker filePicker = new FileOpenPicker();
+            filePicker.SuggestedStartLocation = PickerLocationId.Downloads;
+            filePicker.FileTypeFilter.Clear();
+            filePicker.FileTypeFilter.Add("*");
+#if WINDOWS_PHONE_APP
+            filePicker.PickSingleFileAndContinue();
+#else
+            dfuFile = await filePicker.PickSingleFileAsync();
+#endif
+        }
+
+        private async void SendDFUButton_Click(object sender, RoutedEventArgs e)
+        {
+
+            MainPage.Current.NotifyUser("", NotifyType.StatusMessage);
+            if( dfuFile == null){
+                MainPage.Current.NotifyUser("No DFU File Picked. Please Pick a DFU File!", NotifyType.StatusMessage);
+                return;
+            }
+            // Send DFU!
+            var buf = await FileIO.ReadBufferAsync(dfuFile);
+            dfuReader = DataReader.FromBuffer(buf);
+        }
+
 
      
     }

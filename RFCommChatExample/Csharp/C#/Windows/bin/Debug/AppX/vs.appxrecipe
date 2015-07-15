@@ -20,13 +20,13 @@
     <AppXManifest Include="C:\Workspace\Wearhaus\WindowsApp\RFCommChatExample\Csharp\C#\Windows\bin\Debug\AppxManifest.xml">
       <PackagePath>AppxManifest.xml</PackagePath>
       <ReRegisterAppIfChanged>true</ReRegisterAppIfChanged>
-      <Modified>2015-07-10T00:00:37.725</Modified>
+      <Modified>2015-07-15T01:36:08.327</Modified>
     </AppXManifest>
   </ItemGroup>
   <ItemGroup>
     <AppxPackagedFile Include="C:\Workspace\Wearhaus\WindowsApp\RFCommChatExample\Csharp\C#\Windows\bin\Debug\BluetoothRfcommChat.Windows.exe">
       <PackagePath>BluetoothRfcommChat.Windows.exe</PackagePath>
-      <Modified>2015-07-10T00:38:34.575</Modified>
+      <Modified>2015-07-15T01:36:08.195</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Workspace\Wearhaus\WindowsApp\RFCommChatExample\Csharp\C#\Shared\Assets\mediumtile-sdk.png">
       <PackagePath>Assets\mediumtile-sdk.png</PackagePath>
@@ -79,7 +79,7 @@
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Workspace\Wearhaus\WindowsApp\RFCommChatExample\Csharp\C#\Windows\bin\Debug\Scenario1_ChatClient.xbf">
       <PackagePath>Scenario1_ChatClient.xbf</PackagePath>
-      <Modified>2015-07-10T00:00:37.275</Modified>
+      <Modified>2015-07-15T01:36:07.991</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Workspace\Wearhaus\WindowsApp\RFCommChatExample\Csharp\C#\Windows\bin\Debug\MainPage.xbf">
       <PackagePath>MainPage.xbf</PackagePath>
@@ -95,11 +95,11 @@
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Workspace\Wearhaus\WindowsApp\RFCommChatExample\Csharp\C#\Windows\bin\Debug\BluetoothRfcommChat.Windows.xr.xml">
       <PackagePath>BluetoothRfcommChat.Windows.xr.xml</PackagePath>
-      <Modified>2015-06-13T00:12:47.516</Modified>
+      <Modified>2015-06-13T00:12:47.000</Modified>
     </AppxPackagedFile>
     <AppxPackagedFile Include="C:\Workspace\Wearhaus\WindowsApp\RFCommChatExample\Csharp\C#\Windows\bin\Debug\resources.pri">
       <PackagePath>resources.pri</PackagePath>
-      <Modified>2015-07-10T00:00:37.648</Modified>
+      <Modified>2015-07-15T01:36:08.297</Modified>
     </AppxPackagedFile>
   </ItemGroup>
   <ItemGroup>

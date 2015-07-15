@@ -15,6 +15,7 @@ namespace GaiaDFU
         public const byte GAIA_FLAG_CHECK = 0x01;
         public const ushort GAIA_CSR_VENDOR_ID = 0x000a;
         public const ushort GAIA_WEARHAUS_VENDOR_ID = 0x0a4c;
+        public const byte GAIA_FRAME_LEN = 8;
 
         private DataWriter socketWriter; 
 
@@ -36,7 +37,7 @@ namespace GaiaDFU
         public byte[] CreateGaiaCommand(ushort usrCmd){
             byte[] commandFrame = { GAIA_FRAME_START, GAIA_PROTOCOL_VER, 0x00, 0x00, GAIA_CSR_VENDOR_ID >> 8, GAIA_CSR_VENDOR_ID & 0xff, (byte)(usrCmd >> 8), (byte)(usrCmd & 0xff) };
             
-            if (usrCmd == (ushort)ArcCommand.StartDfu)
+            if (Enum.IsDefined(typeof(ArcCommand), usrCmd))
             {
                 commandFrame[4] = GAIA_WEARHAUS_VENDOR_ID >> 8;
                 commandFrame[5] = GAIA_WEARHAUS_VENDOR_ID & 0xff;
@@ -45,7 +46,7 @@ namespace GaiaDFU
         }
 
 
-        public static enum GaiaCommand : ushort
+        public enum GaiaCommand : ushort
         {
             NoOp                = 0x0700,
 
@@ -78,7 +79,7 @@ namespace GaiaDFU
             DFUBegin            = 0x0631,
         }
 
-        public static enum ArcCommand : ushort
+        public enum ArcCommand : ushort
         {
             GetColor	  		= 0x6743,
             SetColor 	  	 	= 0x7343,

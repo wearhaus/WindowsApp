@@ -4,6 +4,7 @@
     <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Common\ContinuationManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Common\DfuCRC.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Common\GaiaDfu.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SampleConfiguration.cs" />
