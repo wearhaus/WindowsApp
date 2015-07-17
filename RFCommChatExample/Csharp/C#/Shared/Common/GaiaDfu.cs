@@ -17,11 +17,14 @@ namespace GaiaDFU
         public const ushort GAIA_WEARHAUS_VENDOR_ID = 0x0a4c;
         public const byte GAIA_FRAME_LEN = 8;
 
-        private DataWriter socketWriter; 
+        private DataWriter SocketWriter;
+
+        public ushort LastSentCommand;
 
         public GaiaDfu(DataWriter dw)
         {
-            socketWriter = dw;
+            SocketWriter = dw;
+            LastSentCommand = 0x0000;
         }
 
         public static byte Checksum(byte[] b)
@@ -34,22 +37,56 @@ namespace GaiaDFU
             return checkSum;
         }
 
-        public byte[] CreateGaiaCommand(ushort usrCmd){
-            byte[] commandFrame = { GAIA_FRAME_START, GAIA_PROTOCOL_VER, 0x00, 0x00, GAIA_CSR_VENDOR_ID >> 8, GAIA_CSR_VENDOR_ID & 0xff, (byte)(usrCmd >> 8), (byte)(usrCmd & 0xff) };
+        public byte[] CreateGaiaCommand(ushort usrCmd)
+        {
+            return CreateGaiaCommand(usrCmd, GAIA_FLAG_CHECK, new byte[0]);
+        }
+
+        public byte[] CreateGaiaCommand(ushort usrCmd, byte[] payload)
+        {
+            return CreateGaiaCommand(usrCmd, GAIA_FLAG_CHECK, payload);
+        }
+
+        public byte[] CreateGaiaCommand(ushort usrCmd, byte flag)
+        {
+            return CreateGaiaCommand(usrCmd, flag, new byte[0]);
+        }
+
+        public byte[] CreateGaiaCommand(ushort usrCmd, byte flag, byte[] payload)
+        {
+            byte[] commandMessage;
+            int msgLen = GAIA_FRAME_LEN + payload.Length;
+
+            if(flag == GAIA_FLAG_CHECK){ msgLen += 1; }
+            commandMessage = new byte[msgLen];
+
+            commandMessage[0] = GAIA_FRAME_START;
+            commandMessage[1] = GAIA_PROTOCOL_VER;
+            commandMessage[2] = flag;
+            commandMessage[3] = (byte)payload.Length;
+            commandMessage[4] = GAIA_CSR_VENDOR_ID >> 8;
+            commandMessage[5] = GAIA_CSR_VENDOR_ID & 0xff;
+            commandMessage[6] = (byte)(usrCmd >> 8);
+            commandMessage[7] = (byte)(usrCmd & 0xff);
             
             if (Enum.IsDefined(typeof(ArcCommand), usrCmd))
             {
-                commandFrame[4] = GAIA_WEARHAUS_VENDOR_ID >> 8;
-                commandFrame[5] = GAIA_WEARHAUS_VENDOR_ID & 0xff;
+                commandMessage[4] = GAIA_WEARHAUS_VENDOR_ID >> 8;
+                commandMessage[5] = GAIA_WEARHAUS_VENDOR_ID & 0xff;
             }
-            return commandFrame;
-        }
 
+            System.Buffer.BlockCopy(payload, 0, commandMessage, 8, payload.Length);
+
+            if (flag == GAIA_FLAG_CHECK)
+            {
+                commandMessage[msgLen - 1] = Checksum(commandMessage);
+            }
+            LastSentCommand = usrCmd;
+            return commandMessage;
+        }
 
         public enum GaiaCommand : ushort
         {
-            NoOp                = 0x0700,
-
             GetAppVersion       = 0x0304,
             GetRssi             = 0x0301,
 
@@ -77,6 +114,16 @@ namespace GaiaDFU
 
             DFURequest          = 0x0630,
             DFUBegin            = 0x0631,
+
+            NoOp                = 0x0700
+        }
+
+        public enum GaiaNotification : ushort
+        {
+            Register            = 0x4001,
+            Get                 = 0x4081,
+            Cancel              = 0x4002,
+            Event               = 0x4003
         }
 
         public enum ArcCommand : ushort

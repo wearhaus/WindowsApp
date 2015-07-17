@@ -231,35 +231,34 @@ namespace BluetoothRfcommChat
         {
             try
             {
-                /*
-                uint size = await chatReader.LoadAsync(sizeof(uint));
-                if (size < sizeof(uint))
-                {
-                    // The underlying socket was closed before we were able to read the whole data
-                    return;
-                }
-
-                uint stringLength = chatReader.ReadUInt32();
-                uint actualStringLength = await chatReader.LoadAsync(stringLength);
-                if (actualStringLength != stringLength)
-                {
-                    // The underlying socket was closed before we were able to read the whole data
-                    return;
-                }
-                */
-
-                //ConversationList.Items.Add("Received: \"" + chatReader.ReadString(stringLength) + "\"");
 
                 byte frameLen = GaiaDfu.GAIA_FRAME_LEN;
 
+                // Frame is always FRAME_LEN long at least, so load that many bytes and process the frame
                 uint size = await chatReader.LoadAsync(frameLen);
+
+                // Buffer / Stream is closed 
                 if (size < frameLen)
                 {
+                    MainPage.Current.NotifyUser("Problem Loading from Stream", NotifyType.ErrorMessage);
                     return;
                 }
+
                 string receivedStr = "";
                 byte[] receivedFrame = new byte[frameLen];
                 chatReader.ReadBytes(receivedFrame);
+
+                // Check if the Response is a command or an ACK
+                byte commandUpperByte = receivedFrame[6];
+                if (commandUpperByte >> 4 == ((DFUHandler.LastSentCommand >> 12) | 0x8)) // ACK is always the command id (16 bits) masked with 0x8000 so upper byte must start with 0x8_
+                {
+                    receivedStr += "ACK! ";
+                }
+                else // otherwise, this is an actual command! We must respond to it
+                {
+                    receivedStr += "Command! ";
+                }
+
                 receivedStr += BitConverter.ToString(receivedFrame);
                 byte payloadLen = receivedFrame[3];
 
@@ -271,9 +270,13 @@ namespace BluetoothRfcommChat
                     receivedStr += " Payload: " + BitConverter.ToString(payload); 
                 }
 
-                //await chatReader.LoadAsync(sizeof(byte));
-                //byte checksum = chatReader.ReadByte();
-
+                // If we get 0x01 in the Flags, we received a CRC (also we should check it probably)
+                if (receivedFrame[2] == GaiaDfu.GAIA_FLAG_CHECK)
+                {
+                    await chatReader.LoadAsync(sizeof(byte));
+                    byte checksum = chatReader.ReadByte();
+                    receivedStr += " CRC: " + checksum.ToString("X2");
+                }
 
                 ConversationList.Items.Add("Received: " + receivedStr );
 
@@ -296,14 +299,10 @@ namespace BluetoothRfcommChat
             }
         }
 
-        private async void SendButton_Click(object sender, RoutedEventArgs e)
+        private void SendButton_Click(object sender, RoutedEventArgs e)
         {
             try
             {
-                /*chatWriter.WriteUInt32((uint)MessageTextBox.Text.Length);
-                chatWriter.WriteString(MessageTextBox.Text);
-                await chatWriter.StoreAsync();
-                ConversationList.Items.Add("Sent: " + MessageTextBox.Text);*/
                 if (MessageTextBox.Text == "") { return; }
                 ushort usrCmd = Convert.ToUInt16(MessageTextBox.Text, 16);
 
@@ -317,14 +316,19 @@ namespace BluetoothRfcommChat
             }
         }
 
-        private async void SendGaiaMessage(byte[] msg)
+        private async void SendGaiaMessage(byte[] gaiaFrame)
         {
-            chatWriter.WriteBytes(msg);
-            byte checkSum = GaiaDfu.Checksum(msg);
-            chatWriter.WriteByte(checkSum);
+            chatWriter.WriteBytes(gaiaFrame);
+            string sendStr = BitConverter.ToString(gaiaFrame);
+            /*if (gaiaFrame[2] == GaiaDfu.GAIA_FLAG_CHECK)
+            {
+                byte checkSum = GaiaDfu.Checksum(gaiaFrame);
+                chatWriter.WriteByte(checkSum);
+                sendStr += " Checksum: " + checkSum.ToString("X2");
+            }*/
             await chatWriter.StoreAsync();
 
-            ConversationList.Items.Add("Sent: " + BitConverter.ToString(msg) + " Checksum: " + checkSum.ToString("X2"));
+            ConversationList.Items.Add("Sent: " + sendStr);
             MessageTextBox.Text = "";
         } 
 
@@ -374,6 +378,27 @@ namespace BluetoothRfcommChat
             // Send DFU!
             var buf = await FileIO.ReadBufferAsync(dfuFile);
             dfuReader = DataReader.FromBuffer(buf);
+            uint fileSize = buf.Length;
+            byte[] fileBuffer = new byte[fileSize];
+            dfuReader.ReadBytes(fileBuffer);
+            byte[] crcBuffer = new byte[fileSize + 4];
+            System.Buffer.BlockCopy(fileBuffer, 0, crcBuffer, 4, (int)fileSize);
+            crcBuffer[0] = crcBuffer[1] = crcBuffer[2] = crcBuffer[3] = (byte)0xff;
+
+            long crc = DfuCRC.fileCrc(fileBuffer);
+
+            //SendGaiaMessage();
+
+            // Send 6346 (Arc Dfu)
+            // Arc Sends back DFURequest Command
+            // We ACK that
+            // We Send 0631 (DFU Begin)
+            // Wait till we get DFU State 0 (Notification)
+            // Send Raw Bytes
+            // Wait to make sure they received it
+
+
+            //uint fileSize = await dfuReader.LoadAsync(buf.Length);
         }
 
 
