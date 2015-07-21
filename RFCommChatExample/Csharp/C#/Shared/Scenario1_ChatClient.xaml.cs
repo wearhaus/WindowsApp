@@ -1,11 +1,12 @@
 // Copyright (c) Microsoft. All rights reserved.
 
 using System;
+using System.ComponentModel;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.ApplicationModel.Activation;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Devices.Bluetooth.Rfcomm;
@@ -29,6 +30,7 @@ using SDKTemplate;
 using SDKTemplate.Common;
 
 using GaiaDFU;
+using Windows.ApplicationModel.Activation;
 
 namespace BluetoothRfcommChat
 {
@@ -63,6 +65,7 @@ namespace BluetoothRfcommChat
         private DataReader dfuReader;
 
         private MainPage rootPage;
+        
 
         public Scenario1_ChatClient()
         {
@@ -240,7 +243,7 @@ namespace BluetoothRfcommChat
                 // Buffer / Stream is closed 
                 if (size < frameLen)
                 {
-                    MainPage.Current.NotifyUser("Problem Loading from Stream", NotifyType.ErrorMessage);
+                    MainPage.Current.NotifyUser("Disconnected from Stream!", NotifyType.ErrorMessage);
                     return;
                 }
 
@@ -248,37 +251,80 @@ namespace BluetoothRfcommChat
                 byte[] receivedFrame = new byte[frameLen];
                 chatReader.ReadBytes(receivedFrame);
 
-                // Check if the Response is a command or an ACK
-                byte commandUpperByte = receivedFrame[6];
-                if (commandUpperByte >> 4 == ((DFUHandler.LastSentCommand >> 12) | 0x8)) // ACK is always the command id (16 bits) masked with 0x8000 so upper byte must start with 0x8_
-                {
-                    receivedStr += "ACK! ";
-                }
-                else // otherwise, this is an actual command! We must respond to it
-                {
-                    receivedStr += "Command! ";
-                }
-
                 receivedStr += BitConverter.ToString(receivedFrame);
                 byte payloadLen = receivedFrame[3];
 
+                byte[] payload = new byte[payloadLen];
                 if (payloadLen > 0)
                 {
-                    byte[] payload = new byte[payloadLen];
                     await chatReader.LoadAsync(payloadLen);
                     chatReader.ReadBytes(payload);
                     receivedStr += " Payload: " + BitConverter.ToString(payload); 
                 }
 
+                byte[] resp;
                 // If we get 0x01 in the Flags, we received a CRC (also we should check it probably)
                 if (receivedFrame[2] == GaiaDfu.GAIA_FLAG_CHECK)
                 {
                     await chatReader.LoadAsync(sizeof(byte));
                     byte checksum = chatReader.ReadByte();
                     receivedStr += " CRC: " + checksum.ToString("X2");
+
+                    // Now we should have all the bytes, lets process the whole thing!
+                    //resp = DFUHandler.ProcessReceievedMessage(receivedFrame, payload, checksum);
+                }
+                else
+                {
+                    // Now we should have all the bytes, lets process the whole thing!
+                    //resp = DFUHandler.ProcessReceievedMessage(receivedFrame, payload);
                 }
 
-                ConversationList.Items.Add("Received: " + receivedStr );
+
+                // Check if the Response is a command or an ACK
+                byte commandUpperByte = receivedFrame[6];
+                ushort command = GaiaDfu.CombineBytes(receivedFrame[6], receivedFrame[7]);
+
+                if (commandUpperByte >> 4 == ((DFUHandler.LastSentCommand >> 12) | 0x8)) // ACK is always the command id (16 bits) masked with 0x8000 so upper byte must start with 0x8_
+                {
+                    receivedStr += " [ACK!] ";
+                    ConversationList.Items.Add("Received: " + receivedStr );
+                }
+                else // otherwise, this is an actual command! We must respond to it
+                {
+                    receivedStr += " [Command!] ";
+                    ConversationList.Items.Add("Received: " + receivedStr );
+                    switch (command)
+                    {
+                        case (ushort)GaiaDfu.GaiaNotification.Event:
+                            if (payload[0] == 0x10 && payload[1] == 0x00)
+                            {
+                                receivedStr += " [Event!] ";
+                                int chunksRemaining = DFUHandler.ChunksRemaining();
+                                while (chunksRemaining > 0)
+                                {
+                                    byte[] msg = DFUHandler.GetNextFileChunk();
+                                    chatWriter.WriteBytes(msg);
+                                    await chatWriter.StoreAsync();
+                                    
+                                    if (chunksRemaining % 1000 == 0)
+                                    {
+                                        ConversationList.Items.Add("DFU Progress | Chunks Remaining: " + chunksRemaining);
+                                    }
+                                    System.Diagnostics.Debug.WriteLine("Chunks Remaining: " + chunksRemaining);
+
+                                    //SendRawBytes(DFUHandler.GetNextFileChunk(), false);
+                                    chunksRemaining = DFUHandler.ChunksRemaining();
+                                }
+                                // We are in the Gaia Dfu Event!
+                            }
+                            break;
+
+                        default:
+                            SendRawBytes(DFUHandler.CreateAck(command));
+                            break;
+                    }
+                }
+
 
                 ReceiveStringLoop(chatReader);
             }
@@ -307,7 +353,7 @@ namespace BluetoothRfcommChat
                 ushort usrCmd = Convert.ToUInt16(MessageTextBox.Text, 16);
 
                 byte[] msg = DFUHandler.CreateGaiaCommand(usrCmd);
-                SendGaiaMessage(msg);
+                SendRawBytes(msg);
             }
             catch (Exception ex)
             {
@@ -316,19 +362,16 @@ namespace BluetoothRfcommChat
             }
         }
 
-        private async void SendGaiaMessage(byte[] gaiaFrame)
+        private async void SendRawBytes(byte[] msg, bool print = true)
         {
-            chatWriter.WriteBytes(gaiaFrame);
-            string sendStr = BitConverter.ToString(gaiaFrame);
-            /*if (gaiaFrame[2] == GaiaDfu.GAIA_FLAG_CHECK)
-            {
-                byte checkSum = GaiaDfu.Checksum(gaiaFrame);
-                chatWriter.WriteByte(checkSum);
-                sendStr += " Checksum: " + checkSum.ToString("X2");
-            }*/
+            chatWriter.WriteBytes(msg);
+            string sendStr = BitConverter.ToString(msg);
             await chatWriter.StoreAsync();
 
-            ConversationList.Items.Add("Sent: " + sendStr);
+            if (print)
+            {
+                ConversationList.Items.Add("Sent: " + sendStr);
+            }
             MessageTextBox.Text = "";
         } 
 
@@ -376,16 +419,24 @@ namespace BluetoothRfcommChat
                 return;
             }
             // Send DFU!
+
+            // Get CRC first from File
             var buf = await FileIO.ReadBufferAsync(dfuFile);
             dfuReader = DataReader.FromBuffer(buf);
             uint fileSize = buf.Length;
             byte[] fileBuffer = new byte[fileSize];
             dfuReader.ReadBytes(fileBuffer);
+            DFUHandler.SetFileBuffer(fileBuffer);
             byte[] crcBuffer = new byte[fileSize + 4];
             System.Buffer.BlockCopy(fileBuffer, 0, crcBuffer, 4, (int)fileSize);
             crcBuffer[0] = crcBuffer[1] = crcBuffer[2] = crcBuffer[3] = (byte)0xff;
 
-            long crc = DfuCRC.fileCrc(fileBuffer);
+            long crc = DfuCRC.fileCrc(crcBuffer);
+
+            //SendGaiaMessage(DFUHandler.CreateAck((ushort)GaiaDfu.GaiaCommand.DFURequest));
+
+            // Send DfuBegin with CRC and fileSize
+            SendRawBytes(DFUHandler.CreateDfuBegin(crc, fileSize));
 
             //SendGaiaMessage();
 

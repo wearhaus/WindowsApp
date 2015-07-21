@@ -16,10 +16,15 @@ namespace GaiaDFU
         public const ushort GAIA_CSR_VENDOR_ID = 0x000a;
         public const ushort GAIA_WEARHAUS_VENDOR_ID = 0x0a4c;
         public const byte GAIA_FRAME_LEN = 8;
+        
+        private const byte CHUNK_SIZE = 240;
 
+        private byte[] FileBuffer;
+        private int FileChunksSent = 0;
         private DataWriter SocketWriter;
 
         public ushort LastSentCommand;
+        public int TotalChunks;
 
         public GaiaDfu(DataWriter dw)
         {
@@ -37,22 +42,57 @@ namespace GaiaDFU
             return checkSum;
         }
 
-        public byte[] CreateGaiaCommand(ushort usrCmd)
+        public void SetFileBuffer(byte[] buf)
         {
-            return CreateGaiaCommand(usrCmd, GAIA_FLAG_CHECK, new byte[0]);
+            FileBuffer = buf;
+            TotalChunks = (int)Math.Ceiling((float)buf.Length / CHUNK_SIZE);
         }
 
-        public byte[] CreateGaiaCommand(ushort usrCmd, byte[] payload)
+        public int ChunksRemaining()
         {
-            return CreateGaiaCommand(usrCmd, GAIA_FLAG_CHECK, payload);
+            return (int)Math.Ceiling((float)FileBuffer.Length / CHUNK_SIZE) - FileChunksSent;
         }
 
-        public byte[] CreateGaiaCommand(ushort usrCmd, byte flag)
+        public int BytesRemaining()
         {
-            return CreateGaiaCommand(usrCmd, flag, new byte[0]);
+            return (int)FileBuffer.Length - (FileChunksSent * CHUNK_SIZE);
         }
 
-        public byte[] CreateGaiaCommand(ushort usrCmd, byte flag, byte[] payload)
+        public byte[] GetNextFileChunk()
+        {
+            byte[] fileChunk;
+            if (ChunksRemaining() == 1)
+            {
+                int bytesToWrite = BytesRemaining();
+                fileChunk = new byte[bytesToWrite];
+                System.Buffer.BlockCopy(FileBuffer, FileChunksSent * CHUNK_SIZE, fileChunk, 0, bytesToWrite);
+            }
+            else
+            {
+                fileChunk = new byte[CHUNK_SIZE];
+                System.Buffer.BlockCopy(FileBuffer, FileChunksSent * CHUNK_SIZE, fileChunk, 0, CHUNK_SIZE);
+            }
+            FileChunksSent++;
+
+            return fileChunk;
+        }
+
+        public byte[] CreateGaiaCommand(ushort usrCmd, bool isAck = false)
+        {
+            return CreateGaiaCommand(usrCmd, GAIA_FLAG_CHECK, new byte[0], isAck);
+        }
+
+        public byte[] CreateGaiaCommand(ushort usrCmd, byte[] payload, bool isAck = false)
+        {
+            return CreateGaiaCommand(usrCmd, GAIA_FLAG_CHECK, payload, isAck);
+        }
+
+        public byte[] CreateGaiaCommand(ushort usrCmd, byte flag, bool isAck = false)
+        {
+            return CreateGaiaCommand(usrCmd, flag, new byte[0], isAck);
+        }
+
+        public byte[] CreateGaiaCommand(ushort usrCmd, byte flag, byte[] payload, bool isAck = false)
         {
             byte[] commandMessage;
             int msgLen = GAIA_FRAME_LEN + payload.Length;
@@ -81,8 +121,62 @@ namespace GaiaDFU
             {
                 commandMessage[msgLen - 1] = Checksum(commandMessage);
             }
-            LastSentCommand = usrCmd;
+            if (!isAck)
+            {
+                LastSentCommand = usrCmd;
+            }
             return commandMessage;
+        }
+
+        public byte[] CreateAck(ushort usrCmd)
+        {
+            byte[] ackPayload = { 0x00 };
+            return CreateGaiaCommand((ushort)(usrCmd | 0x8000), ackPayload, isAck: true);
+        }
+
+        public byte[] CreateDfuBegin(long crc, uint filesize)
+        {
+            // Swap the 16 bit parts
+            uint mCrc = (uint) (((crc & 0xFFFFL) << 16) | ((crc & 0xFFFF0000L) >> 16));
+            byte[] beginPayload = new byte[8];
+            beginPayload[0] = (byte)(filesize >> 24);
+            beginPayload[1] = (byte)(filesize >> 16);
+            beginPayload[2] = (byte)(filesize >> 8);
+            beginPayload[3] = (byte)(filesize);
+
+            beginPayload[4] = (byte)(mCrc >> 24);
+            beginPayload[5] = (byte)(mCrc >> 16);
+            beginPayload[6] = (byte)(mCrc >> 8);
+            beginPayload[7] = (byte)(mCrc);
+
+            return CreateGaiaCommand((ushort)GaiaCommand.DFUBegin, beginPayload);
+        }
+
+        public static ushort CombineBytes(byte upper, byte lower)
+        {
+            return ((ushort)((((ushort)upper) << 8) | ((ushort)lower)));
+        }
+
+        public byte[] ProcessReceievedMessage(byte[] receivedFrame, byte[] receivedPayload, byte checkSum = 0x00)
+        {
+
+            // Check if the Response is a command or an ACK
+            byte commandUpperByte = receivedFrame[6];
+            ushort command = CombineBytes(receivedFrame[6], receivedFrame[7]);
+            return receivedFrame;
+
+            /*if (commandUpperByte >> 4 == ((LastSentCommand >> 12) | 0x8)) // ACK is always the command id (16 bits) masked with 0x8000 so upper byte must start with 0x8_
+            {
+                receivedStr += "[ACK!] ";
+                ConversationList.Items.Add("Received: " + receivedStr );
+            }
+            else // otherwise, this is an actual command! We must respond to it
+            {
+                receivedStr += "[Command!] ";
+                ConversationList.Items.Add("Received: " + receivedStr );
+                SendGaiaMessage(DFUHandler.CreateAck(GaiaDfu.CombineBytes(receivedFrame[6], receivedFrame[7])));
+            }*/
+
         }
 
         public enum GaiaCommand : ushort
