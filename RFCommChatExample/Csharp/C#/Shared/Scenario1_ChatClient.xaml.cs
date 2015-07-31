@@ -234,7 +234,6 @@ namespace BluetoothRfcommChat
         {
             try
             {
-
                 byte frameLen = GaiaDfu.GAIA_FRAME_LEN;
 
                 // Frame is always FRAME_LEN long at least, so load that many bytes and process the frame
@@ -288,6 +287,16 @@ namespace BluetoothRfcommChat
                 {
                     receivedStr += " [ACK!] ";
                     ConversationList.Items.Add("Received: " + receivedStr );
+
+                    switch (command)
+                    {
+                        case (ushort)GaiaDfu.ArcCommand.StartDfu | 0x8000:
+                            SendDFUBegin();
+                            break;
+
+                        default:
+                            break;
+                    }
                 }
                 else // otherwise, this is an actual command! We must respond to it
                 {
@@ -317,6 +326,10 @@ namespace BluetoothRfcommChat
                                 }
                                 // We are in the Gaia Dfu Event!
                             }
+                            break;
+
+                        case (ushort)GaiaDfu.GaiaCommand.DFURequest:
+                            SendRawBytes(DFUHandler.CreateAck(command));
                             break;
 
                         default:
@@ -410,15 +423,13 @@ namespace BluetoothRfcommChat
 #endif
         }
 
-        private async void SendDFUButton_Click(object sender, RoutedEventArgs e)
+        private async void SendDFUBegin()
         {
-
             MainPage.Current.NotifyUser("", NotifyType.StatusMessage);
             if( dfuFile == null){
                 MainPage.Current.NotifyUser("No DFU File Picked. Please Pick a DFU File!", NotifyType.StatusMessage);
                 return;
             }
-            // Send DFU!
 
             // Get CRC first from File
             var buf = await FileIO.ReadBufferAsync(dfuFile);
@@ -433,26 +444,20 @@ namespace BluetoothRfcommChat
 
             long crc = DfuCRC.fileCrc(crcBuffer);
 
-            //SendGaiaMessage(DFUHandler.CreateAck((ushort)GaiaDfu.GaiaCommand.DFURequest));
-
             // Send DfuBegin with CRC and fileSize
             SendRawBytes(DFUHandler.CreateDfuBegin(crc, fileSize));
-
-            //SendGaiaMessage();
-
-            // Send 6346 (Arc Dfu)
-            // Arc Sends back DFURequest Command
-            // We ACK that
-            // We Send 0631 (DFU Begin)
-            // Wait till we get DFU State 0 (Notification)
-            // Send Raw Bytes
-            // Wait to make sure they received it
-
-
-            //uint fileSize = await dfuReader.LoadAsync(buf.Length);
         }
 
+        private async void SendDFUButton_Click(object sender, RoutedEventArgs e)
+        {
+            MainPage.Current.NotifyUser("", NotifyType.StatusMessage);
+            if( dfuFile == null){
+                MainPage.Current.NotifyUser("No DFU File Picked. Please Pick a DFU File!", NotifyType.StatusMessage);
+                return;
+            }
+            // Send DFU!
+            SendRawBytes(DFUHandler.CreateGaiaCommand((ushort)GaiaDfu.ArcCommand.StartDfu));
+        }
 
-     
     }
 }

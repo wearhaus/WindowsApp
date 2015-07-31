@@ -237,6 +237,14 @@
       <RootProperty Name="Margin" />
     </RootType>
     <RootType FullName="Windows.UI.Xaml.Data.CollectionViewSource" />
+    <RootType FullName="Windows.UI.Xaml.Controls.ProgressBar">
+      <RootProperty Name="Visibility" />
+      <RootProperty Name="Margin" />
+      <RootProperty Name="Height" />
+      <RootProperty Name="Value" />
+      <RootProperty Name="IsIndeterminate" />
+      <RootProperty Name="Maximum" />
+    </RootType>
     <RootType FullName="BluetoothRfcommChat.Scenario1_ChatClient" />
   </Roots.RootTypes>
 </Roots>

@@ -46,6 +46,7 @@
                             <Button x:ConnectionId='2' x:Name="DisconnectButton" Content="Disconnect"                               />
                             <Button x:ConnectionId='3' x:Name="PickFileButton" Content="Pick DFU File"                             />
                             <Button x:ConnectionId='4' x:Name="SendDFUButton" Content="Send DFU"                            />
+                            <ProgressBar x:Name="DFUProgressBar" Visibility="Collapsed" Margin="10" Height="15" Value="0" IsIndeterminate="False" Maximum="100"/>
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
