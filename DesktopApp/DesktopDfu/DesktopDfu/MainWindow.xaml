@@ -17,14 +17,14 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <StackPanel Margin="0,0,0,10">
-                <TextBlock Style="{StaticResource ScenarioDescriptionTextStyle}" TextWrapping="Wrap">
-                    Enumerates all the Chat service instances that are known to Windows and connects to the selected one.
+                <TextBlock Style="{StaticResource ScenarioHeaderTextStyle}" TextWrapping="Wrap">
+                    Wearhaus Bluetooth Firmware Update
                 </TextBlock>
             </StackPanel>
 
             <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                 <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top">
-                    <Button x:Name="RunButton" Content="Run" Margin="0,0, 10,0" Click="RunButton_Click"/>
+                    <Button x:Name="RunButton" Style="{StaticResource MyButtonStyle}" Content="Run" Margin="0,0, 10,0" Click="RunButton_Click"/>
                     <!-- Service Selector -->
                     <Grid x:Name="ServiceSelector" Visibility="Collapsed">
                         <StackPanel Orientation="Vertical">

@@ -14,7 +14,7 @@ namespace SDKTemplate
     {
         // Change the string below to reflect the name of your sample.
         // This is used on the main page as the title of the sample.
-        public const string FEATURE_NAME = "Bluetooth Rfcomm Chat";
+        public const string FEATURE_NAME = "Wearhaus Arc";
 
         // Change the array below to reflect the name of your scenarios.
         // This will be used to populate the list of scenarios on the main page with
@@ -23,8 +23,8 @@ namespace SDKTemplate
         // The code in MainPage will take care of turning this into: "1) Navigating to a web page"
         List<Scenario> scenarios = new List<Scenario>
         {
-            new Scenario() { Title = "Run Chat Client", ClassType = typeof(Scenario1_ChatClient) },
-            new Scenario() { Title = "Run Chat Server", ClassType = typeof(Scenario2_ChatServer) },
+            new Scenario() { Title = "Run Firmware Update App", ClassType = typeof(Scenario1_ChatClient) },
+            //new Scenario() { Title = "Run Chat Server", ClassType = typeof(Scenario2_ChatServer) },
         };
     }
 

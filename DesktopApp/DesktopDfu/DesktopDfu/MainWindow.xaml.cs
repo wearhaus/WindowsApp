@@ -35,8 +35,7 @@ namespace DesktopDfu
         BluetoothDeviceInfo ArcDev;
         NetworkStream BluetoothStream;
 
-        GaiaDfu DfuHandler;
-        String dfuFileName;
+        GaiaDfu DFUHandler;
         
         public MainWindow()
         {
@@ -44,8 +43,7 @@ namespace DesktopDfu
             GaiaServiceID = new Guid("00001107-D102-11E1-9B23-00025B00A5A5");
             ArcDev = null;
             BluetoothStream = null;
-            DfuHandler = new GaiaDfu();
-            dfuFileName = null;
+            DFUHandler = new GaiaDfu();
         }
 
         private async void RunButton_Click(object sender, RoutedEventArgs e)
@@ -93,7 +91,7 @@ namespace DesktopDfu
                     {
                         Console.WriteLine("Connected!");
                         ChatBox.Visibility = System.Windows.Visibility.Visible;
-                        ReceiveStringLoop(BluetoothStream, DfuHandler);
+                        ReceiveStringLoop(BluetoothStream);
                     }
                 }
                 else
@@ -104,32 +102,40 @@ namespace DesktopDfu
             }
             catch (Exception ex)
             {
+                ServiceList.Items.Clear();
+                ConversationList.Items.Clear();
                 RunButton.IsEnabled = true;
             }
         }
 
         private void Disconnect()
         {
-            if (BluetoothStream != null)
+            try
             {
-                System.Diagnostics.Debug.WriteLine("DISCONNECTING AND CLOSING THE STREAM!");
-                BluetoothStream.Dispose();
-                BluetoothStream = null;
-            }
+                if (BluetoothStream != null)
+                {
+                    System.Diagnostics.Debug.WriteLine("DISCONNECTING AND CLOSING THE STREAM!");
+                    BluetoothStream.Dispose();
+                    BluetoothStream = null;
+                }
 
-            if (BluetoothClient != null)
+                if (BluetoothClient != null)
+                {
+                    System.Diagnostics.Debug.WriteLine("DISCONNECTING BLUETOOTH CLIENT!");
+                    BluetoothClient.Dispose();
+                    BluetoothClient = null;
+                }
+
+                RunButton.IsEnabled = true;
+                ServiceSelector.Visibility = System.Windows.Visibility.Collapsed;
+                ChatBox.Visibility = System.Windows.Visibility.Collapsed;
+                ServiceList.Items.Clear();
+                ConversationList.Items.Clear();
+            }
+            catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine("DISCONNECTING BLUETOOTH CLIENT!");
-                BluetoothClient.Dispose();
-                BluetoothClient = null;
+                System.Diagnostics.Debug.WriteLine("Error on Disconnect: " + ex.HResult.ToString() + " - " + ex.Message);
             }
-
-            RunButton.IsEnabled = true;
-            ServiceSelector.Visibility = System.Windows.Visibility.Collapsed;
-            ChatBox.Visibility = System.Windows.Visibility.Collapsed;
-            ServiceList.Items.Clear();
-            ConversationList.Items.Clear();
-            
         }
 
         private async void DisconnectButton_Click(object sender, RoutedEventArgs e)
@@ -147,20 +153,21 @@ namespace DesktopDfu
 
             if (result == true)
             {
-                dfuFileName = dlg.FileName;
+                byte[] fileBuffer = File.ReadAllBytes(dlg.FileName);
+                DFUHandler.SetFileBuffer(fileBuffer);
                 System.Diagnostics.Debug.WriteLine("Picked File: " + dlg.FileName);
             }
         }
 
         private async void SendDFUButton_Click(object sender, RoutedEventArgs e)
         {
-            if (dfuFileName == null)
-            {
-                System.Diagnostics.Debug.WriteLine("No DFU File Picked. Please Pick a DFU File!");
-                return;
-            }
+            //if (DfuHandler.DfuFileName == null)
+            //{
+            //    System.Diagnostics.Debug.WriteLine("No DFU File Picked. Please Pick a DFU File!");
+            //    return;
+            //}
             // Send DFU!
-            SendRawBytes(DfuHandler.CreateGaiaCommand((ushort)GaiaDfu.ArcCommand.StartDfu));
+            SendRawBytes(DFUHandler.CreateGaiaCommand((ushort)GaiaDfu.ArcCommand.StartDfu));
         }
 
         private async void SendButton_Click(object sender, RoutedEventArgs e)
@@ -170,7 +177,7 @@ namespace DesktopDfu
                 if (MessageTextBox.Text == "") { return; }
                 ushort usrCmd = Convert.ToUInt16(MessageTextBox.Text, 16);
 
-                byte[] msg = DfuHandler.CreateGaiaCommand(usrCmd);
+                byte[] msg = DFUHandler.CreateGaiaCommand(usrCmd);
                 SendRawBytes(msg);
             }
             catch (Exception ex)
@@ -191,7 +198,7 @@ namespace DesktopDfu
             MessageTextBox.Text = "";
         }
         
-        private async void ReceiveStringLoop(NetworkStream netSocket, GaiaDfu DFUHandler)
+        private async void ReceiveStringLoop(NetworkStream netSocket)
         {
             try
             {
@@ -218,7 +225,7 @@ namespace DesktopDfu
                     int receivedPayloadLen = await netSocket.ReadAsync(payload, 0, payloadLen);
                     receivedStr += " Payload: " + BitConverter.ToString(payload);
                 }
-
+                
                 byte[] resp;
                 // If we get 0x01 in the Flags, we received a CRC (also we should check it probably)
                 if (receivedFrame[2] == GaiaDfu.GAIA_FLAG_CHECK)
@@ -227,80 +234,42 @@ namespace DesktopDfu
                     receivedStr += " CRC: " + checksum.ToString("X2");
 
                     // Now we should have all the bytes, lets process the whole thing!
-                    //resp = DFUHandler.ProcessReceievedMessage(receivedFrame, payload, checksum);
+                    resp = DFUHandler.CreateResponseToMessage(receivedFrame, payload, checksum);
                 }
                 else
                 {
                     // Now we should have all the bytes, lets process the whole thing!
-                    //resp = DFUHandler.ProcessReceievedMessage(receivedFrame, payload);
+                    resp = DFUHandler.CreateResponseToMessage(receivedFrame, payload);
                 }
 
+                ConversationList.Items.Add("Received: " + receivedStr);
 
-                // Check if the Response is a command or an ACK
-                byte commandUpperByte = receivedFrame[6];
-                ushort command = GaiaDfu.CombineBytes(receivedFrame[6], receivedFrame[7]);
-
-                if (commandUpperByte >> 4 == ((DFUHandler.LastSentCommand >> 12) | 0x8)) // ACK is always the command id (16 bits) masked with 0x8000 so upper byte must start with 0x8_
+                if (DFUHandler.IsSendingFile)
                 {
-                    receivedStr += " [ACK!] ";
-                    ConversationList.Items.Add("Received: " + receivedStr);
-
-                    switch (command)
+                    ConversationList.Items.Add("Receieved Go Ahead for DFU! Starting DFU now!");
+                    int chunksRemaining = DFUHandler.ChunksRemaining();
+                    ConversationList.Items.Add("DFU Progress | Chunks Remaining: " + chunksRemaining);
+                    while (chunksRemaining > 0)
                     {
-                        case (ushort)GaiaDfu.ArcCommand.StartDfu | 0x8000:
-                            SendDFUBegin();
-                            break;
+                        byte[] msg = DFUHandler.GetNextFileChunk();
+                        await netSocket.WriteAsync(msg, 0, msg.Length);
 
-                        default:
-                            break;
+                        if (chunksRemaining % 1000 == 0)
+                        {
+                            ConversationList.Items.Add("DFU Progress | Chunks Remaining: " + chunksRemaining);
+                        }
+                        System.Diagnostics.Debug.WriteLine("Chunks Remaining: " + chunksRemaining);
+
+                        SendRawBytes(DFUHandler.GetNextFileChunk(), false);
+                        chunksRemaining = DFUHandler.ChunksRemaining();
                     }
+                    ConversationList.Items.Add("Finished Sending DFU! Verifying...");
+                    DFUHandler.IsSendingFile = false;
                 }
-                else // otherwise, this is an actual command! We must respond to it
-                {
-                    receivedStr += " [Command!]";
-                    switch (command)
-                    {
-                        case (ushort)GaiaDfu.GaiaNotification.Event:
-                            if (payload[0] == 0x10 && payload[1] == 0x00)
-                            {
-                                receivedStr += " [Event!] ";
-                                ConversationList.Items.Add("Received: " + receivedStr);
-                                ConversationList.Items.Add("Receieved Go Ahead for DFU! Starting DFU now!");
-                                int chunksRemaining = DFUHandler.ChunksRemaining();
-                                ConversationList.Items.Add("DFU Progress | Chunks Remaining: " + chunksRemaining);
-                                while (chunksRemaining > 0)
-                                {
-                                    byte[] msg = DFUHandler.GetNextFileChunk();
-                                    await netSocket.WriteAsync(msg, 0, msg.Length);
+                
+                if(resp != null) SendRawBytes(resp);
 
-                                    if (chunksRemaining % 1000 == 0)
-                                    {
-                                        ConversationList.Items.Add("DFU Progress | Chunks Remaining: " + chunksRemaining);
-                                    }
-                                    System.Diagnostics.Debug.WriteLine("Chunks Remaining: " + chunksRemaining);
-
-                                    SendRawBytes(DFUHandler.GetNextFileChunk(), false);
-                                    chunksRemaining = DFUHandler.ChunksRemaining();
-                                }
-                                // We are in the Gaia Dfu Event!
-                            }
-                            break;
-
-                        case (ushort)GaiaDfu.GaiaCommand.DFURequest:
-                            receivedStr += " [DFU Request! ]";
-                            ConversationList.Items.Add("Received: " + receivedStr);
-                            SendRawBytes(DFUHandler.CreateAck(command));
-                            break;
-
-                        default:
-                            ConversationList.Items.Add("Received: " + receivedStr);
-                            SendRawBytes(DFUHandler.CreateAck(command));
-                            break;
-                    }
-                }
-
-
-                ReceiveStringLoop(netSocket, DFUHandler);
+                ReceiveStringLoop(netSocket);
             }
             catch (Exception ex)
             {
@@ -319,28 +288,7 @@ namespace DesktopDfu
             }
         }
 
-        private async void SendDFUBegin()
-        {
-            if (dfuFileName == null)
-            {
-                System.Diagnostics.Debug.WriteLine("No DFU File Picked. Please Pick a DFU File!");
-                return;
-            }
-
-            // Get CRC first from File
-            byte[] fileBuffer = File.ReadAllBytes(dfuFileName);
-            uint fileSize = (uint)fileBuffer.Length;
-            DfuHandler.SetFileBuffer(fileBuffer);
-            byte[] crcBuffer = new byte[fileSize + 4];
-            System.Buffer.BlockCopy(fileBuffer, 0, crcBuffer, 4, (int)fileSize);
-            crcBuffer[0] = crcBuffer[1] = crcBuffer[2] = crcBuffer[3] = (byte)0xff;
-
-            long crc = DfuCRC.fileCrc(crcBuffer);
-
-            // Send DfuBegin with CRC and fileSize
-            SendRawBytes(DfuHandler.CreateDfuBegin(crc, fileSize));
-        }
-
+   
 
 
     }

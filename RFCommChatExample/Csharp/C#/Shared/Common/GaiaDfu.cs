@@ -1,14 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Windows.Storage;
-using Windows.Storage.Streams;
 
 namespace GaiaDFU
 {
     public class GaiaDfu
     {
-            
+
         // GAIA FRAMING PARAMS
         public const byte GAIA_FRAME_START = 0xff;
         public const byte GAIA_PROTOCOL_VER = 0x01;
@@ -16,20 +14,23 @@ namespace GaiaDFU
         public const ushort GAIA_CSR_VENDOR_ID = 0x000a;
         public const ushort GAIA_WEARHAUS_VENDOR_ID = 0x0a4c;
         public const byte GAIA_FRAME_LEN = 8;
-        
+
         private const byte CHUNK_SIZE = 240;
 
         private byte[] FileBuffer;
-        private int FileChunksSent = 0;
-        private DataWriter SocketWriter;
+        private int FileChunksSent;
 
-        public ushort LastSentCommand;
+        private ushort LastSentCommand;
+        public bool IsSendingFile;
         public int TotalChunks;
 
-        public GaiaDfu(DataWriter dw)
+        public GaiaDfu()
         {
-            SocketWriter = dw;
+            FileBuffer = null;
+            FileChunksSent = 0;
+
             LastSentCommand = 0x0000;
+            IsSendingFile = false;
         }
 
         public static byte Checksum(byte[] b)
@@ -97,7 +98,7 @@ namespace GaiaDFU
             byte[] commandMessage;
             int msgLen = GAIA_FRAME_LEN + payload.Length;
 
-            if(flag == GAIA_FLAG_CHECK){ msgLen += 1; }
+            if (flag == GAIA_FLAG_CHECK) { msgLen += 1; }
             commandMessage = new byte[msgLen];
 
             commandMessage[0] = GAIA_FRAME_START;
@@ -108,7 +109,7 @@ namespace GaiaDFU
             commandMessage[5] = GAIA_CSR_VENDOR_ID & 0xff;
             commandMessage[6] = (byte)(usrCmd >> 8);
             commandMessage[7] = (byte)(usrCmd & 0xff);
-            
+
             if (Enum.IsDefined(typeof(ArcCommand), usrCmd))
             {
                 commandMessage[4] = GAIA_WEARHAUS_VENDOR_ID >> 8;
@@ -134,15 +135,29 @@ namespace GaiaDFU
             return CreateGaiaCommand((ushort)(usrCmd | 0x8000), ackPayload, isAck: true);
         }
 
-        public byte[] CreateDfuBegin(long crc, uint filesize)
+        private byte[] CreateDFUBegin()
         {
-            // Swap the 16 bit parts
-            uint mCrc = (uint) (((crc & 0xFFFFL) << 16) | ((crc & 0xFFFF0000L) >> 16));
+            if (FileBuffer == null)
+            {
+                System.Diagnostics.Debug.WriteLine("Did not specify a DFU File! Please Pick a File!");
+                return null;
+            }
+
+            // Get CRC first from File
+            uint fileSize = (uint)FileBuffer.Length;
+            byte[] crcBuffer = new byte[fileSize + 4];
+            System.Buffer.BlockCopy(FileBuffer, 0, crcBuffer, 4, (int)fileSize);
+            crcBuffer[0] = crcBuffer[1] = crcBuffer[2] = crcBuffer[3] = (byte)0xff;
+
+            long crc = DfuCRC.fileCrc(crcBuffer);
+
+            // Send DfuBegin with CRC and fileSize
+            uint mCrc = (uint)(((crc & 0xFFFFL) << 16) | ((crc & 0xFFFF0000L) >> 16));
             byte[] beginPayload = new byte[8];
-            beginPayload[0] = (byte)(filesize >> 24);
-            beginPayload[1] = (byte)(filesize >> 16);
-            beginPayload[2] = (byte)(filesize >> 8);
-            beginPayload[3] = (byte)(filesize);
+            beginPayload[0] = (byte)(fileSize >> 24);
+            beginPayload[1] = (byte)(fileSize >> 16);
+            beginPayload[2] = (byte)(fileSize >> 8);
+            beginPayload[3] = (byte)(fileSize);
 
             beginPayload[4] = (byte)(mCrc >> 24);
             beginPayload[5] = (byte)(mCrc >> 16);
@@ -157,99 +172,126 @@ namespace GaiaDFU
             return ((ushort)((((ushort)upper) << 8) | ((ushort)lower)));
         }
 
-        public byte[] ProcessReceievedMessage(byte[] receivedFrame, byte[] receivedPayload, byte checkSum = 0x00)
+        public byte[] CreateResponseToMessage(byte[] receivedFrame, byte[] receivedPayload, byte checkSum = 0x00)
         {
 
             // Check if the Response is a command or an ACK
             byte commandUpperByte = receivedFrame[6];
             ushort command = CombineBytes(receivedFrame[6], receivedFrame[7]);
-            return receivedFrame;
 
-            /*if (commandUpperByte >> 4 == ((LastSentCommand >> 12) | 0x8)) // ACK is always the command id (16 bits) masked with 0x8000 so upper byte must start with 0x8_
+            byte[] resp = null;
+
+            if (commandUpperByte >> 4 == ((LastSentCommand >> 12) | 0x8)) // ACK is always the command id (16 bits) masked with 0x8000 so upper byte must start with 0x8_
             {
-                receivedStr += "[ACK!] ";
-                ConversationList.Items.Add("Received: " + receivedStr );
+
+                switch (command)
+                {
+                    case (ushort)GaiaDfu.ArcCommand.StartDfu | 0x8000:
+                        resp = CreateDFUBegin();
+                        break;
+
+                    default:
+                        break;
+                }
             }
             else // otherwise, this is an actual command! We must respond to it
             {
-                receivedStr += "[Command!] ";
-                ConversationList.Items.Add("Received: " + receivedStr );
-                SendGaiaMessage(DFUHandler.CreateAck(GaiaDfu.CombineBytes(receivedFrame[6], receivedFrame[7])));
-            }*/
+                switch (command)
+                {
+                    case (ushort)GaiaDfu.GaiaNotification.Event:
+                        if (receivedPayload[0] == 0x10 && receivedPayload[1] == 0x00)
+                        {
+                            // WE NEED TO LOOP SENDING CHUNKS
+                            // Sending Logic in MainWindow.xaml.cs
+                            IsSendingFile = true;
+                        }
+                        break;
+
+                    case (ushort)GaiaDfu.GaiaCommand.DFURequest:
+                        resp = CreateAck(command);
+                        break;
+
+                    default:
+                        resp = CreateAck(command);
+                        break;
+                }
+            }
+            return resp;
 
         }
 
+
         public enum GaiaCommand : ushort
         {
-            GetAppVersion       = 0x0304,
-            GetRssi             = 0x0301,
+            GetAppVersion = 0x0304,
+            GetRssi = 0x0301,
 
-            SetLED              = 0x0101,
-            GetLED              = 0x0181,
+            SetLED = 0x0101,
+            GetLED = 0x0181,
 
-            SetTone             = 0x0102,
-            GetTone             = 0x0182,
+            SetTone = 0x0102,
+            GetTone = 0x0182,
 
-            SetDefaultVolume    = 0x0103,
-            GetDefaultVolume    = 0x0183,
+            SetDefaultVolume = 0x0103,
+            GetDefaultVolume = 0x0183,
 
-            ChangeVolume        = 0x0201,
-            ToggleBassBoost     = 0x0218,
+            ChangeVolume = 0x0201,
+            ToggleBassBoost = 0x0218,
             Toggle3DEnhancement = 0x0219,
 
-            SetLEDControl       = 0x0207,
-            GetLEDControl       = 0x0287,
+            SetLEDControl = 0x0207,
+            GetLEDControl = 0x0287,
 
-            DeviceReset         = 0x0202,
-            PowerOff            = 0x0204,
+            DeviceReset = 0x0202,
+            PowerOff = 0x0204,
 
-            GetBattery          = 0x0302,
-            GetModuleID         = 0x0303,
+            GetBattery = 0x0302,
+            GetModuleID = 0x0303,
 
-            DFURequest          = 0x0630,
-            DFUBegin            = 0x0631,
+            DFURequest = 0x0630,
+            DFUBegin = 0x0631,
 
-            NoOp                = 0x0700
+            NoOp = 0x0700
         }
 
         public enum GaiaNotification : ushort
         {
-            Register            = 0x4001,
-            Get                 = 0x4081,
-            Cancel              = 0x4002,
-            Event               = 0x4003
+            Register = 0x4001,
+            Get = 0x4081,
+            Cancel = 0x4002,
+            Event = 0x4003
         }
 
         public enum ArcCommand : ushort
         {
-            GetColor	  		= 0x6743,
-            SetColor 	  	 	= 0x7343,
+            GetColor = 0x6743,
+            SetColor = 0x7343,
 
-            GetHeadphoneID	    = 0x6749,
-            GetHeadphoneState   = 0x6753,
-            
-            GetBattery	  		= 0x6742,
-            
-            SetPulse  	 		= 0x7350,
-            GetPulse	 	 	= 0x6750,
-            
-            SetTouch  	 		= 0x7347,
-            GetTouch	 	 	= 0x6747,
-            
-            VolumeUp			= 0x7655,
-            VolumeDown 			= 0x7644,
-            
-            StartDfu	 		= 0x6346, 
-            
-            StartScan     		= 0x6353,
-            
-            StartBroadcast		= 0x6342,
-            JoinStation    	 	= 0x634C,
-            GoIdle     		 	= 0x6349,
-            
-            TurnOnMultipoint	= 0x634D,
-            
-            JoinNearestStation 	= 0x634E
+            GetHeadphoneID = 0x6749,
+            GetHeadphoneState = 0x6753,
+
+            GetBattery = 0x6742,
+
+            SetPulse = 0x7350,
+            GetPulse = 0x6750,
+
+            SetTouch = 0x7347,
+            GetTouch = 0x6747,
+
+            VolumeUp = 0x7655,
+            VolumeDown = 0x7644,
+
+            StartDfu = 0x6346,
+
+            StartScan = 0x6353,
+
+            StartBroadcast = 0x6342,
+            JoinStation = 0x634C,
+            GoIdle = 0x6349,
+
+            TurnOnMultipoint = 0x634D,
+
+            JoinNearestStation = 0x634E
         }
     }
 }

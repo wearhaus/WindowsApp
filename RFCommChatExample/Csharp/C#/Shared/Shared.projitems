@@ -26,6 +26,9 @@
     <Content Include="$(MSBuildThisFileDirectory)Assets\squaretile-sdk.png" />
     <Content Include="$(MSBuildThisFileDirectory)Assets\storelogo-sdk.png" />
     <Content Include="$(MSBuildThisFileDirectory)Assets\tile-sdk.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\WEARHAUSLogo-black.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\WEARHAUSLogo-lightbg.jpg" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\WEARHAUSLogo-Wordmark-darkbg.jpg" />
     <Content Include="$(MSBuildThisFileDirectory)Assets\windows-sdk.png" />
   </ItemGroup>
   <ItemGroup>

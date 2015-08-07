@@ -18,14 +18,19 @@ namespace GaiaDFU
         private const byte CHUNK_SIZE = 240;
 
         private byte[] FileBuffer;
-        private int FileChunksSent = 0;
+        private int FileChunksSent;
 
-        public ushort LastSentCommand;
+        private ushort LastSentCommand;
+        public bool IsSendingFile;
         public int TotalChunks;
 
         public GaiaDfu()
         {
+            FileBuffer = null;
+            FileChunksSent = 0;
+
             LastSentCommand = 0x0000;
+            IsSendingFile = false;
         }
 
         public static byte Checksum(byte[] b)
@@ -130,15 +135,29 @@ namespace GaiaDFU
             return CreateGaiaCommand((ushort)(usrCmd | 0x8000), ackPayload, isAck: true);
         }
 
-        public byte[] CreateDfuBegin(long crc, uint filesize)
+        private byte[] CreateDFUBegin()
         {
-            // Swap the 16 bit parts
+            if (FileBuffer == null)
+            {
+                System.Diagnostics.Debug.WriteLine("Did not specify a DFU File! Please Pick a File!");
+                return null;
+            }
+
+            // Get CRC first from File
+            uint fileSize = (uint)FileBuffer.Length;
+            byte[] crcBuffer = new byte[fileSize + 4];
+            System.Buffer.BlockCopy(FileBuffer, 0, crcBuffer, 4, (int)fileSize);
+            crcBuffer[0] = crcBuffer[1] = crcBuffer[2] = crcBuffer[3] = (byte)0xff;
+
+            long crc = DfuCRC.fileCrc(crcBuffer);
+
+            // Send DfuBegin with CRC and fileSize
             uint mCrc = (uint)(((crc & 0xFFFFL) << 16) | ((crc & 0xFFFF0000L) >> 16));
             byte[] beginPayload = new byte[8];
-            beginPayload[0] = (byte)(filesize >> 24);
-            beginPayload[1] = (byte)(filesize >> 16);
-            beginPayload[2] = (byte)(filesize >> 8);
-            beginPayload[3] = (byte)(filesize);
+            beginPayload[0] = (byte)(fileSize >> 24);
+            beginPayload[1] = (byte)(fileSize >> 16);
+            beginPayload[2] = (byte)(fileSize >> 8);
+            beginPayload[3] = (byte)(fileSize);
 
             beginPayload[4] = (byte)(mCrc >> 24);
             beginPayload[5] = (byte)(mCrc >> 16);
@@ -153,27 +172,54 @@ namespace GaiaDFU
             return ((ushort)((((ushort)upper) << 8) | ((ushort)lower)));
         }
 
-        public byte[] ProcessReceievedMessage(byte[] receivedFrame, byte[] receivedPayload, byte checkSum = 0x00)
+        public byte[] CreateResponseToMessage(byte[] receivedFrame, byte[] receivedPayload, byte checkSum = 0x00)
         {
 
             // Check if the Response is a command or an ACK
             byte commandUpperByte = receivedFrame[6];
             ushort command = CombineBytes(receivedFrame[6], receivedFrame[7]);
-            return receivedFrame;
 
-            /*if (commandUpperByte >> 4 == ((LastSentCommand >> 12) | 0x8)) // ACK is always the command id (16 bits) masked with 0x8000 so upper byte must start with 0x8_
+            byte[] resp = null;
+
+            if (commandUpperByte >> 4 == ((LastSentCommand >> 12) | 0x8)) // ACK is always the command id (16 bits) masked with 0x8000 so upper byte must start with 0x8_
             {
-                receivedStr += "[ACK!] ";
-                ConversationList.Items.Add("Received: " + receivedStr );
+
+                switch (command)
+                {
+                    case (ushort)GaiaDfu.ArcCommand.StartDfu | 0x8000:
+                        resp = CreateDFUBegin();
+                        break;
+
+                    default:
+                        break;
+                }
             }
             else // otherwise, this is an actual command! We must respond to it
             {
-                receivedStr += "[Command!] ";
-                ConversationList.Items.Add("Received: " + receivedStr );
-                SendGaiaMessage(DFUHandler.CreateAck(GaiaDfu.CombineBytes(receivedFrame[6], receivedFrame[7])));
-            }*/
+                switch (command)
+                {
+                    case (ushort)GaiaDfu.GaiaNotification.Event:
+                        if (receivedPayload[0] == 0x10 && receivedPayload[1] == 0x00)
+                        {
+                            // WE NEED TO LOOP SENDING CHUNKS
+                            // Sending Logic in MainWindow.xaml.cs
+                            IsSendingFile = true;
+                        }
+                        break;
+
+                    case (ushort)GaiaDfu.GaiaCommand.DFURequest:
+                        resp = CreateAck(command);
+                        break;
+
+                    default:
+                        resp = CreateAck(command);
+                        break;
+                }
+            }
+            return resp;
 
         }
+
 
         public enum GaiaCommand : ushort
         {

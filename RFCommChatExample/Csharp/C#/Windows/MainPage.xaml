@@ -16,7 +16,7 @@
             <ColumnDefinition Width="2*"  MinWidth="230" MaxWidth="600"/>
             <ColumnDefinition Width="8*"/>
         </Grid.ColumnDefinitions>
-        <Grid x:Name="LeftPane" Background="#FF140044" Grid.Column="0">
+        <Grid x:Name="LeftPane" Background="#00bccc" Grid.Column="0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="115"/>
                 <RowDefinition Height="*"/>
@@ -25,8 +25,7 @@
             </Grid.RowDefinitions>
             <StackPanel VerticalAlignment="Top" Grid.Row="0" Orientation="Vertical">
                 <StackPanel Orientation="Horizontal" Margin="5,20,0,0">
-                    <Image Source="Assets/windows-sdk.png" Stretch="None"/>
-                    <TextBlock Text="Windows platform sample" Foreground="White" Style="{StaticResource TagLineTextStyle}"/>
+                    <TextBlock Text="Wearhaus Firmware Update" Foreground="White" Style="{StaticResource TagLineTextStyle}"/>
                 </StackPanel>
                 <TextBlock x:Name="SampleTitle" Foreground="White" Style="{StaticResource SampleHeaderTextStyle}" Margin="30,10,30,0" TextWrapping="Wrap" Text="Sample title here"/>
             </StackPanel>
@@ -46,8 +45,8 @@
                 </Border>
             </StackPanel>
             <StackPanel Grid.Row="3" Orientation="Vertical" Margin="10,0,5,10" VerticalAlignment="Bottom" >
-                <Image Source="Assets/microsoft-sdk.png"  Stretch="None" HorizontalAlignment="Left"/>
-                <TextBlock Text="&#xA9; Microsoft Corporation. All rights reserved." Foreground="White" Style="{StaticResource CopyrightTextStyle}"/>
+                <Image Source="Assets/WEARHAUSLogo-black.png"  Stretch="Uniform" HorizontalAlignment="Left" Height="48" Width="87"/>
+                <TextBlock Text="&#xA9; Wearhaus Inc. All rights reserved." Foreground="White" Style="{StaticResource CopyrightTextStyle}"/>
                 <StackPanel x:Name="FooterPanel" Orientation="Horizontal" HorizontalAlignment="Left">
                     <HyperlinkButton Content="Terms" Tag="http://www.microsoft.com/About/Legal/EN/US/IntellectualProperty/Copyright/default.aspx"
                         Click="Footer_Click" FontSize="12" Style="{StaticResource HyperlinkStyle}"/>
