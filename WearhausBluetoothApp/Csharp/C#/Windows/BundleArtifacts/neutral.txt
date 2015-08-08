@@ -1,0 +1,2 @@
+MainPackage=C:\Workspace\Wearhaus\WindowsApp\RFCommChatExample\Csharp\C#\Windows\bin\Debug\BluetoothRfcommChat.Windows_1.0.0.3_Bundle\BluetoothRfcommChat.Windows_1.0.0.3_AnyCPU_Debug.appx
+SymbolPackage=C:\Workspace\Wearhaus\WindowsApp\RFCommChatExample\Csharp\C#\Windows\AppPackages\BluetoothRfcommChat.Windows_1.0.0.3_Debug_Test\BluetoothRfcommChat.Windows_1.0.0.3_AnyCPU_Debug.appxsym

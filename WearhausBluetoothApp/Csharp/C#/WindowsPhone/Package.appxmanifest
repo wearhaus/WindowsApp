@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Package xmlns="http://schemas.microsoft.com/appx/2010/manifest" xmlns:m2="http://schemas.microsoft.com/appx/2013/manifest" xmlns:m3="http://schemas.microsoft.com/appx/2014/manifest" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest">
+  <Identity Name="Wearhaus.Bluetooth.WindowsPhoneApp.CS" Publisher="CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US" Version="1.0.0.0" />
+  <mp:PhoneIdentity PhoneProductId="7498215d-1fed-4094-be80-375dd1ee4aed" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
+  <Properties>
+    <DisplayName>Wearhaus Windows Phone Bluetooth App</DisplayName>
+    <PublisherDisplayName>Wearhaus Inc</PublisherDisplayName>
+    <Logo>Assets\storeLogo-sdk.png</Logo>
+  </Properties>
+  <Prerequisites>
+    <OSMinVersion>6.3.1</OSMinVersion>
+    <OSMaxVersionTested>6.3.1</OSMaxVersionTested>
+  </Prerequisites>
+  <Resources>
+    <Resource Language="x-generate" />
+  </Resources>
+  <Applications>
+    <Application Id="SDKSample.App" Executable="$targetnametoken$.exe" EntryPoint="SDKSample.App">
+      <m3:VisualElements DisplayName="Wearhaus Bluetooth" Description="Bluetooth Firmware Update App for Wearhaus Arc" ForegroundText="light" BackgroundColor="#00bccc" Square150x150Logo="Assets\rsz_wearhauslogo-black150x150.png" Square44x44Logo="Assets\smallTile-Phone-sdk.png">
+        <m3:DefaultTile ShortName="BluetoothRfcommChat C#" DefaultSize="square150x150Logo" Wide310x150Logo="Assets\rsz_1wearhauslogo-black310x150.png" Square71x71Logo="Assets\mediumtile-sdk.png">
+          <m3:ShowNameOnTiles>
+            <m3:ShowOn Tile="square150x150Logo" />
+            <m3:ShowOn Tile="wide310x150Logo" />
+          </m3:ShowNameOnTiles>
+        </m3:DefaultTile>
+        <m3:SplashScreen Image="Assets\splash-Phone-sdk.png" BackgroundColor="#00bccc" />
+        <m3:ApplicationView MinWidth="width320" />
+      </m3:VisualElements>
+    </Application>
+  </Applications>
+  <Capabilities>
+    <Capability Name="internetClientServer" />
+    <Capability Name="privateNetworkClientServer" />
+    <DeviceCapability Name="proximity" />
+    <m2:DeviceCapability Name="bluetooth.rfcomm">
+      <m2:Device Id="any">
+        <m2:Function Type="serviceId:00001107-D102-11E1-9B23-00025B00A5A5" />
+      </m2:Device>
+    </m2:DeviceCapability>
+  </Capabilities>
+</Package>
