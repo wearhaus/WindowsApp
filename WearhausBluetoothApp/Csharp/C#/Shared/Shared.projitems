@@ -17,21 +17,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="$(MSBuildThisFileDirectory)Assets\mediumtile-sdk.png" />
-    <Content Include="$(MSBuildThisFileDirectory)Assets\microsoft-sdk.png" />
-    <Content Include="$(MSBuildThisFileDirectory)Assets\smalltile-Windows-sdk.png" />
-    <Content Include="$(MSBuildThisFileDirectory)Assets\smalltile-Phone-sdk.png" />
-    <Content Include="$(MSBuildThisFileDirectory)Assets\splash-Windows-sdk.png" />
-    <Content Include="$(MSBuildThisFileDirectory)Assets\splash-Phone-sdk.png" />
-    <Content Include="$(MSBuildThisFileDirectory)Assets\squaretile-sdk.png" />
-    <Content Include="$(MSBuildThisFileDirectory)Assets\storelogo-sdk.png" />
-    <Content Include="$(MSBuildThisFileDirectory)Assets\tile-sdk.png" />
-    <Content Include="$(MSBuildThisFileDirectory)Assets\WEARHAUSLogo-black.png" />
-    <Content Include="$(MSBuildThisFileDirectory)Assets\WEARHAUSLogo-lightbg.jpg" />
-    <Content Include="$(MSBuildThisFileDirectory)Assets\WEARHAUSLogo-Wordmark-darkbg.jpg" />
-    <Content Include="$(MSBuildThisFileDirectory)Assets\windows-sdk.png" />
-  </ItemGroup>
-  <ItemGroup>
     <ApplicationDefinition Include="$(MSBuildThisFileDirectory)App.xaml">
       <SubType>Designer</SubType>
     </ApplicationDefinition>
@@ -41,5 +26,27 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)Assets\logo_black_transparent150x150.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\logo_black_transparent30x30.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\logo_black_transparent310x150.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\logo_black_transparent50x50.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\logo_black_transparent620x300.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\logo_white_transparent150x150.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\logo_white_transparent30x30.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\logo_white_transparent310x150.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\logo_white_transparent44x44.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\logo_white_transparent50x50.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\logo_white_transparent620x300.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\logo_white_transparent71x71.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\logo_wordmark_black_transparent150x150.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\logo_wordmark_black_transparent310x150.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\logo_wordmark_black_transparent50x50.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\logo_wordmark_black_transparent620x300.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\logo_wordmark_white_no_bg150x150.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\logo_wordmark_white_no_bg310x150.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\logo_wordmark_white_no_bg480x800.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\logo_wordmark_white_no_bg620x300.png" />
   </ItemGroup>
 </Project>

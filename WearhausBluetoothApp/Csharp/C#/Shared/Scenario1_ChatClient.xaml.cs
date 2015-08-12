@@ -1,10 +1,10 @@
 // Copyright (c) Microsoft. All rights reserved.
 
 using System;
-using System.ComponentModel;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.ComponentModel;
 using System.Threading;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Foundation;
@@ -66,7 +66,6 @@ namespace WearhausBluetoothApp
 
         private MainPage rootPage;
         
-
         public Scenario1_ChatClient()
         {
             this.InitializeComponent();
@@ -222,14 +221,33 @@ namespace WearhausBluetoothApp
                 }
 
                 RunButton.IsEnabled = true;
+                SendDFUButton.IsEnabled = false;
                 ServiceSelector.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
                 ChatBox.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                DFUProgressBar.IsIndeterminate = false;
+                DFUProgressBar.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                DFUProgressBar.Value = 0;
+                DFUHandler.IsSendingFile = false;
+                ProgressStatus.Text = "";
+                ProgressStatus.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
                 ConversationList.Items.Clear();
             }
             catch (Exception ex)
             {
                 MainPage.Current.NotifyUser("Error On Disconnect: " + ex.HResult.ToString() + " - " + ex.Message,
                    NotifyType.ErrorMessage);
+            }
+        }
+
+        private void DebugButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (DebugControlGrid.Visibility == Windows.UI.Xaml.Visibility.Visible)
+            {
+                DebugControlGrid.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+            }
+            else if (DebugControlGrid.Visibility == Windows.UI.Xaml.Visibility.Collapsed)
+            {
+                DebugControlGrid.Visibility = Windows.UI.Xaml.Visibility.Visible;
             }
         }
 
@@ -259,6 +277,8 @@ namespace WearhausBluetoothApp
                 return;
             }
 
+            SendDFUButton.IsEnabled = true;
+
             // Get CRC first from File
             var buf = await FileIO.ReadBufferAsync(dfuFile);
             dfuReader = DataReader.FromBuffer(buf);
@@ -281,6 +301,10 @@ namespace WearhausBluetoothApp
             }
             // Send DFU!
             SendRawBytes(DFUHandler.CreateGaiaCommand((ushort)GaiaDfu.ArcCommand.StartDfu));
+            DFUProgressBar.Visibility = Windows.UI.Xaml.Visibility.Visible;
+            DFUProgressBar.IsIndeterminate = true;
+            ProgressStatus.Visibility = Windows.UI.Xaml.Visibility.Visible;
+            ProgressStatus.Text = "Beginning Update...";
         }
 
         private void SendButton_Click(object sender, RoutedEventArgs e)
@@ -347,9 +371,18 @@ namespace WearhausBluetoothApp
                 // Buffer / Stream is closed 
                 if (size < frameLen)
                 {
-                    MainPage.Current.NotifyUser("Disconnected from Stream!", NotifyType.ErrorMessage);
-                    Disconnect();
-                    return;
+                    if (DFUHandler.IsSendingFile)
+                    {
+                        MainPage.Current.NotifyUser("DFU Complete! Your Arc will automatically restart, please Listen to your Arc for a double beep startup sound to indicate a successful upgrade!", NotifyType.StatusMessage);
+                        Disconnect();
+                        return;
+                    }
+                    else
+                    {
+                        MainPage.Current.NotifyUser("Disconnected from Stream!", NotifyType.ErrorMessage);
+                        Disconnect();
+                        return;
+                    }
                 }
 
                 string receivedStr = "";
@@ -389,6 +422,10 @@ namespace WearhausBluetoothApp
                 if (DFUHandler.IsSendingFile)
                 {
                     ConversationList.Items.Add("Receieved Go Ahead for DFU! Starting DFU now!");
+                    ProgressStatus.Text = "Received Go Ahead for Update! Starting Update now!";
+                    DFUProgressBar.IsIndeterminate = false;
+                    DFUProgressBar.Value = 0;
+
                     int chunksRemaining = DFUHandler.ChunksRemaining();
                     ConversationList.Items.Add("DFU Progress | Chunks Remaining: " + chunksRemaining);
                     while (chunksRemaining > 0)
@@ -396,6 +433,9 @@ namespace WearhausBluetoothApp
                         byte[] msg = DFUHandler.GetNextFileChunk();
                         chatWriter.WriteBytes(msg);
                         await chatWriter.StoreAsync();
+
+                        ProgressStatus.Text = "Update in progress...";
+                        DFUProgressBar.Value = 100 * (float)(DFUHandler.TotalChunks - chunksRemaining) / (float)DFUHandler.TotalChunks;
 
                         if (chunksRemaining % 1000 == 0)
                         {
@@ -406,8 +446,9 @@ namespace WearhausBluetoothApp
                         SendRawBytes(DFUHandler.GetNextFileChunk(), false);
                         chunksRemaining = DFUHandler.ChunksRemaining();
                     }
+                    ProgressStatus.Text = "Finished Sending File! Verifying... (Your Arc will restart soon after this step!)";
+                    DFUProgressBar.IsIndeterminate = true;
                     ConversationList.Items.Add("Finished Sending DFU! Verifying...");
-                    DFUHandler.IsSendingFile = false;
 
                 }
 

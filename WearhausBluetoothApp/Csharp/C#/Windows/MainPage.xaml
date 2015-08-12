@@ -11,7 +11,7 @@
         <local:ScenarioBindingConverter x:Key="ScenarioConverter"></local:ScenarioBindingConverter>
     </Page.Resources>
 
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    <Grid Background="#00bccc">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="2*"  MinWidth="230" MaxWidth="600"/>
             <ColumnDefinition Width="8*"/>
@@ -39,13 +39,13 @@
                 </ListBox.ItemTemplate>
             </ListBox>
             <StackPanel Grid.Row="2" Orientation="Vertical" Margin="0,10,0,20" VerticalAlignment="Top">
-                <TextBlock Margin="10,0,0,0" Foreground="White" TextWrapping="Wrap" >Status:</TextBlock>
+                <TextBlock Margin="10,0,0,0" Foreground="White" FontSize="20"  TextWrapping="Wrap" >Status:</TextBlock>
                 <Border x:Name="StatusBorder" Margin="0,0,0,0" Visibility="Collapsed">
-                    <TextBlock x:Name="StatusBlock" Foreground="White" FontWeight="Bold" MaxHeight="200" TextTrimming="CharacterEllipsis"  Margin="20,10,10,20" TextWrapping="Wrap" />
+                    <TextBlock x:Name="StatusBlock" Foreground="White" FontWeight="Bold" FontSize="16" MaxHeight="200" TextTrimming="CharacterEllipsis"  Margin="20,10,10,20" TextWrapping="Wrap" />
                 </Border>
             </StackPanel>
             <StackPanel Grid.Row="3" Orientation="Vertical" Margin="10,0,5,10" VerticalAlignment="Bottom" >
-                <Image Source="Assets/WEARHAUSLogo-black.png"  Stretch="Uniform" HorizontalAlignment="Left" Height="48" Width="87"/>
+                <Image Source="Assets/logo_wordmark_white_no_bg620x300.png"  Stretch="Uniform" HorizontalAlignment="Left" Height="41" Width="89"/>
                 <TextBlock Text="&#xA9; Wearhaus Inc. All rights reserved." Foreground="White" Style="{StaticResource CopyrightTextStyle}"/>
                 <StackPanel x:Name="FooterPanel" Orientation="Horizontal" HorizontalAlignment="Left">
                     <HyperlinkButton Content="Terms" Tag="http://www.microsoft.com/About/Legal/EN/US/IntellectualProperty/Copyright/default.aspx"
@@ -54,7 +54,7 @@
                     <HyperlinkButton Content="Trademarks" Tag="http://www.microsoft.com/About/Legal/EN/US/IntellectualProperty/Trademarks/EN-US.aspx"
                         Click="Footer_Click" FontSize="12" Style="{StaticResource HyperlinkStyle}"/>
                     <TextBlock Text="|"  Style="{StaticResource SeparatorStyle}" VerticalAlignment="Center"/>
-                    <HyperlinkButton Content="Privacy" Tag="http://privacy.microsoft.com" Click="Footer_Click" FontSize="12" Style="{StaticResource HyperlinkStyle}"/>
+                    <HyperlinkButton Content="Privacy" Tag="https://www.iubenda.com/privacy-policy/225786" Click="Footer_Click" FontSize="12" Style="{StaticResource HyperlinkStyle}"/>
                 </StackPanel>
             </StackPanel>
         </Grid>
