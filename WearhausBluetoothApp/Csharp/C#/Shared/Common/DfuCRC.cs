@@ -5,7 +5,7 @@ using System.Text;
 using Windows.Storage;
 using Windows.Storage.Streams;
 
-namespace GaiaDFU
+namespace Gaia
 {
     public class DfuCRC
     {

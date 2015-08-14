@@ -6,7 +6,8 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Common\ContinuationManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Common\DfuCRC.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Common\GaiaDfu.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Common\GaiaHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Common\GaiaMessage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SampleConfiguration.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>

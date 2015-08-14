@@ -12,18 +12,22 @@
     </Page.Resources>
     <Grid Background="#00bccc">
         <Grid x:Name="RootGrid" Margin="12,20,12,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="39*"/>
+                <ColumnDefinition Width="632*"/>
+            </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
-            <StackPanel Margin="0,0,0,10">
-                <TextBlock Style="{StaticResource ScenarioDescriptionTextStyle}" FontSize="20" TextWrapping="Wrap">
+            <StackPanel Margin="0,0,0,250" Grid.ColumnSpan="2">
+                <TextBlock x:Name="TopInstruction" Style="{StaticResource ScenarioDescriptionTextStyle}" FontSize="20" TextWrapping="Wrap">
                     Run to Scan for Devices and Select the Wearhaus Arc you wish to update.
                 </TextBlock>
             </StackPanel>
 
-            <ScrollViewer Grid.Row="1" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto">
+            <ScrollViewer x:Name="InfoViewer" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto" Grid.ColumnSpan="2" Margin="0,34,0,0" Grid.RowSpan="2">
                 <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top">
                     <Button x:Name="RunButton" Content="Run" Margin="0,0, 10,0" Click="RunButton_Click"/>
                     <!-- Service Selector -->
@@ -39,15 +43,19 @@
                             </ListBox>
                         </StackPanel>
                     </Grid>
+                    <TextBlock x:Name="ConnectionStatus" Text="Connecting..." Margin="10" Style="{StaticResource SubheaderTextBlockStyle}" Visibility="Collapsed"/>
+                    <ProgressBar x:Name="ConnectionProgress" IsIndeterminate="False" Visibility="Collapsed"/>
                     <!-- Chat box -->
                     <Grid x:Name="ChatBox" Visibility="Collapsed" Margin="0,10,0,0">
                         <StackPanel Orientation="Vertical">
-                            <TextBlock x:Name="ServiceName" Style="{StaticResource SampleHeaderTextStyle}" Text="Current Service Name" TextWrapping="Wrap" Margin="0,0,0,10"/>
-                            <Button x:Name="DisconnectButton" Content="Disconnect" Click="DisconnectButton_Click"/>
-                            <TextBlock x:Name="Instructions" Style="{StaticResource SampleHeaderTextStyle}" Text="Please select the file you want to update firmware with, then hit the Send DFU button!" Margin="0,10,0,10" TextWrapping="Wrap"/>
-                            <Button x:Name="PickFileButton" FontSize="20" Content="Pick DFU File" Click="PickFileButton_Click"/>
-                            <Button x:Name="SendDFUButton" FontSize="20" Content="Send DFU" Click="SendDFUButton_Click" IsEnabled="False"/>
-                            <TextBlock x:Name="ProgressStatus" Style="{StaticResource SubheaderTextBlockStyle}" Margin="10" Visibility="Collapsed"/>
+                            <ListBox x:Name="DummyConversationList"/>
+                              
+                            <TextBlock x:Name="ServiceName" HorizontalAlignment="Center" Style="{StaticResource SampleHeaderTextStyle}" Text="Current Service Name" TextWrapping="Wrap" Margin="0,0,0,10"/>
+                            <Button x:Name="DisconnectButton" HorizontalAlignment="Center" Content="Disconnect" Click="DisconnectButton_Click"/>
+                            <TextBlock x:Name="Instructions" HorizontalAlignment="Center" Style="{StaticResource SampleHeaderTextStyle}" Text="Please select the file you want to update firmware with, then hit the Send DFU button!" Margin="0,10,0,10" TextWrapping="Wrap"/>
+                            <Button x:Name="PickFileButton" HorizontalAlignment="Center" FontSize="20" Content="Pick DFU File" Click="PickFileButton_Click"/>
+                            <Button x:Name="SendDFUButton" HorizontalAlignment="Center" FontSize="20" Content="Send DFU" Click="SendDFUButton_Click" IsEnabled="False"/>
+                            <TextBlock x:Name="ProgressStatus" HorizontalAlignment="Center" Style="{StaticResource SubheaderTextBlockStyle}" Margin="10" Visibility="Collapsed"/>
                             <ProgressBar x:Name="DFUProgressBar" Visibility="Collapsed" Margin="10" Height="15" Value="0"  IsIndeterminate="False" Maximum="100"/>
                             <CheckBox x:Name="DebugCheckBox" Content="Debug" Click="DebugButton_Click"/>
                             <Grid x:Name="DebugControlGrid" Visibility="Collapsed">
@@ -72,8 +80,8 @@
 
             <!-- Status Block for providing messages to the user.  Use the
              NotifyUser() method to populate the message -->
-            <Border x:Name="ErrorBorder" Background="Red" Grid.Row="2"/>
-            <TextBlock x:Name="StatusBlock" Grid.Row="2" FontSize="16" Margin="12, 10, 12, 10" Visibility="Collapsed"/>
+            <Border x:Name="ErrorBorder" Background="Red" Grid.Row="2" Grid.ColumnSpan="2"/>
+            <TextBlock x:Name="StatusBlock" Grid.Row="2" FontSize="16" Margin="12,10,12,-10" Visibility="Collapsed" Grid.ColumnSpan="2"/>
         </Grid>
     </Grid>
 </Page>

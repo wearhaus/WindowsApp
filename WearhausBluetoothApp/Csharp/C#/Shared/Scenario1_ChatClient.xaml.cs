@@ -29,7 +29,7 @@ using System.Diagnostics;
 using SDKTemplate;
 using SDKTemplate.Common;
 
-using GaiaDFU;
+using Gaia;
 using Windows.ApplicationModel.Activation;
 
 namespace WearhausBluetoothApp
@@ -60,7 +60,7 @@ namespace WearhausBluetoothApp
         private DataWriter chatWriter;
         private RfcommDeviceService chatService;
         private DeviceInformationCollection chatServiceInfoCollection;
-        private GaiaDfu DFUHandler;
+        private GaiaHelper GaiaHandler;
         private StorageFile dfuFile;
         private DataReader dfuReader;
 
@@ -75,7 +75,7 @@ namespace WearhausBluetoothApp
             chatService = null;
             chatServiceInfoCollection = null;
 
-            DFUHandler = null;
+            GaiaHandler = null;
 
             App.Current.Suspending += App_Suspending;
         }
@@ -126,7 +126,13 @@ namespace WearhausBluetoothApp
             try
             {
                 RunButton.IsEnabled = false;
+                RunButton.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
                 ServiceSelector.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                TopInstruction.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+
+                ConnectionProgress.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                ConnectionProgress.IsIndeterminate = true;
+                ConnectionStatus.Visibility = Windows.UI.Xaml.Visibility.Visible;
 
                 var chatServiceInfo = chatServiceInfoCollection[ServiceList.SelectedIndex];
 
@@ -176,6 +182,10 @@ namespace WearhausBluetoothApp
                 ServiceName.Text = "Connected to: \"" + chatServiceInfo.Name + "\"";
                 //ServiceName.Text = "Service Name: \"" + attributeReader.ReadString(serviceNameLength) + "\"";
 
+                ConnectionProgress.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                ConnectionProgress.IsIndeterminate = false;
+                ConnectionStatus.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+
                 lock (this)
                 {
                     chatSocket = new StreamSocket();
@@ -186,18 +196,18 @@ namespace WearhausBluetoothApp
                 chatWriter = new DataWriter(chatSocket.OutputStream);
                 ChatBox.Visibility = Windows.UI.Xaml.Visibility.Visible;
 
-                DFUHandler = new GaiaDfu(); // Create GAIA DFU Object
+                GaiaHandler = new GaiaHelper(); // Create GAIA DFU Object
 
                 DataReader chatReader = new DataReader(chatSocket.InputStream);
                 ReceiveStringLoop(chatReader);
-                
+
 
             }
             catch (Exception ex)
             {
-                RunButton.IsEnabled = true;
                 MainPage.Current.NotifyUser("Error: " + ex.HResult.ToString() + " - " + ex.Message, 
                     NotifyType.ErrorMessage);
+                Disconnect();
             }
         }
 
@@ -221,13 +231,22 @@ namespace WearhausBluetoothApp
                 }
 
                 RunButton.IsEnabled = true;
+                RunButton.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                TopInstruction.Visibility = Windows.UI.Xaml.Visibility.Visible;
+
                 SendDFUButton.IsEnabled = false;
                 ServiceSelector.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
                 ChatBox.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
                 DFUProgressBar.IsIndeterminate = false;
                 DFUProgressBar.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
                 DFUProgressBar.Value = 0;
-                DFUHandler.IsSendingFile = false;
+
+                Instructions.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                Instructions.Text = "Please select the file you want to update firmware with, then hit the Send DFU button!";
+                PickFileButton.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                SendDFUButton.Visibility = Windows.UI.Xaml.Visibility.Visible;
+
+                GaiaHandler.IsSendingFile = false;
                 ProgressStatus.Text = "";
                 ProgressStatus.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
                 ConversationList.Items.Clear();
@@ -236,6 +255,7 @@ namespace WearhausBluetoothApp
             {
                 MainPage.Current.NotifyUser("Error On Disconnect: " + ex.HResult.ToString() + " - " + ex.Message,
                    NotifyType.ErrorMessage);
+                Disconnect();
             }
         }
 
@@ -273,7 +293,6 @@ namespace WearhausBluetoothApp
 
             MainPage.Current.NotifyUser("", NotifyType.StatusMessage);
             if( dfuFile == null){
-                MainPage.Current.NotifyUser("Invalid DFU File!", NotifyType.ErrorMessage);
                 return;
             }
 
@@ -285,13 +304,12 @@ namespace WearhausBluetoothApp
             uint fileSize = buf.Length;
             byte[] fileBuffer = new byte[fileSize];
             dfuReader.ReadBytes(fileBuffer);
-            DFUHandler.SetFileBuffer(fileBuffer);
+            GaiaHandler.SetFileBuffer(fileBuffer);
 
-            MainPage.Current.NotifyUser("Picked File: " + dfuFile.Name, NotifyType.StatusMessage);
-
+            Instructions.Text = "Picked File: " + dfuFile.Name + ". Press Send DFU to Begin Update, or Pick File again.";
         }
 
-        private async void SendDFUButton_Click(object sender, RoutedEventArgs e)
+        private void SendDFUButton_Click(object sender, RoutedEventArgs e)
         {
             MainPage.Current.NotifyUser("", NotifyType.StatusMessage);
             if (dfuFile == null)
@@ -300,11 +318,16 @@ namespace WearhausBluetoothApp
                 return;
             }
             // Send DFU!
-            SendRawBytes(DFUHandler.CreateGaiaCommand((ushort)GaiaDfu.ArcCommand.StartDfu));
+            GaiaMessage startDfuCmd = new GaiaMessage((ushort)GaiaMessage.ArcCommand.StartDfu);
+            SendRawBytes(startDfuCmd.BytesSrc);
             DFUProgressBar.Visibility = Windows.UI.Xaml.Visibility.Visible;
             DFUProgressBar.IsIndeterminate = true;
             ProgressStatus.Visibility = Windows.UI.Xaml.Visibility.Visible;
             ProgressStatus.Text = "Beginning Update...";
+
+            Instructions.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+            PickFileButton.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+            SendDFUButton.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
         }
 
         private void SendButton_Click(object sender, RoutedEventArgs e)
@@ -314,27 +337,37 @@ namespace WearhausBluetoothApp
                 if (MessageTextBox.Text == "") { return; }
                 ushort usrCmd = Convert.ToUInt16(MessageTextBox.Text, 16);
 
-                byte[] msg = DFUHandler.CreateGaiaCommand(usrCmd);
-                SendRawBytes(msg);
+                GaiaMessage msg = new GaiaMessage(usrCmd);
+                SendRawBytes(msg.BytesSrc);
             }
             catch (Exception ex)
             {
                 MainPage.Current.NotifyUser("Error: " + ex.HResult.ToString() + " - " + ex.Message,
                     NotifyType.StatusMessage);
+                Disconnect();
             }
         }
 
         private async void SendRawBytes(byte[] msg, bool print = true)
         {
-            chatWriter.WriteBytes(msg);
-            string sendStr = BitConverter.ToString(msg);
-            await chatWriter.StoreAsync();
-
-            if (print)
+            try
             {
-                ConversationList.Items.Add("Sent: " + sendStr);
+                chatWriter.WriteBytes(msg);
+                string sendStr = BitConverter.ToString(msg);
+                await chatWriter.StoreAsync();
+
+                if (print)
+                {
+                    ConversationList.Items.Add("Sent: " + sendStr);
+                }
+                MessageTextBox.Text = "";
             }
-            MessageTextBox.Text = "";
+            catch (Exception ex)
+            {
+                MainPage.Current.NotifyUser("Error: " + ex.HResult.ToString() + " - " + ex.Message,
+                    NotifyType.StatusMessage);
+                Disconnect();
+            }
         }
 
 #if WINDOWS_PHONE_APP
@@ -363,7 +396,7 @@ namespace WearhausBluetoothApp
         {
             try
             {
-                byte frameLen = GaiaDfu.GAIA_FRAME_LEN;
+                byte frameLen = GaiaMessage.GAIA_FRAME_LEN;
 
                 // Frame is always FRAME_LEN long at least, so load that many bytes and process the frame
                 uint size = await chatReader.LoadAsync(frameLen);
@@ -371,9 +404,9 @@ namespace WearhausBluetoothApp
                 // Buffer / Stream is closed 
                 if (size < frameLen)
                 {
-                    if (DFUHandler.IsSendingFile)
+                    if (GaiaHandler.IsSendingFile)
                     {
-                        MainPage.Current.NotifyUser("DFU Complete! Your Arc will automatically restart, please Listen to your Arc for a double beep startup sound to indicate a successful upgrade!", NotifyType.StatusMessage);
+                        TopInstruction.Text = "DFU Complete! Your Arc will automatically restart, please Listen to your Arc for a double beep startup sound to indicate a successful upgrade!";
                         Disconnect();
                         return;
                     }
@@ -400,42 +433,44 @@ namespace WearhausBluetoothApp
                     receivedStr += " Payload: " + BitConverter.ToString(payload); 
                 }
 
-                byte[] resp;
+                GaiaMessage receivedMessage = new GaiaMessage(receivedFrame, payload);
+
+                GaiaMessage resp;
                 // If we get 0x01 in the Flags, we received a CRC (also we should check it probably)
-                if (receivedFrame[2] == GaiaDfu.GAIA_FLAG_CHECK)
+                if (receivedMessage.IsFlagSet)
                 {
                     await chatReader.LoadAsync(sizeof(byte));
                     byte checksum = chatReader.ReadByte();
                     receivedStr += " CRC: " + checksum.ToString("X2");
 
                     // Now we should have all the bytes, lets process the whole thing!
-                    resp = DFUHandler.CreateResponseToMessage(receivedFrame, payload, checksum);
+                    resp = GaiaHandler.CreateResponseToMessage(receivedMessage, checksum);
                 }
                 else
                 {
                     // Now we should have all the bytes, lets process the whole thing!
-                    resp = DFUHandler.CreateResponseToMessage(receivedFrame, payload);
+                    resp = GaiaHandler.CreateResponseToMessage(receivedMessage);
                 }
 
                 ConversationList.Items.Add("Received: " + receivedStr);
 
-                if (DFUHandler.IsSendingFile)
+                if (GaiaHandler.IsSendingFile)
                 {
                     ConversationList.Items.Add("Receieved Go Ahead for DFU! Starting DFU now!");
                     ProgressStatus.Text = "Received Go Ahead for Update! Starting Update now!";
                     DFUProgressBar.IsIndeterminate = false;
                     DFUProgressBar.Value = 0;
 
-                    int chunksRemaining = DFUHandler.ChunksRemaining();
+                    int chunksRemaining = GaiaHandler.ChunksRemaining();
                     ConversationList.Items.Add("DFU Progress | Chunks Remaining: " + chunksRemaining);
                     while (chunksRemaining > 0)
                     {
-                        byte[] msg = DFUHandler.GetNextFileChunk();
+                        byte[] msg = GaiaHandler.GetNextFileChunk();
                         chatWriter.WriteBytes(msg);
                         await chatWriter.StoreAsync();
 
                         ProgressStatus.Text = "Update in progress...";
-                        DFUProgressBar.Value = 100 * (float)(DFUHandler.TotalChunks - chunksRemaining) / (float)DFUHandler.TotalChunks;
+                        DFUProgressBar.Value = 100 * (float)(GaiaHandler.TotalChunks - chunksRemaining) / (float)GaiaHandler.TotalChunks;
 
                         if (chunksRemaining % 1000 == 0)
                         {
@@ -443,8 +478,8 @@ namespace WearhausBluetoothApp
                         }
                         System.Diagnostics.Debug.WriteLine("Chunks Remaining: " + chunksRemaining);
 
-                        SendRawBytes(DFUHandler.GetNextFileChunk(), false);
-                        chunksRemaining = DFUHandler.ChunksRemaining();
+                        SendRawBytes(GaiaHandler.GetNextFileChunk(), false);
+                        chunksRemaining = GaiaHandler.ChunksRemaining();
                     }
                     ProgressStatus.Text = "Finished Sending File! Verifying... (Your Arc will restart soon after this step!)";
                     DFUProgressBar.IsIndeterminate = true;
@@ -452,7 +487,7 @@ namespace WearhausBluetoothApp
 
                 }
 
-                if (resp != null) SendRawBytes(resp);
+                if (resp != null) SendRawBytes(resp.BytesSrc);
 
                 ReceiveStringLoop(chatReader);
             }
