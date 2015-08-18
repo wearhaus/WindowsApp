@@ -11,7 +11,6 @@ namespace Gaia
         private byte[] FileBuffer;
         private int FileChunksSent;
 
-        private ushort LastSentCommand;
         public bool IsSendingFile;
         public int TotalChunks;
 
@@ -20,7 +19,6 @@ namespace Gaia
             FileBuffer = null;
             FileChunksSent = 0;
 
-            LastSentCommand = 0x0000;
             IsSendingFile = false;
         }
 
@@ -69,57 +67,6 @@ namespace Gaia
             return fileChunk;
         }
 
-        /*public byte[] CreateGaiaCommand(ushort usrCmd, bool isAck = false)
-        {
-            return CreateGaiaCommand(usrCmd, GaiaMessage.GAIA_FLAG_CHECK, new byte[0], isAck);
-        }
-
-        public byte[] CreateGaiaCommand(ushort usrCmd, byte[] payload, bool isAck = false)
-        {
-            return CreateGaiaCommand(usrCmd, GaiaMessage.GAIA_FLAG_CHECK, payload, isAck);
-        }
-
-        public byte[] CreateGaiaCommand(ushort usrCmd, byte flag, bool isAck = false)
-        {
-            return CreateGaiaCommand(usrCmd, flag, new byte[0], isAck);
-        }
-
-        public byte[] CreateGaiaCommand(ushort usrCmd, byte flag, byte[] payload, bool isAck = false)
-        {
-            byte[] commandMessage;
-            int msgLen = GaiaMessage.GAIA_FRAME_LEN + payload.Length;
-
-            if (flag == GaiaMessage.GAIA_FLAG_CHECK) { msgLen += 1; }
-            commandMessage = new byte[msgLen];
-
-            commandMessage[0] = GaiaMessage.GAIA_FRAME_START;
-            commandMessage[1] = GaiaMessage.GAIA_PROTOCOL_VER;
-            commandMessage[2] = flag;
-            commandMessage[3] = (byte)payload.Length;
-            commandMessage[4] = GaiaMessage.GAIA_CSR_VENDOR_ID >> 8;
-            commandMessage[5] = GaiaMessage.GAIA_CSR_VENDOR_ID & 0xff;
-            commandMessage[6] = (byte)(usrCmd >> 8);
-            commandMessage[7] = (byte)(usrCmd & 0xff);
-
-            if (Enum.IsDefined(typeof(ArcCommand), usrCmd))
-            {
-                commandMessage[4] = GaiaMessage.GAIA_WEARHAUS_VENDOR_ID >> 8;
-                commandMessage[5] = GaiaMessage.GAIA_WEARHAUS_VENDOR_ID & 0xff;
-            }
-
-            System.Buffer.BlockCopy(payload, 0, commandMessage, 8, payload.Length);
-
-            if (flag == GaiaMessage.GAIA_FLAG_CHECK)
-            {
-                commandMessage[msgLen - 1] = Checksum(commandMessage);
-            }
-            if (!isAck)
-            {
-                LastSentCommand = usrCmd;
-            }
-            return commandMessage;
-        }*/
-
         private GaiaMessage CreateDFUBegin()
         {
             if (FileBuffer == null)
@@ -160,10 +107,16 @@ namespace Gaia
         public GaiaMessage CreateResponseToMessage(GaiaMessage receievedMessage, byte checkSum = 0x00)
         {
 
+
             // Check if the Response is a command or an ACK
             ushort command = receievedMessage.CommandId;
-
             GaiaMessage resp = null;
+
+            // See if we need to verify the checksum first
+            if (receievedMessage.IsFlagSet && !receievedMessage.MatchesChecksum(checkSum))
+            {
+                resp = GaiaMessage.CreateErrorGaia(" Checksum did not match! Expected Checksum: " + receievedMessage.Checksum.ToString("X2") + ", Receieved Checksum: " + checkSum.ToString("X2"));
+            }
 
             if (receievedMessage.IsAck) // If this message is an ACK, we must find what the acked command id is
             {
@@ -171,7 +124,21 @@ namespace Gaia
                 switch (command)
                 {
                     case (ushort)GaiaMessage.ArcCommand.StartDfu | 0x8000:
-                        resp = CreateDFUBegin();
+                        if (receievedMessage.PayloadSrc[0] == 0x00)
+                        {
+                            resp = CreateDFUBegin();
+                        }
+                        else
+                        {
+                            resp = GaiaMessage.CreateErrorGaia(" Invalid DFU Request!");
+                        }
+                        break;
+                    
+                    case (ushort)GaiaMessage.GaiaCommand.DFUBegin | 0x8000:
+                        if (receievedMessage.PayloadSrc[0] != 0x00)
+                        {
+                            resp = GaiaMessage.CreateErrorGaia(" Invalid DFU Request, the device may not be capable of a Firmware Update.");
+                        }
                         break;
 
                     default:
@@ -199,6 +166,7 @@ namespace Gaia
                         break;
                 }
             }
+
             return resp;
 
         }

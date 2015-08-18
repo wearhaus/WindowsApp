@@ -23,8 +23,7 @@ namespace SDKTemplate
         // The code in MainPage will take care of turning this into: "1) Navigating to a web page"
         List<Scenario> scenarios = new List<Scenario>
         {
-            new Scenario() { Title = "Run Firmware Update App", ClassType = typeof(Scenario1_ChatClient) },
-            //new Scenario() { Title = "Run Chat Server", ClassType = typeof(Scenario2_ChatServer) },
+            new Scenario() { Title = "Run Firmware Update App", ClassType = typeof(Scenario1_DfuClient) },
         };
     }
 

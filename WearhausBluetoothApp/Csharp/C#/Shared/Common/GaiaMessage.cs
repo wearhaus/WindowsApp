@@ -38,11 +38,24 @@ namespace Gaia
         public ushort VendorId { get; private set; }
         public bool IsFlagSet { get; private set; }
         public bool IsAck { get; private set; }
+        public bool IsError { get; private set; }
 
-        public byte[] BytesSrc {get; private set;}
-        public byte[] PayloadSrc {get; private set;}
-        public byte Checksum {get; private set;}
+        public byte[] BytesSrc { get; private set; }
+        public byte[] PayloadSrc { get; private set; }
+        public byte Checksum { get; private set; }
+        public string InfoMessage { get; set; }
 
+
+        public GaiaMessage(string errorMsg)
+        {
+            BytesSrc = null;
+            PayloadSrc = null;
+            VendorId = GaiaMessage.GAIA_CSR_VENDOR_ID;
+            IsFlagSet = false;
+
+            IsError = true;
+            InfoMessage = errorMsg;
+        }
 
         public GaiaMessage(ushort usrCmd, byte flag, byte[] payload)
         {
@@ -64,6 +77,8 @@ namespace Gaia
             VendorId = GaiaMessage.GAIA_CSR_VENDOR_ID;
             IsFlagSet = false;
             IsAck = (CommandId & GAIA_ACK_MASK) != 0;
+            IsError = false;
+            InfoMessage = null;
 
             if (Enum.IsDefined(typeof(GaiaMessage.ArcCommand), usrCmd))
             {
@@ -99,6 +114,8 @@ namespace Gaia
             VendorId = GaiaHelper.CombineBytes(BytesSrc[OFFS_VENDOR_ID_H], BytesSrc[OFFS_VENDOR_ID_L]);
             IsFlagSet = BytesSrc[OFFS_FLAGS] == GAIA_FLAG_CHECK;
             IsAck = (CommandId & GAIA_ACK_MASK) != 0;
+            IsError = false;
+            InfoMessage = null;
 
             if (IsFlagSet)
             {
@@ -118,6 +135,11 @@ namespace Gaia
 
         public GaiaMessage(ushort usrCmd, byte flag) : this(usrCmd, flag, new byte[0])
         {
+        }
+
+        public static GaiaMessage CreateErrorGaia(string errMsg)
+        {
+            return new GaiaMessage(errMsg);
         }
 
         public static GaiaMessage CreateAck(ushort usrCmd)

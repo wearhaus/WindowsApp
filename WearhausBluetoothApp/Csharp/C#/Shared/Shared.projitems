@@ -13,8 +13,8 @@
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)Common\SuspensionManager.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Scenario1_ChatClient.xaml.cs">
-      <DependentUpon>Scenario1_ChatClient.xaml</DependentUpon>
+    <Compile Include="$(MSBuildThisFileDirectory)Scenario1_DfuClient.xaml.cs">
+      <DependentUpon>Scenario1_DfuClient.xaml</DependentUpon>
     </Compile>
   </ItemGroup>
   <ItemGroup>
@@ -23,7 +23,7 @@
     </ApplicationDefinition>
   </ItemGroup>
   <ItemGroup>
-    <Page Include="$(MSBuildThisFileDirectory)Scenario1_ChatClient.xaml">
+    <Page Include="$(MSBuildThisFileDirectory)Scenario1_DfuClient.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

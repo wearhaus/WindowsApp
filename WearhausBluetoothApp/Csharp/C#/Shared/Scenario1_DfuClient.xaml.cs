@@ -38,9 +38,9 @@ namespace WearhausBluetoothApp
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
 #if WINDOWS_PHONE_APP
-    public sealed partial class Scenario1_ChatClient : Page, IFileOpenPickerContinuable
+    public sealed partial class Scenario1_DfuClient : Page, IFileOpenPickerContinuable
 #else
-    public sealed partial class Scenario1_ChatClient : Page
+    public sealed partial class Scenario1_DfuClient : Page
 #endif
     {
         // Wearhaus UUID for GAIA: 00001107-D102-11E1-9B23-00025B00A5A5
@@ -66,7 +66,7 @@ namespace WearhausBluetoothApp
 
         private MainPage rootPage;
         
-        public Scenario1_ChatClient()
+        public Scenario1_DfuClient()
         {
             this.InitializeComponent();
 
@@ -182,10 +182,6 @@ namespace WearhausBluetoothApp
                 ServiceName.Text = "Connected to: \"" + chatServiceInfo.Name + "\"";
                 //ServiceName.Text = "Service Name: \"" + attributeReader.ReadString(serviceNameLength) + "\"";
 
-                ConnectionProgress.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-                ConnectionProgress.IsIndeterminate = false;
-                ConnectionStatus.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-
                 lock (this)
                 {
                     chatSocket = new StreamSocket();
@@ -201,6 +197,9 @@ namespace WearhausBluetoothApp
                 DataReader chatReader = new DataReader(chatSocket.InputStream);
                 ReceiveStringLoop(chatReader);
 
+                ConnectionProgress.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                ConnectionProgress.IsIndeterminate = false;
+                ConnectionStatus.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
 
             }
             catch (Exception ex)
@@ -255,7 +254,7 @@ namespace WearhausBluetoothApp
             {
                 MainPage.Current.NotifyUser("Error On Disconnect: " + ex.HResult.ToString() + " - " + ex.Message,
                    NotifyType.ErrorMessage);
-                Disconnect();
+                return;
             }
         }
 
@@ -391,7 +390,7 @@ namespace WearhausBluetoothApp
         }
 #endif
 
-
+        
         private async void ReceiveStringLoop(DataReader chatReader)
         {
             try
@@ -452,6 +451,11 @@ namespace WearhausBluetoothApp
                     resp = GaiaHandler.CreateResponseToMessage(receivedMessage);
                 }
 
+                if (resp != null && resp.InfoMessage != null)
+                {
+                    receivedStr += resp.InfoMessage;
+                }
+
                 ConversationList.Items.Add("Received: " + receivedStr);
 
                 if (GaiaHandler.IsSendingFile)
@@ -487,7 +491,7 @@ namespace WearhausBluetoothApp
 
                 }
 
-                if (resp != null) SendRawBytes(resp.BytesSrc);
+                if (resp != null && !resp.IsError) SendRawBytes(resp.BytesSrc);
 
                 ReceiveStringLoop(chatReader);
             }
@@ -506,6 +510,11 @@ namespace WearhausBluetoothApp
                     }
                 }
             }
+        }
+
+        private void InfoViewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
+        {
+
         }
 
     }

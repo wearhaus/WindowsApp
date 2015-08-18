@@ -1,6 +1,6 @@
 ﻿<!-- Copyright (c) Microsoft. All rights reserved. -->
 <Page
-    x:Class="WearhausBluetoothApp.Scenario1_ChatClient"
+    x:Class="WearhausBluetoothApp.Scenario1_DfuClient"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:SDKTemplate"
@@ -27,9 +27,9 @@
                 </TextBlock>
             </StackPanel>
 
-            <ScrollViewer x:Name="InfoViewer" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto" Grid.ColumnSpan="2" Margin="0,34,0,0" Grid.RowSpan="2">
+            <ScrollViewer x:Name="InfoViewer" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto" Grid.ColumnSpan="2" Margin="0,34,0,0" Grid.RowSpan="2" ViewChanged="InfoViewer_ViewChanged">
                 <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top">
-                    <Button x:Name="RunButton" Content="Run" Margin="0,0, 10,0" Click="RunButton_Click"/>
+                    <Button x:Name="RunButton" Content="Run" Margin="0, 70, 20,0" Click="RunButton_Click"/>
                     <!-- Service Selector -->
                     <Grid x:Name="ServiceSelector" Visibility="Collapsed">
                         <StackPanel Orientation="Vertical">
