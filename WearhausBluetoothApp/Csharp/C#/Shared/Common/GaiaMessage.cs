@@ -4,6 +4,9 @@ using System.Text;
 
 namespace Gaia
 {
+    /// <summary>
+    /// GaiaMessage - Class to encapsulate Gaia message parameters and packet structure details
+    /// </summary>
     public class GaiaMessage
     {
 
@@ -22,6 +25,7 @@ namespace Gaia
         public const ushort GAIA_ACK_MASK = 0x8000;
         public const ushort GAIA_COMMAND_MASK = 0x7FFF;
 
+        // Packet Offset Values (see above)
         public const int OFFS_SOF = 0;
         public const int OFFS_VERSION = 1;
         public const int OFFS_FLAGS = 2;
@@ -34,18 +38,24 @@ namespace Gaia
         public const int OFFS_COMMAND_ID_L = OFFS_COMMAND_ID + 1;
         public const int OFFS_PAYLOAD = GAIA_FRAME_LEN;
 
+        // Id's and Flag Auto-properties
         public ushort CommandId { get; private set; }
         public ushort VendorId { get; private set; }
         public bool IsFlagSet { get; private set; }
         public bool IsAck { get; private set; }
         public bool IsError { get; private set; }
 
+        // Source byte and information Auto-properties 
         public byte[] BytesSrc { get; private set; }
         public byte[] PayloadSrc { get; private set; }
         public byte Checksum { get; private set; }
         public string InfoMessage { get; set; }
 
 
+        /// <summary>
+        /// Constructor for creating an empty message to signify an error only
+        /// </summary>
+        /// <param name="errorMsg">Error Message to be displayed elsewhere for information purposes</param>
         public GaiaMessage(string errorMsg)
         {
             BytesSrc = null;
@@ -148,6 +158,11 @@ namespace Gaia
             return new GaiaMessage((ushort)(usrCmd | GAIA_ACK_MASK), ackPayload);
         }
 
+        /// <summary>
+        /// Method to check if a checksum matches the calculated checksum for this GaiaMessage
+        /// </summary>
+        /// <param name="rcvChecksum">Checksum to compare to</param>
+        /// <returns>True if the checksums match, false otherwise</returns>
         public bool MatchesChecksum(byte rcvChecksum)
         {
             if (Checksum != null && rcvChecksum != null)
@@ -160,6 +175,9 @@ namespace Gaia
             }
         }
 
+        /// <summary>
+        /// Public enum for Gaia Command ID's with CSR's Gaia Vendor ID
+        /// </summary>
         public enum GaiaCommand : ushort
         {
             GetAppVersion = 0x0304,
@@ -193,6 +211,9 @@ namespace Gaia
             NoOp = 0x0700
         }
 
+        /// <summary>
+        /// Public enum for CSR's Gaia notification Command ID's
+        /// </summary>
         public enum GaiaNotification : ushort
         {
             Register = 0x4001,
@@ -201,6 +222,9 @@ namespace Gaia
             Event = 0x4003
         }
 
+        /// <summary>
+        /// Public enum for Wearhaus' Command ID's with Wearhaus' Vendor ID
+        /// </summary>
         public enum ArcCommand : ushort
         {
             GetColor = 0x6743,
