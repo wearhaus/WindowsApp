@@ -58,14 +58,14 @@ namespace WearhausBluetoothApp
         //    -  the SDP Attribute Type value in the most significant 5 bits.
         private const byte SdpServiceNameAttributeType = (4 << 3) | 5;
 
-        private StreamSocket bluetoothSocket;
+        private StreamSocket BluetoothSocket;
         
-        private DataWriter bluetoothWriter;
-        private RfcommDeviceService bluetoothService;
-        private DeviceInformationCollection bluetoothServiceInfoCollection;
+        private DataWriter BluetoothWriter;
+        private RfcommDeviceService BluetoothService;
+        private DeviceInformationCollection BluetoothServiceInfoCollection;
         private GaiaHelper GaiaHandler;
-        private StorageFile dfuFile;
-        private DataReader dfuReader;
+        private StorageFile DfuFile;
+        private DataReader DfuReader;
 
         private WearhausHttpController HttpController;
 
@@ -75,10 +75,10 @@ namespace WearhausBluetoothApp
         {
             this.InitializeComponent();
 
-            bluetoothSocket = null;
-            bluetoothWriter = null;
-            bluetoothService = null;
-            bluetoothServiceInfoCollection = null;
+            BluetoothSocket = null;
+            BluetoothWriter = null;
+            BluetoothService = null;
+            BluetoothServiceInfoCollection = null;
 
             GaiaHandler = null;
 
@@ -105,13 +105,13 @@ namespace WearhausBluetoothApp
             MainPage.Current.NotifyUser("", NotifyType.StatusMessage);
 
             // Find all paired instances of the Rfcomm chat service
-            bluetoothServiceInfoCollection = await DeviceInformation.FindAllAsync(
+            BluetoothServiceInfoCollection = await DeviceInformation.FindAllAsync(
                 RfcommDeviceService.GetDeviceSelector(RfcommServiceId.FromUuid(RfcommChatServiceUuid)));
 
-            if (bluetoothServiceInfoCollection.Count > 0)
+            if (BluetoothServiceInfoCollection.Count > 0)
             {
                 List<string> items = new List<string>();
-                foreach (var chatServiceInfo in bluetoothServiceInfoCollection)
+                foreach (var chatServiceInfo in BluetoothServiceInfoCollection)
                 {
                     items.Add(chatServiceInfo.Name);
                     //Added to print services!
@@ -145,7 +145,7 @@ namespace WearhausBluetoothApp
                 ConnectionProgress.IsIndeterminate = true;
                 ConnectionStatus.Visibility = Windows.UI.Xaml.Visibility.Visible;
 
-                var bluetoothServiceInfo = bluetoothServiceInfoCollection[ServiceList.SelectedIndex];
+                var bluetoothServiceInfo = BluetoothServiceInfoCollection[ServiceList.SelectedIndex];
 
 
                 // Potential Bug Fix?? Wrap FromIdAsync call in the UI Thread, as per the instructions of:
@@ -155,11 +155,11 @@ namespace WearhausBluetoothApp
                 //await Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () =>
                 //{
                 // ONLY WORKS IN WINDOWS 10 RIGHT NOW!?
-                bluetoothService = await RfcommDeviceService.FromIdAsync(bluetoothServiceInfo.Id);
+                BluetoothService = await RfcommDeviceService.FromIdAsync(bluetoothServiceInfo.Id);
                 //});
 
 
-                if (bluetoothService == null)
+                if (BluetoothService == null)
                 {
                     MainPage.Current.NotifyUser(
                         "Access to the device is denied because the application was not granted access",
@@ -167,7 +167,7 @@ namespace WearhausBluetoothApp
                     return;
                 }
 
-                var attributes = await bluetoothService.GetSdpRawAttributesAsync();
+                var attributes = await BluetoothService.GetSdpRawAttributesAsync();
                 if (!attributes.ContainsKey(SdpServiceNameAttributeId))
                 {
                     MainPage.Current.NotifyUser(
@@ -196,17 +196,17 @@ namespace WearhausBluetoothApp
 
                 lock (this)
                 {
-                    bluetoothSocket = new StreamSocket();
+                    BluetoothSocket = new StreamSocket();
                 }
 
-                await bluetoothSocket.ConnectAsync(bluetoothService.ConnectionHostName, bluetoothService.ConnectionServiceName);
+                await BluetoothSocket.ConnectAsync(BluetoothService.ConnectionHostName, BluetoothService.ConnectionServiceName);
 
-                bluetoothWriter = new DataWriter(bluetoothSocket.OutputStream);
+                BluetoothWriter = new DataWriter(BluetoothSocket.OutputStream);
                 ChatBox.Visibility = Windows.UI.Xaml.Visibility.Visible;
 
                 GaiaHandler = new GaiaHelper(); // Create GAIA DFU Object
 
-                DataReader chatReader = new DataReader(bluetoothSocket.InputStream);
+                DataReader chatReader = new DataReader(BluetoothSocket.InputStream);
                 ReceiveStringLoop(chatReader);
 
                 ConnectionProgress.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
@@ -231,24 +231,13 @@ namespace WearhausBluetoothApp
         {
             try
             {
-                if (bluetoothWriter != null)
-                {
-                    bluetoothWriter.DetachStream();
-                    bluetoothWriter = null;
-                }
-
-                lock (this)
-                {
-                    if (bluetoothSocket != null)
-                    {
-                        bluetoothSocket.Dispose();
-                        bluetoothSocket = null;
-                    }
-                }
-
                 RunButton.IsEnabled = true;
                 RunButton.Visibility = Windows.UI.Xaml.Visibility.Visible;
                 TopInstruction.Visibility = Windows.UI.Xaml.Visibility.Visible;
+
+                ConnectionProgress.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                ConnectionProgress.IsIndeterminate = false;
+                ConnectionStatus.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
 
                 SendDFUButton.IsEnabled = false;
                 ServiceSelector.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
@@ -266,6 +255,21 @@ namespace WearhausBluetoothApp
                 ProgressStatus.Text = "";
                 ProgressStatus.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
                 ConversationList.Items.Clear();
+
+                if (BluetoothWriter != null)
+                {
+                    BluetoothWriter.DetachStream();
+                    BluetoothWriter = null;
+                }
+
+                lock (this)
+                {
+                    if (BluetoothSocket != null)
+                    {
+                        BluetoothSocket.Dispose();
+                        BluetoothSocket = null;
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -318,21 +322,21 @@ namespace WearhausBluetoothApp
 #endif
 
             MainPage.Current.NotifyUser("", NotifyType.StatusMessage);
-            if( dfuFile == null){
+            if( DfuFile == null){
                 return;
             }
 
             SendDFUButton.IsEnabled = true;
 
             // Get CRC first from File
-            var buf = await FileIO.ReadBufferAsync(dfuFile);
-            dfuReader = DataReader.FromBuffer(buf);
+            var buf = await FileIO.ReadBufferAsync(DfuFile);
+            DfuReader = DataReader.FromBuffer(buf);
             uint fileSize = buf.Length;
             byte[] fileBuffer = new byte[fileSize];
-            dfuReader.ReadBytes(fileBuffer);
+            DfuReader.ReadBytes(fileBuffer);
             GaiaHandler.SetFileBuffer(fileBuffer);
 
-            Instructions.Text = "Picked File: " + dfuFile.Name + ". Press Send DFU to Begin Update, or Pick File again.";
+            Instructions.Text = "Picked File: " + DfuFile.Name + ". Press Send DFU to Begin Update, or Pick File again.";
         }
 
         /// <summary>
@@ -341,7 +345,7 @@ namespace WearhausBluetoothApp
         private void SendDFUButton_Click(object sender, RoutedEventArgs e)
         {
             MainPage.Current.NotifyUser("", NotifyType.StatusMessage);
-            if (dfuFile == null)
+            if (DfuFile == null)
             {
                 MainPage.Current.NotifyUser("No DFU File Picked. Please Pick a DFU File!", NotifyType.StatusMessage);
                 return;
@@ -371,7 +375,7 @@ namespace WearhausBluetoothApp
                 if (MessageTextBox.Text.Contains("/"))
                 {
                     // FOR HTTP POST DEBUG
-                    HttpGet(MessageTextBox.Text);
+                    //HttpController.HttpGet(MessageTextBox.Text);
                 }
                 else
                 {
@@ -398,9 +402,9 @@ namespace WearhausBluetoothApp
         {
             try
             {
-                bluetoothWriter.WriteBytes(msg);
+                BluetoothWriter.WriteBytes(msg);
                 string sendStr = BitConverter.ToString(msg);
-                await bluetoothWriter.StoreAsync();
+                await BluetoothWriter.StoreAsync();
 
                 if (print)
                 {
@@ -429,12 +433,12 @@ namespace WearhausBluetoothApp
         {
             if (args.Files.Count > 0)
             {
-                dfuFile = args.Files[0];
-                MainPage.Current.NotifyUser("Picked File: " + dfuFile.Name, NotifyType.StatusMessage);
+                DfuFile = args.Files[0];
+                MainPage.Current.NotifyUser("Picked File: " + DfuFile.Name, NotifyType.StatusMessage);
             }
             else
             {
-                dfuFile = null;
+                DfuFile = null;
                 MainPage.Current.NotifyUser("Not a Valid File / No File Chosen!", NotifyType.StatusMessage);
             }
         }
@@ -530,8 +534,8 @@ namespace WearhausBluetoothApp
                     while (chunksRemaining > 0)
                     {
                         byte[] msg = GaiaHandler.GetNextFileChunk();
-                        bluetoothWriter.WriteBytes(msg);
-                        await bluetoothWriter.StoreAsync();
+                        BluetoothWriter.WriteBytes(msg);
+                        await BluetoothWriter.StoreAsync();
 
                         ProgressStatus.Text = "Update in progress...";
                         DFUProgressBar.Value = 100 * (float)(GaiaHandler.TotalChunks - chunksRemaining) / (float)GaiaHandler.TotalChunks;
@@ -559,7 +563,7 @@ namespace WearhausBluetoothApp
             {
                 lock (this)
                 {
-                    if (bluetoothSocket == null)
+                    if (BluetoothSocket == null)
                     {
                         // Do not print anything here -  the user closed the socket.
                     }

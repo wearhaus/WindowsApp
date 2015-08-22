@@ -9,6 +9,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)Common\GaiaHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Common\GaiaMessage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Common\WearhausHttpController.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)LoginPage.xaml.cs">
+      <DependentUpon>LoginPage.xaml</DependentUpon>
+    </Compile>
     <Compile Include="$(MSBuildThisFileDirectory)SampleConfiguration.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
@@ -24,6 +27,10 @@
     </ApplicationDefinition>
   </ItemGroup>
   <ItemGroup>
+    <Page Include="$(MSBuildThisFileDirectory)LoginPage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="$(MSBuildThisFileDirectory)Scenario1_DfuClient.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

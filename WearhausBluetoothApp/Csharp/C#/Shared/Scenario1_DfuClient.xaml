@@ -29,7 +29,7 @@
 
             <ScrollViewer x:Name="InfoViewer" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto" Grid.ColumnSpan="2" Margin="0,34,0,0" Grid.RowSpan="2" ViewChanged="InfoViewer_ViewChanged">
                 <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top">
-                    <Button x:Name="RunButton" Content="Run" Margin="0, 70, 20,0" Click="RunButton_Click"/>
+                    <Button x:Name="RunButton" Content="Run" Margin="0, 70, 20,20" Click="RunButton_Click"/>
                     <!-- Service Selector -->
                     <Grid x:Name="ServiceSelector" Visibility="Collapsed">
                         <StackPanel Orientation="Vertical">

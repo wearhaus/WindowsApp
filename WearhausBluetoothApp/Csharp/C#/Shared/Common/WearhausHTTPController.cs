@@ -11,13 +11,13 @@ namespace WearhausHttp
 
         private const string WEARHAUS_URI = "http://wearhausapistaging.herokuapp.com/v1.2/";
         private const string PATH_ACCOUNT_CREATE = "account/create";
-        private const string PATH_VERIFY_GUEST = "account/verify_guest";
-        private const string PATH_VERIFY_CREDENTIALS = "account/verify_credentials";
-        private const string PATH_UPDATE_HID = "account/update_hid";
-        private const string PATH_VERIFY_EMAIL = "account/verify_email";
-        private const string PATH_UPDATE_PROFILE = "account/update_profile";
-        private const string PATH_FORGOT_PASSWORD = "account/forgot_password";
-        private const string PATH_FORGOT_PASSWORD_LOGIN = "account/forgot_password_login";
+        private const string PATH_ACCOUNT_VERIFY_GUEST = "account/verify_guest";
+        private const string PATH_ACCOUNT_VERIFY_CREDENTIALS = "account/verify_credentials";
+        private const string PATH_ACCOUNT_UPDATE_HID = "account/update_hid";
+        private const string PATH_ACCOUNT_VERIFY_EMAIL = "account/verify_email";
+        private const string PATH_ACCOUNT_UPDATE_PROFILE = "account/update_profile";
+        private const string PATH_ACCOUNT_FORGOT_PASSWORD = "account/forgot_password";
+        private const string PATH_ACCOUNT_FORGOT_PASSWORD_LOGIN = "account/forgot_password_login";
 
         private const string PATH_USERS_SHOW = "users/forgot_password_login";
         private const string PATH_USERS_PRIVATE_PROFILE = "users/forgot_password_login";
@@ -47,7 +47,7 @@ namespace WearhausHttp
                 {"email", email},
                 {"password", password}
             };
-
+            
             return await HttpPost(PATH_ACCOUNT_CREATE, param);
         }
 
@@ -61,6 +61,17 @@ namespace WearhausHttp
             };
 
             return await HttpPost(PATH_ACCOUNT_CREATE, vals);
+        }
+
+        public async Task<string> VerifyCredentials(string email, string password)
+        {
+            var vals = new Dictionary<string, string>{
+                {"email", email},
+                {"password", password},
+                {"hid", HID}
+            };
+
+            return await HttpPost(PATH_ACCOUNT_VERIFY_CREDENTIALS, vals); 
         }
         
         private async Task<string> HttpPost(string destination, Dictionary<string, string> values)
