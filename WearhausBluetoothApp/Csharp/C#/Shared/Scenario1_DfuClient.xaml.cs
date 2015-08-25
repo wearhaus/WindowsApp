@@ -318,7 +318,7 @@ namespace WearhausBluetoothApp
 #if WINDOWS_PHONE_APP
             filePicker.PickSingleFileAndContinue();
 #else
-            dfuFile = await filePicker.PickSingleFileAsync();
+            DfuFile = await filePicker.PickSingleFileAsync();
 #endif
 
             MainPage.Current.NotifyUser("", NotifyType.StatusMessage);
