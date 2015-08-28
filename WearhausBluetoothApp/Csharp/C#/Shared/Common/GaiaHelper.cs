@@ -201,10 +201,28 @@ namespace Gaia
                 switch (command)
                 {
                     case (ushort)GaiaMessage.GaiaNotification.Event:
-                        if (receievedMessage.PayloadSrc[0] == 0x10 && receievedMessage.PayloadSrc[1] == 0x00)
+                        if (receievedMessage.PayloadSrc[0] == 0x10)
                         {
-                            // WE NEED TO LOOP SENDING CHUNKS
-                            IsSendingFile = true;
+                            switch(receievedMessage.PayloadSrc[1]){
+                                case (byte)GaiaMessage.DfuStatus.Download:
+                                    IsSendingFile = true;
+                                    // WE NEED TO LOOP SENDING CHUNKS
+                                    break;
+
+                                case (byte)GaiaMessage.DfuStatus.Download_Failure:
+                                    resp = GaiaMessage.CreateErrorGaia(" Error 0x01, problem during file download. Please disconnect and try again. If the problem persists contact Wearhaus Support!");
+                                    break;
+
+                                case (byte)GaiaMessage.DfuStatus.Verification:
+                                    break;
+                                
+                                case (byte)GaiaMessage.DfuStatus.Verification_Failure:
+                                    resp = GaiaMessage.CreateErrorGaia(" Error 0x03, problem during file verification. Please disconnect and try again. If the problem persists contact Wearhaus Support!");
+                                    break;
+
+                                case (byte)GaiaMessage.DfuStatus.Verification_Success:
+                                    break;
+                            }
                         }
                         break;
 

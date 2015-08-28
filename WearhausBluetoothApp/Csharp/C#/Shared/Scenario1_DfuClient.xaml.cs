@@ -108,19 +108,124 @@ namespace WearhausBluetoothApp
             BluetoothServiceInfoCollection = await DeviceInformation.FindAllAsync(
                 RfcommDeviceService.GetDeviceSelector(RfcommServiceId.FromUuid(RfcommChatServiceUuid)));
 
+            DeviceInformation bluetoothServiceInfo = null;
             if (BluetoothServiceInfoCollection.Count > 0)
             {
+                
                 List<string> items = new List<string>();
                 foreach (var chatServiceInfo in BluetoothServiceInfoCollection)
                 {
                     items.Add(chatServiceInfo.Name);
                     //Added to print services!
+                    if (chatServiceInfo.Name.Contains("Wearhaus"))
+                    {
+                        bluetoothServiceInfo = chatServiceInfo;
+                    }
                 }
                 cvs.Source = items;
                 ServiceSelector.Visibility = Windows.UI.Xaml.Visibility.Visible;
+
+                if (bluetoothServiceInfo != null)
+                {
+                    try
+                    {
+                        RunButton.IsEnabled = false;
+                        RunButton.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                        ServiceSelector.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                        TopInstruction.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+
+                        ConnectionProgress.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                        ConnectionProgress.IsIndeterminate = true;
+                        ConnectionStatus.Visibility = Windows.UI.Xaml.Visibility.Visible;
+
+                        //var bluetoothServiceInfo = BluetoothServiceInfoCollection[ServiceList.SelectedIndex];
+
+
+                        // Potential Bug Fix?? Wrap FromIdAsync call in the UI Thread, as per the instructions of:
+                        // http://blogs.msdn.com/b/wsdevsol/archive/2014/11/10/why-doesn-t-the-windows-8-1-bluetooth-rfcomm-chat-sample-work.aspx
+                        // EDIT: Actually may not work as all this does is bring the exception thrown outside of this thread, so the exception is unhandled...
+
+                        //await Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () =>
+                        //{
+                        // ONLY WORKS IN WINDOWS 10 RIGHT NOW!?
+                        BluetoothService = await RfcommDeviceService.FromIdAsync(bluetoothServiceInfo.Id);
+                        //});
+
+
+                        if (BluetoothService == null)
+                        {
+                            MainPage.Current.NotifyUser(
+                                "Access to the device is denied because the application was not granted access",
+                                NotifyType.StatusMessage);
+                            return;
+                        }
+
+                        var attributes = await BluetoothService.GetSdpRawAttributesAsync();
+                        if (!attributes.ContainsKey(SdpServiceNameAttributeId))
+                        {
+                            MainPage.Current.NotifyUser(
+                                "The Chat service is not advertising the Service Name attribute (attribute id=0x100). " +
+                                "Please verify that you are running the BluetoothRfcommChat server.",
+                                NotifyType.ErrorMessage);
+                            return;
+                        }
+
+                        var attributeReader = DataReader.FromBuffer(attributes[SdpServiceNameAttributeId]);
+                        var attributeType = attributeReader.ReadByte();
+                        if (attributeType != SdpServiceNameAttributeType)
+                        {
+                            MainPage.Current.NotifyUser(
+                                "The Chat service is using an unexpected format for the Service Name attribute. " +
+                                "Please verify that you are running the BluetoothRfcommChat server.",
+                                NotifyType.ErrorMessage);
+                            return;
+                        }
+
+                        var serviceNameLength = attributeReader.ReadByte();
+
+                        // The Service Name attribute requires UTF-8 encoding.
+                        attributeReader.UnicodeEncoding = UnicodeEncoding.Utf8;
+                        ServiceName.Text = "Connected to: \"" + bluetoothServiceInfo.Name + "\"";
+
+                        lock (this)
+                        {
+                            BluetoothSocket = new StreamSocket();
+                        }
+
+                        await BluetoothSocket.ConnectAsync(BluetoothService.ConnectionHostName, BluetoothService.ConnectionServiceName);
+
+                        BluetoothWriter = new DataWriter(BluetoothSocket.OutputStream);
+                        ChatBox.Visibility = Windows.UI.Xaml.Visibility.Visible;
+
+                        GaiaHandler = new GaiaHelper(); // Create GAIA DFU Object
+                        HttpController = new WearhausHttpController(bluetoothServiceInfo.Id); // Create HttpController object
+
+                        DataReader chatReader = new DataReader(BluetoothSocket.InputStream);
+                        ReceiveStringLoop(chatReader);
+
+                        ConnectionProgress.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                        ConnectionProgress.IsIndeterminate = false;
+                        ConnectionStatus.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+
+                        this.Frame.Navigate(typeof(LoginPage));
+
+                    }
+                    catch (Exception ex)
+                    {
+                        TopInstruction.Text = "No Wearhaus Arc found! Please connect to a Wearhaus Arc and then run the App again!";
+                        MainPage.Current.NotifyUser("Error: " + ex.HResult.ToString() + " - " + ex.Message,
+                            NotifyType.ErrorMessage);
+                        Disconnect();
+                    }
+                }
+                else
+                {
+                    TopInstruction.Text = "No Wearhaus Arc found! Please connect to a Wearhaus Arc and then run the App again!";
+                }
             }
             else
             {
+                TopInstruction.Text = "No Bluetooth Devices found! Please connect to a Wearhaus Arc and then run the App again!";
                 MainPage.Current.NotifyUser(
                     "No chat services were found. Please pair with a device that is advertising the chat service.",
                     NotifyType.ErrorMessage);
@@ -205,6 +310,7 @@ namespace WearhausBluetoothApp
                 ChatBox.Visibility = Windows.UI.Xaml.Visibility.Visible;
 
                 GaiaHandler = new GaiaHelper(); // Create GAIA DFU Object
+                HttpController = new WearhausHttpController(bluetoothServiceInfo.Id); // Create HttpController object
 
                 DataReader chatReader = new DataReader(BluetoothSocket.InputStream);
                 ReceiveStringLoop(chatReader);
@@ -212,6 +318,8 @@ namespace WearhausBluetoothApp
                 ConnectionProgress.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
                 ConnectionProgress.IsIndeterminate = false;
                 ConnectionStatus.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+
+                this.Frame.Navigate(typeof(LoginPage));
 
             }
             catch (Exception ex)
@@ -251,10 +359,10 @@ namespace WearhausBluetoothApp
                 PickFileButton.Visibility = Windows.UI.Xaml.Visibility.Visible;
                 SendDFUButton.Visibility = Windows.UI.Xaml.Visibility.Visible;
 
-                GaiaHandler.IsSendingFile = false;
+                if(GaiaHandler != null)GaiaHandler.IsSendingFile = false;
                 ProgressStatus.Text = "";
                 ProgressStatus.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-                ConversationList.Items.Clear();
+                if(ConversationList != null)ConversationList.Items.Clear();
 
                 if (BluetoothWriter != null)
                 {
@@ -553,6 +661,12 @@ namespace WearhausBluetoothApp
                     DFUProgressBar.IsIndeterminate = true;
                     ConversationList.Items.Add("Finished Sending DFU! Verifying...");
 
+                }
+
+                if (resp != null && resp.IsError)
+                {
+                    ProgressStatus.Text = resp.InfoMessage;
+                    DFUProgressBar.IsIndeterminate = false;
                 }
 
                 if (resp != null && !resp.IsError) SendRawBytes(resp.BytesSrc);

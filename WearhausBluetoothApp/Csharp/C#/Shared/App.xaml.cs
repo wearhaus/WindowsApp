@@ -20,6 +20,8 @@ using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Navigation;
 using SDKTemplate.Common;
 
+using WearhausBluetoothApp;
+
 namespace SDKTemplate
 {
     /// <summary>

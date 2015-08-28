@@ -223,6 +223,18 @@ namespace Gaia
         }
 
         /// <summary>
+        /// Public enum for dfu state which is the payload for the Event Gaia Notification (0x4003)
+        /// </summary>
+        public enum DfuStatus : byte
+        {
+            Download = 0x00,
+            Download_Failure = 0x01,
+            Verification = 0x02,
+            Verification_Failure = 0x03,
+            Verification_Success = 0x04
+        }
+
+        /// <summary>
         /// Public enum for Wearhaus' Command ID's with Wearhaus' Vendor ID
         /// </summary>
         public enum ArcCommand : ushort
