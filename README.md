@@ -10,6 +10,10 @@ Shared/Scenario1_ChatClient.xaml.cs
 Windows/MainPage.xaml.cs
 
 Error details:
+
+In Windows 8.1 -
 An exception is thrown from the "await RfcommDeviceService.FromIdAsync(chatServiceInfo.Id);" [Line 122, Scenario1_ChatClient.xaml.cs] (presumably) with the following additional information:
 
 "A message sent on a datagram socket was larger than the internal message before or some other network limit, or the buffer used to receive a datagram into was smaller than the datagram itself. (Exception from HRESULT: 0x80072738)"
+
+This error does NOT HAPPEN in windows 10
