@@ -1,5 +1,5 @@
 ﻿<Page
-    x:Class="WearhausBluetoothApp.LoginPage"
+    x:Class="WearhausBluetoothApp.SignupPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:SDKTemplate"
@@ -22,24 +22,28 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="120"/>
                         <ColumnDefinition Width="240"/>
-                        <ColumnDefinition Width="1*"/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="*"/>
+                        <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <TextBlock x:Name="Email" Grid.Row="0" Grid.Column="0" Margin="10" HorizontalAlignment="Center" Style="{StaticResource ScenarioDescriptionTextStyle}" FontSize="20" TextWrapping="Wrap">
-                       Email: 
+                    <TextBlock x:Name="Username" Grid.Row="0" Grid.Column="0" Margin="10" HorizontalAlignment="Center" Style="{StaticResource ScenarioDescriptionTextStyle}" FontSize="20" TextWrapping="Wrap">
+                       Username:
                     </TextBlock>
-                    <TextBox x:Name="EmailTextBox" Grid.Row="0" Grid.Column="1" Margin="0,0,10,10"/>
+                    <TextBox x:Name="UsernameTextBox" Grid.Row="0" Grid.Column="1" Margin="0,0,10,10"/>
 
-                    <TextBlock x:Name="Password" Grid.Row="1" Grid.Column="0" Margin="10" HorizontalAlignment="Center" Style="{StaticResource ScenarioDescriptionTextStyle}" FontSize="20" TextWrapping="Wrap">
+                    <TextBlock x:Name="Email" Grid.Row="1" Grid.Column="0" Margin="10" HorizontalAlignment="Center" Style="{StaticResource ScenarioDescriptionTextStyle}" FontSize="20" TextWrapping="Wrap">
+                       Email:
+                    </TextBlock>
+                    <TextBox x:Name="EmailTextBox" Grid.Row="1" Grid.Column="1" Margin="0,0,10,10"/>
+
+                    <TextBlock x:Name="Password" Grid.Row="2" Grid.Column="0" Margin="10" HorizontalAlignment="Center" Style="{StaticResource ScenarioDescriptionTextStyle}" FontSize="20" TextWrapping="Wrap">
                        Password:
                     </TextBlock>
-                    <TextBox x:Name="PasswordTextBox" Grid.Row="1" Grid.Column="1" Margin="0,0,10,10"/>
-                    <StackPanel Grid.Row="2" Grid.ColumnSpan="2" HorizontalAlignment="Center" Orientation="Horizontal">
-                        <Button x:Name="LoginButton" Click="LoginButton_Click" Grid.Row="2" Grid.ColumnSpan="2" Content="Login" Margin="10" Width="170" HorizontalAlignment="Center"/>
+                    <TextBox x:Name="PasswordTextBox" Grid.Row="2" Grid.Column="1" Margin="0,0,10,10"/>
+                    <StackPanel Grid.Row="3" Grid.ColumnSpan="2" HorizontalAlignment="Center" Orientation="Horizontal">
                         <Button x:Name="SignupButton" Click="SignupButton_Click" Grid.Row="2" Grid.ColumnSpan="2" Content="Signup" Margin="10" Width="170" HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Grid>

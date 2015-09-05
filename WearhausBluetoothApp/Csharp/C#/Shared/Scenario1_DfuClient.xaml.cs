@@ -101,6 +101,8 @@ namespace WearhausBluetoothApp
         /// </summary>
         private async void RunButton_Click(object sender, RoutedEventArgs e)
         {
+
+
             // Clear any previous messages
             MainPage.Current.NotifyUser("", NotifyType.StatusMessage);
 
