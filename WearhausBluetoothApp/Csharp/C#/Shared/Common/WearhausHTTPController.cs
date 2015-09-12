@@ -3,13 +3,21 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using System.Runtime.Serialization.Json;
+using Windows.Data.Json;
+
 
 namespace WearhausHttp
 {
     public class WearhausHttpController
     {
 
+
+#if DEBUG
         private const string WEARHAUS_URI = "http://wearhausapistaging.herokuapp.com/v1.2/";
+#else
+        private const string WEARHAUS_URI = "http://wearhausapi.herokuapp.com/v1.2/";
+#endif
         private const string PATH_ACCOUNT_CREATE = "account/create";
         private const string PATH_ACCOUNT_VERIFY_GUEST = "account/verify_guest";
         private const string PATH_ACCOUNT_VERIFY_CREDENTIALS = "account/verify_credentials";
@@ -30,7 +38,10 @@ namespace WearhausHttp
         private string User_id;
         private string Token;
 
-        public string HttpMessage { get; private set; }
+        private DataContractJsonSerializer JsonSerializer;
+
+        // Last Successful Reponse from an HTTP Request
+        public string LastHttpResponse { get; private set; }
 
         public WearhausHttpController(string deviceID)
         {
@@ -38,7 +49,9 @@ namespace WearhausHttp
             User_id = null;
             Token = null;
 
-            HttpMessage = null;
+            JsonSerializer = new DataContractJsonSerializer(typeof(Dictionary<string, string>));
+
+            LastHttpResponse = null;
         }
 
         public async Task<string> CreateNewUser(string email, string password)
@@ -48,19 +61,19 @@ namespace WearhausHttp
                 {"password", password}
             };
             
-            return await HttpPost(PATH_ACCOUNT_CREATE, param);
+            string resp = await HttpPost(PATH_ACCOUNT_CREATE, param);
+            return resp; 
         }
 
-        public async Task<string> CreateGuest(string email, string password, string display_name)
+        public async Task<string> CreateGuest()
         {
             var vals = new Dictionary<string, string>{
-                {"email", email},
-                {"password", password},
-                {"display_name", display_name},
                 {"hid", HID}
             };
 
-            return await HttpPost(PATH_ACCOUNT_CREATE, vals);
+            string resp = await HttpPost(PATH_ACCOUNT_VERIFY_GUEST, vals);
+            var x = JsonValue.Parse(resp);
+            return resp;
         }
 
         public async Task<string> VerifyCredentials(string email, string password)
@@ -71,7 +84,8 @@ namespace WearhausHttp
                 {"hid", HID}
             };
 
-            return await HttpPost(PATH_ACCOUNT_VERIFY_CREDENTIALS, vals); 
+            string resp = await HttpPost(PATH_ACCOUNT_VERIFY_CREDENTIALS, vals);
+            return resp;
         }
         
         private async Task<string> HttpPost(string destination, Dictionary<string, string> values)
@@ -82,7 +96,8 @@ namespace WearhausHttp
                     var content = new FormUrlEncodedContent(values);
                     var response = await client.PostAsync(WEARHAUS_URI + destination, content);
                     var responseString = await response.Content.ReadAsStringAsync();
-                    return "Receieved HTTP POST response:\n" + responseString;
+                    LastHttpResponse = responseString;
+                    return responseString;
                 }
                 catch (Exception e)
                 {
@@ -97,8 +112,9 @@ namespace WearhausHttp
             {
                 try
                 {
-                    var responseString = await client.GetStringAsync(destination);
-                    return "Received HTTP GET response:\n" + responseString;
+                    var responseString = await client.GetStringAsync(WEARHAUS_URI + destination);
+                    LastHttpResponse = responseString;
+                    return responseString;
                 }
                 catch (Exception e)
                 {

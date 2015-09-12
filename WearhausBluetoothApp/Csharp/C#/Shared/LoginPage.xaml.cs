@@ -1,4 +1,5 @@
-﻿using System;
+﻿using WearhausBluetoothApp.Common;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -13,7 +14,8 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 
-using WearhausBluetoothApp.Common;
+//using SDKTemplate;
+//using SDKTemplate.Common;
 using WearhausHttp;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=234238
@@ -25,7 +27,7 @@ namespace WearhausBluetoothApp
     /// </summary>
     public sealed partial class LoginPage : Page
     {
-        WearhausHttpController HttpController;
+        //private WearhausHttpController HttpController;
         private NavigationHelper navigationHelper;
         private ObservableDictionary defaultViewModel = new ObservableDictionary();
 
@@ -97,25 +99,24 @@ namespace WearhausBluetoothApp
 
         #endregion
 
-        public LoginPage(WearhausHttpController httpController)
+        public LoginPage()//WearhausHttpController httpController)
         {
             this.InitializeComponent();
 
             this.navigationHelper = new NavigationHelper(this);
             this.navigationHelper.LoadState += navigationHelper_LoadState;
             this.navigationHelper.SaveState += navigationHelper_SaveState;
-            HttpController = httpController;
+            //HttpController = httpController;
         }
 
         private async void LoginButton_Click(object sender, RoutedEventArgs e)
         {
-            string resp = await HttpController.VerifyCredentials(EmailTextBox.Text, PasswordTextBox.Text);
+            //string resp = await HttpController.VerifyCredentials(EmailTextBox.Text, PasswordTextBox.Text);
         }
 
         private async void SignupButton_Click(object sender, RoutedEventArgs e)
         {
-            string resp = await HttpController.CreateNewUser(EmailTextBox.Text, PasswordTextBox.Text);
-
+            //string resp = await HttpController.CreateNewUser(EmailTextBox.Text, PasswordTextBox.Text);
         }
     }
 }
