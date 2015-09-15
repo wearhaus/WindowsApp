@@ -11,8 +11,6 @@ namespace WearhausHttp
 {
     public class WearhausHttpController
     {
-
-
 #if DEBUG
         private const string WEARHAUS_URI = "http://wearhausapistaging.herokuapp.com/v1.2/";
 #else
@@ -38,8 +36,6 @@ namespace WearhausHttp
         private string User_id;
         private string Token;
 
-        private DataContractJsonSerializer JsonSerializer;
-
         // Last Successful Reponse from an HTTP Request
         public string LastHttpResponse { get; private set; }
 
@@ -48,8 +44,6 @@ namespace WearhausHttp
             HID = WearhausHttpController.ParseHID(deviceID);
             User_id = null;
             Token = null;
-
-            JsonSerializer = new DataContractJsonSerializer(typeof(Dictionary<string, string>));
 
             LastHttpResponse = null;
         }
@@ -72,7 +66,8 @@ namespace WearhausHttp
             };
 
             string resp = await HttpPost(PATH_ACCOUNT_VERIFY_GUEST, vals);
-            var x = JsonValue.Parse(resp);
+            User_id = ParseJson("guest_user_id", resp);
+            Token = ParseJson("token", resp);
             return resp;
         }
 
@@ -101,7 +96,7 @@ namespace WearhausHttp
                 }
                 catch (Exception e)
                 {
-                    return "Exception in HttpPost response:\n" + e.Message;
+                    return "Exception in HttpPost response:" + e.Message;
                 }
             }
         }
@@ -118,9 +113,117 @@ namespace WearhausHttp
                 }
                 catch (Exception e)
                 {
-                    return "Exception in HttpGet response:\n" + e.Message;
+                    return "Exception in HttpGet response:" + e.Message;
                 }
             }
+        }
+
+        public static string ParseJson(string key, string jsonResp)
+        {
+            JsonObject x = JsonObject.Parse(jsonResp);
+            string tempVal = null;
+            string status = null;
+            try
+            {
+                tempVal = x[key].GetString();
+                status = x["status"].GetString();
+                switch (Convert.ToInt32(status))
+                {
+                    case 0:
+                        break;
+
+                    case 1:
+                        return "Error: bad or missing token";
+
+                    case 2:
+                        return "Error: bad or missing user_id";
+
+                    case 3:
+                        return "Error: bad or missing HID";
+
+                    case 4:
+                        return "Error: bad or missing email";
+
+                    case 5:
+                        return "Error: bad or missing session_id";
+
+                    case 6:
+                        return "Error: authentication failed";
+
+                    case 7:
+                        return "Error: email taken";
+
+                    case 8:
+                        return "Error: fb_id taken";
+
+                    case 9:
+                        return "Error: bad song_id";
+
+                    case 10:
+                        return "Error: facebook token failed at being authenticated";
+
+                    case 11:
+                        return "Error: given user_id is a guest! Either requested action is forbidden for guests, or no profile to return";
+
+                    case 12:
+                        return "Error: bad param";
+
+                    case 13:
+                        return "Error: username already taken";
+
+                    case 100: 
+                        return "Error: need one or both fb_id and password to be set at all times";
+
+                    case 102: 
+                        return "new song object created. please upload image to S3 and call next server endpoint";
+
+                    case 104: 
+                        return "Error: bad song metadata. Couldn't create song_id";
+
+                    case 111: 
+                        return "Error: fb_id not tied to any account. Use create account";
+
+                    case 131: 
+                        return "Error: station not on server";
+
+                    case 132: 
+                        return "Error: station in wrong state; is currently idle";
+
+                    case 133: 
+                        return "Error: station in wrong state; is currently listening";
+
+                    case 134: 
+                        return "station/session exists, but may be stale (4+ hours since last update). Don't render metadata on app";
+
+                    case 140: 
+                        return "Error: station is private; either master_user can't be found, or not friends with master_user";
+
+                    case 150: 
+                        return "Error: friend request already sent";
+
+                    case 151: 
+                        return "Error: already friends";
+
+                    case 180: 
+                        return "Error: bad profile_pic_url. Needs to be image on S3 or facebook url";
+
+                    case 181: 
+                        return "Error: Can't set password. An email needs to be set first";
+
+                    case 184: 
+                        return "Error: No password has been set; use facebook to login to account";
+
+                    default:
+                        return "Error: unknown error";
+
+                }
+            }
+            catch (Exception e)
+            {
+                System.Diagnostics.Debug.WriteLine("Exception in ParseJson: " + e.Message);
+                return null;
+            }
+            return tempVal;
         }
 
 
