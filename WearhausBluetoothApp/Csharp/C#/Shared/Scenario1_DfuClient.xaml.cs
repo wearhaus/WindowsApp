@@ -270,14 +270,18 @@ namespace WearhausBluetoothApp
                         BluetoothWriter = new DataWriter(BluetoothSocket.OutputStream);
                         ChatBox.Visibility = Windows.UI.Xaml.Visibility.Visible;
 
-                        GaiaHandler = new GaiaHelper(); // Create GAIA DFU Object
+                        GaiaHandler = new GaiaHelper(); // Create GAIA DFU Helper Object
                         HttpController = new WearhausHttpController(bluetoothServiceInfo.Id); // Create HttpController object
 
-                        String Testres = await HttpController.CreateGuest();
-                        System.Diagnostics.Debug.WriteLine(Testres);
+                        String guestResult = await HttpController.CreateGuest(); // Create a Guest account for basic information to the server
+                        System.Diagnostics.Debug.WriteLine(guestResult);
 
                         DataReader chatReader = new DataReader(BluetoothSocket.InputStream);
                         ReceiveStringLoop(chatReader);
+
+                        GaiaMessage firmware_version = new GaiaMessage((ushort)GaiaMessage.GaiaCommand.GetAppVersion); 
+                        // Send a get app version Gaia req to the device to see what the firmware version is (for DFU)
+                        SendRawBytes(firmware_version.BytesSrc);
 
                         ConnectionProgress.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
                         ConnectionProgress.IsIndeterminate = false;
@@ -697,6 +701,12 @@ namespace WearhausBluetoothApp
                 if (resp != null && resp.InfoMessage != null)
                 {
                     receivedStr += resp.InfoMessage;
+                }
+
+                if (receivedMessage.CommandId == (ushort)GaiaMessage.GaiaCommand.GetAppVersion) // Specifically handling the case to find out the current Firmware version
+                {
+                    string firmware_ver = WearhausHttpController.ParseFirmwareVersion(receivedMessage.PayloadSrc);
+                    HttpController.Current_fv = firmware_ver;
                 }
 
                 ConversationList.Items.Add("Received: " + receivedStr);

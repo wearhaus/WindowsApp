@@ -83,10 +83,11 @@ namespace Gaia
             BytesSrc[OFFS_COMMAND_ID_H] = (byte)(usrCmd >> 8);
             BytesSrc[OFFS_COMMAND_ID_L] = (byte)(usrCmd & 0xff);
 
-            CommandId = usrCmd;
             VendorId = GaiaMessage.GAIA_CSR_VENDOR_ID;
             IsFlagSet = false;
+            CommandId = usrCmd;
             IsAck = (CommandId & GAIA_ACK_MASK) != 0;
+            CommandId = IsAck ? (ushort)(CommandId ^ GAIA_ACK_MASK) : CommandId; // Here we re-check the command id and remove the mask if it is an ACK
             IsError = false;
             InfoMessage = null;
 
@@ -124,6 +125,7 @@ namespace Gaia
             VendorId = GaiaHelper.CombineBytes(BytesSrc[OFFS_VENDOR_ID_H], BytesSrc[OFFS_VENDOR_ID_L]);
             IsFlagSet = BytesSrc[OFFS_FLAGS] == GAIA_FLAG_CHECK;
             IsAck = (CommandId & GAIA_ACK_MASK) != 0;
+            CommandId = IsAck ? (ushort)(CommandId ^ GAIA_ACK_MASK) : CommandId; // Here we re-check the command id and remove the mask if it is an ACK
             IsError = false;
             InfoMessage = null;
 

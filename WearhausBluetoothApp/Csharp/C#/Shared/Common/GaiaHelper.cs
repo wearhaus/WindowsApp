@@ -157,8 +157,6 @@ namespace Gaia
         /// </returns>
         public GaiaMessage CreateResponseToMessage(GaiaMessage receievedMessage, byte checkSum = 0x00)
         {
-
-
             // Check if the Response is a command or an ACK
             ushort command = receievedMessage.CommandId;
             GaiaMessage resp = null;

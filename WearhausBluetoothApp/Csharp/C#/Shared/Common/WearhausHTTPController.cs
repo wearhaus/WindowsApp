@@ -25,6 +25,8 @@ namespace WearhausHttp
         private const string PATH_ACCOUNT_FORGOT_PASSWORD = "account/forgot_password";
         private const string PATH_ACCOUNT_FORGOT_PASSWORD_LOGIN = "account/forgot_password_login";
 
+        private const string PATH_HEADPHONES_DFU_REPORT = "headphones/dfu_report";
+
         private const string PATH_USERS_SHOW = "users/forgot_password_login";
         private const string PATH_USERS_PRIVATE_PROFILE = "users/forgot_password_login";
 
@@ -36,6 +38,7 @@ namespace WearhausHttp
         private string User_id;
         private string Token;
 
+        public string Current_fv { get; set; }
         // Last Successful Reponse from an HTTP Request
         public string LastHttpResponse { get; private set; }
 
@@ -44,7 +47,8 @@ namespace WearhausHttp
             HID = WearhausHttpController.ParseHID(deviceID);
             User_id = null;
             Token = null;
-
+            
+            Current_fv = null;
             LastHttpResponse = null;
         }
 
@@ -56,6 +60,7 @@ namespace WearhausHttp
             };
             
             string resp = await HttpPost(PATH_ACCOUNT_CREATE, param);
+            Token = ParseJson("token", resp);
             return resp; 
         }
 
@@ -81,6 +86,25 @@ namespace WearhausHttp
 
             string resp = await HttpPost(PATH_ACCOUNT_VERIFY_CREDENTIALS, vals);
             return resp;
+        }
+
+        public async Task<string> DfuReport(string dfu_status, bool dfu_success)
+        {
+            var vals = new Dictionary<string, string>{
+                {"token", Token},
+                {"old_fv", Current_fv},
+                {"new_fv", HID},
+                {"attempted_fv", HID},
+                {"dfu_status", dfu_status},
+#if WINDOWS_PHONE_APP
+                {"device", "windows_phone"}
+#else
+                {"device", "windows_desktop"}
+#endif
+            };
+            string resp = await HttpPost(PATH_ACCOUNT_VERIFY_CREDENTIALS, vals);
+            return resp;
+
         }
         
         private async Task<string> HttpPost(string destination, Dictionary<string, string> values)
@@ -231,6 +255,13 @@ namespace WearhausHttp
         {
             string[] words = chatserviceinfoID.Split('_')[1].Split('&');
             return words[words.Length - 1];
+        }
+
+        public static string ParseFirmwareVersion(byte[] payload)
+        {
+            string firmwareStr = "";
+            firmwareStr = BitConverter.ToString(payload).Replace("-", string.Empty);
+            return firmwareStr;
         }
 
     }
