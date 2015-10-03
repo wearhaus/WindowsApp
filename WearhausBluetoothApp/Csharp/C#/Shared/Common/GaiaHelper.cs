@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Windows.System.Threading;
 
 namespace Gaia
 {
@@ -13,6 +14,9 @@ namespace Gaia
 
         private byte[] FileBuffer;
         private int FileChunksSent;
+
+        public ThreadPoolTimer PeriodicTimer;
+        public bool IsWaitingForResp { get; set; }
 
         public bool IsSendingFile;
         public int TotalChunks;
@@ -27,6 +31,8 @@ namespace Gaia
 
             IsSendingFile = false;
             TotalChunks = 0;
+            IsWaitingForResp = false;
+
         }
 
         /// <summary>
@@ -42,6 +48,24 @@ namespace Gaia
                 checkSum ^= b[i];
             }
             return checkSum;
+        }
+
+        private void StartTimer()
+        {
+            PeriodicTimer = ThreadPoolTimer.CreateTimer(TimerElapsedEventHandler, TimeSpan.FromSeconds(10));
+            System.Diagnostics.Debug.WriteLine("TIMER STARTED!");
+        }
+
+        private void TimerElapsedEventHandler(ThreadPoolTimer Timer)
+        {
+            if (IsWaitingForResp)
+            {
+                System.Diagnostics.Debug.WriteLine("TIMER ELAPSED! AHHH WE ARE STILL WAITING GRRR");
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("TIMER ELAPSED! WOOHOO NOT WAITING FOR RESP WE GOT DIS!");
+            }
         }
         
         /// <summary>
@@ -172,21 +196,23 @@ namespace Gaia
 
                 switch (command)
                 {
-                    case (ushort)GaiaMessage.ArcCommand.StartDfu | 0x8000:
+                    case (ushort)GaiaMessage.ArcCommand.StartDfu:
                         if (receievedMessage.PayloadSrc[0] == 0x00)
                         {
                             resp = CreateDFUBegin();
+                            StartTimer();
                         }
                         else
                         {
-                            resp = GaiaMessage.CreateErrorGaia(" Invalid DFU Request!");
+                            resp = GaiaMessage.CreateErrorGaia(" Firmware Update Failed. Try again, and if this error persists, contact customer support at wearhaus.com. Error 9");
+                            // TODO: Send DFU Report to server with status 9
                         }
                         break;
                     
-                    case (ushort)GaiaMessage.GaiaCommand.DFUBegin | 0x8000:
+                    case (ushort)GaiaMessage.GaiaCommand.DFUBegin:
                         if (receievedMessage.PayloadSrc[0] != 0x00)
                         {
-                            resp = GaiaMessage.CreateErrorGaia(" Invalid DFU Request, the device may not be capable of a Firmware Update.");
+                            resp = GaiaMessage.CreateErrorGaia(" Firmware Update Failed. Try again, and if this error persists, contact customer support at wearhaus.com. Error 9");
                         }
                         break;
 
@@ -229,7 +255,7 @@ namespace Gaia
                         break;
 
                     default:
-                        resp = GaiaMessage.CreateErrorGaia(" Error, that command cannot be handled at this time!");
+                        resp = GaiaMessage.CreateErrorGaia(" Error, unsupported command: " + command.ToString("X4"));
                         break;
                 }
             }

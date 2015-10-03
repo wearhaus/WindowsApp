@@ -31,7 +31,7 @@ using SDKTemplate;
 using SDKTemplate.Common;
 
 using Gaia;
-using WearhausHttp;
+using WearhausServer;
 using WearhausBluetoothApp.Common;
 using Windows.ApplicationModel.Activation;
 
@@ -67,6 +67,8 @@ namespace WearhausBluetoothApp
         private GaiaHelper GaiaHandler;
         private StorageFile DfuFile;
         private DataReader DfuReader;
+
+        private Windows.UI.Xaml.DispatcherTimer Timer;
 
         private WearhausHttpController HttpController;
 
@@ -161,6 +163,18 @@ namespace WearhausBluetoothApp
             App.Current.Suspending += App_Suspending;
         }
 
+        public void StartTimer()
+        {
+            Timer = new DispatcherTimer();
+            Timer.Tick += TimerEventHandler;
+            Timer.Interval = new TimeSpan(0, 0, 30);
+            Timer.Start();
+        }
+
+        public void TimerEventHandler(object sender, object e)
+        {
+        }
+
         void App_Suspending(object sender, Windows.ApplicationModel.SuspendingEventArgs e)
         {
             // Make sure we cleanup resources on suspend
@@ -190,13 +204,13 @@ namespace WearhausBluetoothApp
                 {
                     items.Add(chatServiceInfo.Name);
                     //Added to print services!
-                    if (chatServiceInfo.Name.Contains("Wearhaus"))
-                    {
+                    string hid = WearhausHttpController.ParseHID(chatServiceInfo.Id);
+                    if (hid.StartsWith("1CF03E") || hid.StartsWith("00025B")) {
                         bluetoothServiceInfo = chatServiceInfo;
                     }
                 }
                 cvs.Source = items;
-                ServiceSelector.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                //ServiceSelector.Visibility = Windows.UI.Xaml.Visibility.Visible;
 
                 if (bluetoothServiceInfo != null)
                 {
@@ -268,7 +282,6 @@ namespace WearhausBluetoothApp
                         await BluetoothSocket.ConnectAsync(BluetoothService.ConnectionHostName, BluetoothService.ConnectionServiceName);
 
                         BluetoothWriter = new DataWriter(BluetoothSocket.OutputStream);
-                        ChatBox.Visibility = Windows.UI.Xaml.Visibility.Visible;
 
                         GaiaHandler = new GaiaHelper(); // Create GAIA DFU Helper Object
                         HttpController = new WearhausHttpController(bluetoothServiceInfo.Id); // Create HttpController object
@@ -279,13 +292,15 @@ namespace WearhausBluetoothApp
                         DataReader chatReader = new DataReader(BluetoothSocket.InputStream);
                         ReceiveStringLoop(chatReader);
 
-                        GaiaMessage firmware_version = new GaiaMessage((ushort)GaiaMessage.GaiaCommand.GetAppVersion); 
+                        GaiaMessage firmware_version_request = new GaiaMessage((ushort)GaiaMessage.GaiaCommand.GetAppVersion); 
                         // Send a get app version Gaia req to the device to see what the firmware version is (for DFU)
-                        SendRawBytes(firmware_version.BytesSrc);
+                        SendRawBytes(firmware_version_request.BytesSrc);
 
                         ConnectionProgress.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
                         ConnectionProgress.IsIndeterminate = false;
                         ConnectionStatus.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+
+                        ChatBox.Visibility = Windows.UI.Xaml.Visibility.Visible;
 
                     }
                     catch (Exception ex)
@@ -298,7 +313,7 @@ namespace WearhausBluetoothApp
                 }
                 else
                 {
-                    TopInstruction.Text = "No Wearhaus Arc found! Please connect to a Wearhaus Arc and then run the App again!";
+                    TopInstruction.Text = "No Wearhaus Arc found! Please double check to make sure you are connected to a Wearhaus Arc in Windows Bluetooth Settings. Then run the App again!";
                 }
             }
             else
@@ -311,6 +326,7 @@ namespace WearhausBluetoothApp
 
         }
         
+        // ********************* THIS METHOD IS CURRENTLY NOT IN USE AND SHOULD NOT BE CALLED, THERE ARE NO MORE 'SERVICES' ********************
         /// <summary>
         /// Method to connect to the selected bluetooth device when clicking/tapping the device
         /// in the UI ServiceList
@@ -653,6 +669,7 @@ namespace WearhausBluetoothApp
                     if (GaiaHandler.IsSendingFile)
                     {
                         TopInstruction.Text = "DFU Complete! Your Arc will automatically restart, please Listen to your Arc for a double beep startup sound to indicate a successful upgrade!";
+                        GaiaHandler.IsSendingFile = false;
                         Disconnect();
                         return;
                     }
@@ -726,8 +743,6 @@ namespace WearhausBluetoothApp
                     while (chunksRemaining > 0)
                     {
                         byte[] msg = GaiaHandler.GetNextFileChunk();
-                        BluetoothWriter.WriteBytes(msg);
-                        await BluetoothWriter.StoreAsync();
 
                         ProgressStatus.Text = "Update in progress...";
                         DFUProgressBar.Value = 100 * (float)(GaiaHandler.TotalChunks - chunksRemaining) / (float)GaiaHandler.TotalChunks;
@@ -736,9 +751,9 @@ namespace WearhausBluetoothApp
                         {
                             ConversationList.Items.Add("DFU Progress | Chunks Remaining: " + chunksRemaining);
                         }
-                        System.Diagnostics.Debug.WriteLine("Chunks Remaining: " + chunksRemaining);
+                        //System.Diagnostics.Debug.WriteLine("Chunks Remaining: " + chunksRemaining);
 
-                        SendRawBytes(GaiaHandler.GetNextFileChunk(), false);
+                        SendRawBytes(msg, false);
                         chunksRemaining = GaiaHandler.ChunksRemaining();
                     }
                     ProgressStatus.Text = "Finished Sending File! Verifying... (Your Arc will restart soon after this step!)";
