@@ -14,7 +14,7 @@ namespace WearhausServer
 
         public static Dictionary<string, FirmwareObj> FirmwareTable = new Dictionary<string, FirmwareObj>{
             {"0000001000AFFFF56150000000000000000", 
-            new FirmwareObj("", "0000001000AFFFF56150000000000000000", "1.0.0", @"Base Firmware Version", 
+            new FirmwareObj("https://s3.amazonaws.com/wearhausfw/version615.dfu", "0000001000AFFFF56150000000000000000", "1.0.0", @"Base Firmware Version", 
                 1, 1, 1, 1, 1, 1, "", new string[1] {"Any"}) 
             },
 

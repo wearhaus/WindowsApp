@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.ComponentModel;
-using System.Threading;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
@@ -67,8 +66,6 @@ namespace WearhausBluetoothApp
         private GaiaHelper GaiaHandler;
         private StorageFile DfuFile;
         private DataReader DfuReader;
-
-        private Windows.UI.Xaml.DispatcherTimer Timer;
 
         private WearhausHttpController HttpController;
 
@@ -163,18 +160,6 @@ namespace WearhausBluetoothApp
             App.Current.Suspending += App_Suspending;
         }
 
-        public void StartTimer()
-        {
-            Timer = new DispatcherTimer();
-            Timer.Tick += TimerEventHandler;
-            Timer.Interval = new TimeSpan(0, 0, 30);
-            Timer.Start();
-        }
-
-        public void TimerEventHandler(object sender, object e)
-        {
-        }
-
         void App_Suspending(object sender, Windows.ApplicationModel.SuspendingEventArgs e)
         {
             // Make sure we cleanup resources on suspend
@@ -210,7 +195,6 @@ namespace WearhausBluetoothApp
                     }
                 }
                 cvs.Source = items;
-                //ServiceSelector.Visibility = Windows.UI.Xaml.Visibility.Visible;
 
                 if (bluetoothServiceInfo != null)
                 {
@@ -553,6 +537,7 @@ namespace WearhausBluetoothApp
                 return;
             }
             // Send DFU!
+            DisconnectButton.IsEnabled = false;
             GaiaMessage startDfuCmd = new GaiaMessage((ushort)GaiaMessage.ArcCommand.StartDfu);
             SendRawBytes(startDfuCmd.BytesSrc);
             DFUProgressBar.Visibility = Windows.UI.Xaml.Visibility.Visible;
@@ -734,7 +719,7 @@ namespace WearhausBluetoothApp
                     ConversationList.Items.Add("Receieved Go Ahead for DFU! Starting DFU now!");
                     ProgressStatus.Text = "Received Go Ahead for Update! Starting Update now!";
                     DFUProgressBar.IsIndeterminate = false;
-                    DFUProgressBar.Value = 0;
+                    //DFUProgressBar.Value = 0;
 
                     int chunksRemaining = GaiaHandler.ChunksRemaining();
                     ConversationList.Items.Add("DFU Progress | Chunks Remaining: " + chunksRemaining);
@@ -745,13 +730,14 @@ namespace WearhausBluetoothApp
                         byte[] msg = GaiaHandler.GetNextFileChunk();
 
                         ProgressStatus.Text = "Update in progress...";
+                        
                         DFUProgressBar.Value = 100 * (float)(GaiaHandler.TotalChunks - chunksRemaining) / (float)GaiaHandler.TotalChunks;
 
                         if (chunksRemaining % 1000 == 0)
                         {
                             ConversationList.Items.Add("DFU Progress | Chunks Remaining: " + chunksRemaining);
                         }
-                        //System.Diagnostics.Debug.WriteLine("Chunks Remaining: " + chunksRemaining);
+                        System.Diagnostics.Debug.WriteLine("Chunks Remaining: " + chunksRemaining);
 
                         SendRawBytes(msg, false);
                         chunksRemaining = GaiaHandler.ChunksRemaining();
@@ -765,7 +751,7 @@ namespace WearhausBluetoothApp
                 if (resp != null && resp.IsError)
                 {
                     ProgressStatus.Text = resp.InfoMessage;
-                    DFUProgressBar.IsIndeterminate = false;
+                    //DFUProgressBar.IsIndeterminate = false;
                 }
 
                 if (resp != null && !resp.IsError) SendRawBytes(resp.BytesSrc);
