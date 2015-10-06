@@ -57,7 +57,7 @@
                             <Button x:Name="SendDFUButton" HorizontalAlignment="Left" FontSize="20" Content="Send DFU" Click="SendDFUButton_Click" IsEnabled="False"/>
                             <TextBlock x:Name="ProgressStatus" HorizontalAlignment="Left" Style="{StaticResource SubheaderTextBlockStyle}" Margin="10" Visibility="Collapsed"/>
                             <ProgressBar x:Name="DFUProgressBar" Visibility="Collapsed" Margin="10" Height="15" Value="0"  IsIndeterminate="False" Maximum="100"/>
-                            <CheckBox x:Name="DebugCheckBox" Content="Debug" VerticalAlignment="Bottom" Click="DebugButton_Click"/>
+                            <CheckBox x:Name="DebugCheckBox" VerticalAlignment="Bottom" Content="Debug" Click="DebugButton_Click"/>
                             <Grid x:Name="DebugControlGrid" Visibility="Collapsed">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />

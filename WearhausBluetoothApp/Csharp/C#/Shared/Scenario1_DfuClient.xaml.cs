@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.ComponentModel;
-using System.Threading;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
@@ -196,7 +195,6 @@ namespace WearhausBluetoothApp
                     }
                 }
                 cvs.Source = items;
-                ServiceSelector.Visibility = Windows.UI.Xaml.Visibility.Visible;
 
                 if (bluetoothServiceInfo != null)
                 {
@@ -299,7 +297,7 @@ namespace WearhausBluetoothApp
                 }
                 else
                 {
-                    TopInstruction.Text = "No Wearhaus Arc found! Please double check to make sure you are connected to a Wearhaus Arc in Windows Bluetooth Settings. Then run the App again";
+                    TopInstruction.Text = "No Wearhaus Arc found! Please double check to make sure you are connected to a Wearhaus Arc in Windows Bluetooth Settings. Then run the App again!";
                 }
             }
             else
@@ -311,7 +309,6 @@ namespace WearhausBluetoothApp
             }
 
         }
-
 
         // ********************* THIS METHOD IS CURRENTLY NOT IN USE AND SHOULD NOT BE CALLED, THERE ARE NO MORE 'SERVICES' ********************
         /// <summary>
@@ -540,6 +537,7 @@ namespace WearhausBluetoothApp
                 return;
             }
             // Send DFU!
+            DisconnectButton.IsEnabled = false;
             GaiaMessage startDfuCmd = new GaiaMessage((ushort)GaiaMessage.ArcCommand.StartDfu);
             SendRawBytes(startDfuCmd.BytesSrc);
             DFUProgressBar.Visibility = Windows.UI.Xaml.Visibility.Visible;
@@ -656,6 +654,7 @@ namespace WearhausBluetoothApp
                     if (GaiaHandler.IsSendingFile)
                     {
                         TopInstruction.Text = "DFU Complete! Your Arc will automatically restart, please Listen to your Arc for a double beep startup sound to indicate a successful upgrade!";
+                        GaiaHandler.IsSendingFile = false;
                         Disconnect();
                         return;
                     }
@@ -728,7 +727,7 @@ namespace WearhausBluetoothApp
                     ConversationList.Items.Add("Receieved Go Ahead for DFU! Starting DFU now!");
                     ProgressStatus.Text = "Received Go Ahead for Update! Starting Update now!";
                     DFUProgressBar.IsIndeterminate = false;
-                    DFUProgressBar.Value = 0;
+                    //DFUProgressBar.Value = 0;
 
                     int chunksRemaining = GaiaHandler.ChunksRemaining();
                     ConversationList.Items.Add("DFU Progress | Chunks Remaining: " + chunksRemaining);
@@ -746,6 +745,7 @@ namespace WearhausBluetoothApp
                         chunksRemaining = GaiaHandler.ChunksRemaining();
 
                         ProgressStatus.Text = "Update in progress...";
+                        
                         DFUProgressBar.Value = 100 * (float)(GaiaHandler.TotalChunks - chunksRemaining) / (float)GaiaHandler.TotalChunks;
 
                         if (chunksRemaining % 1000 == 0)

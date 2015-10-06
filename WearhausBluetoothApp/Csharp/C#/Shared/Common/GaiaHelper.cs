@@ -14,6 +14,9 @@ namespace Gaia
         private byte[] FileBuffer;
         private int FileChunksSent;
 
+        //public ThreadPoolTimer PeriodicTimer;
+        public bool IsWaitingForResp { get; set; }
+
         public bool IsSendingFile;
         public int TotalChunks;
 
@@ -27,6 +30,8 @@ namespace Gaia
 
             IsSendingFile = false;
             TotalChunks = 0;
+            IsWaitingForResp = false;
+
         }
 
         /// <summary>
@@ -43,6 +48,24 @@ namespace Gaia
             }
             return checkSum;
         }
+
+        //private void StartTimer()
+        //{
+        //    PeriodicTimer = ThreadPoolTimer.CreateTimer(TimerElapsedEventHandler, TimeSpan.FromSeconds(10));
+        //    System.Diagnostics.Debug.WriteLine("TIMER STARTED!");
+        //}
+
+        //private void TimerElapsedEventHandler(ThreadPoolTimer Timer)
+        //{
+        //    if (IsWaitingForResp)
+        //    {
+        //        System.Diagnostics.Debug.WriteLine("TIMER ELAPSED! AHHH WE ARE STILL WAITING GRRR");
+        //    }
+        //    else
+        //    {
+        //        System.Diagnostics.Debug.WriteLine("TIMER ELAPSED! WOOHOO NOT WAITING FOR RESP WE GOT DIS!");
+        //    }
+        //}
         
         /// <summary>
         /// Method to set the instance of the FileBuffer corresponding to 

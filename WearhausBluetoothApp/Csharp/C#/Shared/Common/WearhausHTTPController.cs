@@ -11,23 +11,23 @@ namespace WearhausServer
 {
     public class WearhausHttpController
     {
-        
+
         public static Dictionary<string, FirmwareObj> FirmwareTable = new Dictionary<string, FirmwareObj>{
-            {"0000001000AFFFF56150000000000000000",
-            new FirmwareObj("https://s3.amazonaws.com/wearhausfw/version615.dfu", "0000001000AFFFF56150000000000000000", "1.0.0", @"Base Firmware Version",
-                1, 1, 1, 1, 1, 1, "", new string[1] {"Any"})
+            {"0000001000AFFFF56150000000000000000", 
+            new FirmwareObj("https://s3.amazonaws.com/wearhausfw/version615.dfu", "0000001000AFFFF56150000000000000000", "1.0.0", @"Base Firmware Version", 
+                1, 1, 1, 1, 1, 1, "", new string[1] {"Any"}) 
             },
 
             {"0000001000AFFFF11000000000000000000",
-            new FirmwareObj("", "0000001000AFFFF11000000000000000000", "1.1.0", @"Firmware Version 1.1.0 adds the ability to use the Aux cable as
+            new FirmwareObj("", "0000001000AFFFF11000000000000000000", "1.1.0", @"Firmware Version 1.1.0 adds the ability to use the Aux cable as 
             an audio source while the Arc is on and/or broadcasting",
-                8, 8, 1, 1, 1, 1, "", new string[2] {"1.0.0", "Any"})
+                8, 8, 1, 1, 1, 1, "", new string[2] {"1.0.0", "Any"}) 
             },
 
             {"????",
             new FirmwareObj("", "????", "1.2.0", @"Firmware Version 1.2.0 enables the bluetooth Microphone and be able to handle phone
             calls and other uses of the mic during normal headphone operation.",
-                8, 8, 1, 1, 1, 1, "", new string[3] {"1.1.0", "1.0.0", "Any"})
+                8, 8, 1, 1, 1, 1, "", new string[3] {"1.1.0", "1.0.0", "Any"}) 
             }
         };
 
@@ -39,7 +39,7 @@ namespace WearhausServer
 #endif
         private const string PATH_ACCOUNT_CREATE = "account/create";
         private const string PATH_ACCOUNT_VERIFY_GUEST = "account/verify_guest";
-        private const string PATH_ACCOUNT_VERIFY_CREDENTIALS = "account/verify_credentials";
+        private const string PATH_ACCOUNT_VERIFY_CREDENTIALS = "account/,verify_credentials";
         private const string PATH_ACCOUNT_UPDATE_HID = "account/update_hid";
         private const string PATH_ACCOUNT_VERIFY_EMAIL = "account/verify_email";
         private const string PATH_ACCOUNT_UPDATE_PROFILE = "account/update_profile";
