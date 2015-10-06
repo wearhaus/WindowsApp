@@ -172,21 +172,25 @@ namespace Gaia
 
                 switch (command)
                 {
-                    case (ushort)GaiaMessage.ArcCommand.StartDfu | 0x8000:
+                    case (ushort)GaiaMessage.ArcCommand.StartDfu:
                         if (receievedMessage.PayloadSrc[0] == 0x00)
                         {
                             resp = CreateDFUBegin();
                         }
                         else
                         {
-                            resp = GaiaMessage.CreateErrorGaia(" Invalid DFU Request!");
+                            resp = GaiaMessage.CreateErrorGaia(@" Firmware Update Failed. Try again, or if this error persists, contact customer support at
+                                support@wearhaus.com. (ERROR 9)");
+                            //TODO: Send DFU Report to Server with Status 9
                         }
                         break;
                     
-                    case (ushort)GaiaMessage.GaiaCommand.DFUBegin | 0x8000:
+                    case (ushort)GaiaMessage.GaiaCommand.DFUBegin:
                         if (receievedMessage.PayloadSrc[0] != 0x00)
                         {
-                            resp = GaiaMessage.CreateErrorGaia(" Invalid DFU Request, the device may not be capable of a Firmware Update.");
+                            resp = GaiaMessage.CreateErrorGaia(@" Firmware Update Failed. Try again, or if this error persists, contact customer support at
+                                support@wearhaus.com. (ERROR 9)");
+                            //TODO: Send DFU Report to Server with Status 9
                         }
                         break;
 
@@ -229,7 +233,7 @@ namespace Gaia
                         break;
 
                     default:
-                        resp = GaiaMessage.CreateErrorGaia(" Error, that command cannot be handled at this time!");
+                        resp = GaiaMessage.CreateErrorGaia(" Error, unsupported command: " + command.ToString("X4"));
                         break;
                 }
             }

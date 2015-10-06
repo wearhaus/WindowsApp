@@ -7,10 +7,31 @@ using System.Runtime.Serialization.Json;
 using Windows.Data.Json;
 
 
-namespace WearhausHttp
+namespace WearhausServer
 {
     public class WearhausHttpController
     {
+        
+        public static Dictionary<string, FirmwareObj> FirmwareTable = new Dictionary<string, FirmwareObj>{
+            {"0000001000AFFFF56150000000000000000",
+            new FirmwareObj("https://s3.amazonaws.com/wearhausfw/version615.dfu", "0000001000AFFFF56150000000000000000", "1.0.0", @"Base Firmware Version",
+                1, 1, 1, 1, 1, 1, "", new string[1] {"Any"})
+            },
+
+            {"0000001000AFFFF11000000000000000000",
+            new FirmwareObj("", "0000001000AFFFF11000000000000000000", "1.1.0", @"Firmware Version 1.1.0 adds the ability to use the Aux cable as
+            an audio source while the Arc is on and/or broadcasting",
+                8, 8, 1, 1, 1, 1, "", new string[2] {"1.0.0", "Any"})
+            },
+
+            {"????",
+            new FirmwareObj("", "????", "1.2.0", @"Firmware Version 1.2.0 enables the bluetooth Microphone and be able to handle phone
+            calls and other uses of the mic during normal headphone operation.",
+                8, 8, 1, 1, 1, 1, "", new string[3] {"1.1.0", "1.0.0", "Any"})
+            }
+        };
+
+
 #if DEBUG
         private const string WEARHAUS_URI = "http://wearhausapistaging.herokuapp.com/v1.2/";
 #else
@@ -60,7 +81,7 @@ namespace WearhausHttp
             };
             
             string resp = await HttpPost(PATH_ACCOUNT_CREATE, param);
-            Token = ParseJson("token", resp);
+            Token = ParseJsonResp("token", resp);
             return resp; 
         }
 
@@ -71,8 +92,8 @@ namespace WearhausHttp
             };
 
             string resp = await HttpPost(PATH_ACCOUNT_VERIFY_GUEST, vals);
-            User_id = ParseJson("guest_user_id", resp);
-            Token = ParseJson("token", resp);
+            User_id = ParseJsonResp("guest_user_id", resp);
+            Token = ParseJsonResp("token", resp);
             return resp;
         }
 
@@ -93,8 +114,8 @@ namespace WearhausHttp
             var vals = new Dictionary<string, string>{
                 {"token", Token},
                 {"old_fv", Current_fv},
-                {"new_fv", HID},
-                {"attempted_fv", HID},
+                {"new_fv", Current_fv},
+                {"attempted_fv", Current_fv},
                 {"dfu_status", dfu_status},
 #if WINDOWS_PHONE_APP
                 {"device", "windows_phone"}
@@ -102,7 +123,7 @@ namespace WearhausHttp
                 {"device", "windows_desktop"}
 #endif
             };
-            string resp = await HttpPost(PATH_ACCOUNT_VERIFY_CREDENTIALS, vals);
+            string resp = await HttpPost(PATH_HEADPHONES_DFU_REPORT, vals);
             return resp;
 
         }
@@ -142,7 +163,7 @@ namespace WearhausHttp
             }
         }
 
-        public static string ParseJson(string key, string jsonResp)
+        public static string ParseJsonResp(string key, string jsonResp)
         {
             JsonObject x = JsonObject.Parse(jsonResp);
             string tempVal = null;

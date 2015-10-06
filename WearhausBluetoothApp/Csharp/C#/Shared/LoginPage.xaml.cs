@@ -16,7 +16,7 @@ using Windows.UI.Xaml.Navigation;
 
 //using SDKTemplate;
 //using SDKTemplate.Common;
-using WearhausHttp;
+using WearhausServer;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=234238
 

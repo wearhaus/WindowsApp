@@ -23,7 +23,7 @@
             </Grid.RowDefinitions>
             <StackPanel Margin="0,0,0,250" Grid.ColumnSpan="2">
                 <TextBlock x:Name="TopInstruction" Style="{StaticResource ScenarioDescriptionTextStyle}" FontSize="20" TextWrapping="Wrap">
-                    Run to Scan for Devices and Select the Wearhaus Arc you wish to update.
+                    Run to Update Firmware for your Wearhaus Arc! Please make sure you are connected to your Arc in Windows Bluetooth Settings.
                 </TextBlock>
             </StackPanel>
 
@@ -50,14 +50,14 @@
                         <StackPanel Orientation="Vertical">
                             <ListBox x:Name="DummyConversationList"/>
 
-                            <TextBlock x:Name="ServiceName" HorizontalAlignment="Center" Style="{StaticResource SampleHeaderTextStyle}" Text="Current Service Name" TextWrapping="Wrap" Margin="0,0,0,10"/>
-                            <Button x:Name="DisconnectButton" HorizontalAlignment="Center" Content="Disconnect" Click="DisconnectButton_Click"/>
-                            <TextBlock x:Name="Instructions" HorizontalAlignment="Center" Style="{StaticResource SampleHeaderTextStyle}" Text="Please select the file you want to update firmware with, then hit the Send DFU button!" Margin="0,10,0,10" TextWrapping="Wrap"/>
-                            <Button x:Name="PickFileButton" HorizontalAlignment="Center" FontSize="20" Content="Pick DFU File" Click="PickFileButton_Click"/>
-                            <Button x:Name="SendDFUButton" HorizontalAlignment="Center" FontSize="20" Content="Send DFU" Click="SendDFUButton_Click" IsEnabled="False"/>
-                            <TextBlock x:Name="ProgressStatus" HorizontalAlignment="Center" Style="{StaticResource SubheaderTextBlockStyle}" Margin="10" Visibility="Collapsed"/>
+                            <TextBlock x:Name="ServiceName" HorizontalAlignment="Left" Style="{StaticResource SampleHeaderTextStyle}" Text="Current Service Name" TextWrapping="Wrap" Margin="0,0,0,10"/>
+                            <Button x:Name="DisconnectButton" HorizontalAlignment="Left" Content="Disconnect" Click="DisconnectButton_Click"/>
+                            <TextBlock x:Name="Instructions" HorizontalAlignment="Left" Style="{StaticResource SampleHeaderTextStyle}" Text="Please select the file you want to update firmware with, then hit the Send DFU button!" Margin="0,10,0,10" TextWrapping="Wrap"/>
+                            <Button x:Name="PickFileButton" HorizontalAlignment="Left" FontSize="20" Content="Pick DFU File" Click="PickFileButton_Click"/>
+                            <Button x:Name="SendDFUButton" HorizontalAlignment="Left" FontSize="20" Content="Send DFU" Click="SendDFUButton_Click" IsEnabled="False"/>
+                            <TextBlock x:Name="ProgressStatus" HorizontalAlignment="Left" Style="{StaticResource SubheaderTextBlockStyle}" Margin="10" Visibility="Collapsed"/>
                             <ProgressBar x:Name="DFUProgressBar" Visibility="Collapsed" Margin="10" Height="15" Value="0"  IsIndeterminate="False" Maximum="100"/>
-                            <CheckBox x:Name="DebugCheckBox" Content="Debug" Click="DebugButton_Click"/>
+                            <CheckBox x:Name="DebugCheckBox" Content="Debug" VerticalAlignment="Bottom" Click="DebugButton_Click"/>
                             <Grid x:Name="DebugControlGrid" Visibility="Collapsed">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
