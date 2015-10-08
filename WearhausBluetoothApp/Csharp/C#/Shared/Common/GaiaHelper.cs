@@ -16,6 +16,7 @@ namespace Gaia
 
         //public ThreadPoolTimer PeriodicTimer;
         public bool IsWaitingForResp { get; set; }
+        public bool IsWaitingForVerification { get; set; }
 
         public bool IsSendingFile;
         public int TotalChunks;
@@ -31,6 +32,7 @@ namespace Gaia
             IsSendingFile = false;
             TotalChunks = 0;
             IsWaitingForResp = false;
+            IsWaitingForVerification = false;
 
         }
 
@@ -126,7 +128,7 @@ namespace Gaia
         /// Prepare the CRC and the 8 bytes required as part of the payload for the DFU Begin Gaia Command
         /// </summary>
         /// <returns>A GaiaMessage object containing the first bytes necessary for DFU Begin</returns>
-        private GaiaMessage CreateDFUBegin()
+        private GaiaMessage CreateDfuBegin()
         {
             if (FileBuffer == null)
             {
@@ -198,7 +200,7 @@ namespace Gaia
                     case (ushort)GaiaMessage.ArcCommand.StartDfu:
                         if (receievedMessage.PayloadSrc[0] == 0x00)
                         {
-                            resp = CreateDFUBegin();
+                            resp = CreateDfuBegin();
                         }
                         else
                         {

@@ -309,7 +309,157 @@ namespace WearhausBluetoothApp
             }
 
         }
+        
 
+        /// <summary>
+        /// Message to start the UI Services and functions to search for nearby bluetooth devices
+        /// </summary>
+        private async void VerifyDfuButton_Click(object sender, RoutedEventArgs e)
+        {
+            //this.Frame.Navigate(typeof(LoginPage), null);
+
+            // Clear any previous messages
+            MainPage.Current.NotifyUser("", NotifyType.StatusMessage);
+
+            // Find all paired instances of the Rfcomm chat service
+            BluetoothServiceInfoCollection = await DeviceInformation.FindAllAsync(
+                RfcommDeviceService.GetDeviceSelector(RfcommServiceId.FromUuid(RfcommChatServiceUuid)));
+
+            DeviceInformation bluetoothServiceInfo = null;
+            if (BluetoothServiceInfoCollection.Count > 0)
+            {
+                
+                List<string> items = new List<string>();
+                foreach (var chatServiceInfo in BluetoothServiceInfoCollection)
+                {
+                    items.Add(chatServiceInfo.Name);
+                    //Added to print services!
+                    string hid = WearhausHttpController.ParseHID(chatServiceInfo.Id);
+                    if (hid.StartsWith("1CF03E") || hid.StartsWith("00025B")) {
+                        bluetoothServiceInfo = chatServiceInfo;
+                    }
+                }
+                cvs.Source = items;
+
+                if (bluetoothServiceInfo != null)
+                {
+                    try
+                    {
+                        RunButton.IsEnabled = false;
+                        RunButton.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                        ServiceSelector.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                        TopInstruction.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+
+                        ConnectionProgress.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                        ConnectionProgress.IsIndeterminate = true;
+                        ConnectionStatus.Visibility = Windows.UI.Xaml.Visibility.Visible;
+
+                        //var bluetoothServiceInfo = BluetoothServiceInfoCollection[ServiceList.SelectedIndex];
+
+
+                        // Potential Bug Fix?? Wrap FromIdAsync call in the UI Thread, as per the instructions of:
+                        // http://blogs.msdn.com/b/wsdevsol/archive/2014/11/10/why-doesn-t-the-windows-8-1-bluetooth-rfcomm-chat-sample-work.aspx
+                        // EDIT: Actually may not work as all this does is bring the exception thrown outside of this thread, so the exception is unhandled...
+
+                        //await Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () =>
+                        //{
+                        // ONLY WORKS IN WINDOWS 10 RIGHT NOW!?
+                        BluetoothService = await RfcommDeviceService.FromIdAsync(bluetoothServiceInfo.Id);
+                        //});
+
+
+                        if (BluetoothService == null)
+                        {
+                            MainPage.Current.NotifyUser(
+                                "Access to the device is denied because the application was not granted access",
+                                NotifyType.StatusMessage);
+                            return;
+                        }
+
+                        var attributes = await BluetoothService.GetSdpRawAttributesAsync();
+                        if (!attributes.ContainsKey(SdpServiceNameAttributeId))
+                        {
+                            MainPage.Current.NotifyUser(
+                                "The Chat service is not advertising the Service Name attribute (attribute id=0x100). " +
+                                "Please verify that you are running the BluetoothRfcommChat server.",
+                                NotifyType.ErrorMessage);
+                            return;
+                        }
+
+                        var attributeReader = DataReader.FromBuffer(attributes[SdpServiceNameAttributeId]);
+                        var attributeType = attributeReader.ReadByte();
+                        if (attributeType != SdpServiceNameAttributeType)
+                        {
+                            MainPage.Current.NotifyUser(
+                                "The Chat service is using an unexpected format for the Service Name attribute. " +
+                                "Please verify that you are running the BluetoothRfcommChat server.",
+                                NotifyType.ErrorMessage);
+                            return;
+                        }
+
+                        var serviceNameLength = attributeReader.ReadByte();
+
+                        // The Service Name attribute requires UTF-8 encoding.
+                        attributeReader.UnicodeEncoding = UnicodeEncoding.Utf8;
+                        ServiceName.Text = "Connected to: \"" + bluetoothServiceInfo.Name + "\"";
+
+                        lock (this)
+                        {
+                            BluetoothSocket = new StreamSocket();
+                        }
+
+                        await BluetoothSocket.ConnectAsync(BluetoothService.ConnectionHostName, BluetoothService.ConnectionServiceName);
+
+                        BluetoothWriter = new DataWriter(BluetoothSocket.OutputStream);
+
+                        //GaiaHandler = new GaiaHelper(); // Create GAIA DFU Helper Object
+                        //HttpController = new WearhausHttpController(bluetoothServiceInfo.Id); // Create HttpController object
+
+                        //String guestResult = await HttpController.CreateGuest(); // Create a Guest account for basic information to the server
+                        //System.Diagnostics.Debug.WriteLine(guestResult);
+
+                        DataReader chatReader = new DataReader(BluetoothSocket.InputStream);
+                        ReceiveStringLoop(chatReader);
+
+                        GaiaMessage firmware_version_request = new GaiaMessage((ushort)GaiaMessage.GaiaCommand.GetAppVersion); 
+                        // Send a get app version Gaia req to the device to see what the firmware version is (for DFU)
+                        SendRawBytes(firmware_version_request.BytesSrc);
+
+                        VerifyDfuButton.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+
+                        ConnectionProgress.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                        ConnectionProgress.IsIndeterminate = false;
+                        ConnectionStatus.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+
+                        TopInstruction.Text = "Verifying Firmware Version Matches...";
+                        TopInstruction.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                        ConnectionProgress.IsIndeterminate = true;
+                        ConnectionProgress.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                        ConnectionStatus.Visibility = Windows.UI.Xaml.Visibility.Visible;
+
+                    }
+                    catch (Exception ex)
+                    {
+                        TopInstruction.Text = "No Wearhaus Arc found! Please connect to a Wearhaus Arc and then run the App again!";
+                        MainPage.Current.NotifyUser("Error: " + ex.HResult.ToString() + " - " + ex.Message,
+                            NotifyType.ErrorMessage);
+                        Disconnect();
+                    }
+                }
+                else
+                {
+                    TopInstruction.Text = "No Wearhaus Arc found! Please double check to make sure you are connected to a Wearhaus Arc in Windows Bluetooth Settings. Then run the App again!";
+                }
+            }
+            else
+            {
+                TopInstruction.Text = "No Bluetooth Devices found! Please connect to a Wearhaus Arc and then run the App again!";
+                MainPage.Current.NotifyUser(
+                    "No chat services were found. Please pair with a device that is advertising the chat service.",
+                    NotifyType.ErrorMessage);
+            }
+
+        }
         // ********************* THIS METHOD IS CURRENTLY NOT IN USE AND SHOULD NOT BE CALLED, THERE ARE NO MORE 'SERVICES' ********************
         /// <summary>
         /// Method to connect to the selected bluetooth device when clicking/tapping the device
@@ -417,25 +567,39 @@ namespace WearhausBluetoothApp
         {
             try
             {
-                RunButton.IsEnabled = true;
-                RunButton.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                if (GaiaHandler.IsWaitingForVerification)
+                {
+                    RunButton.IsEnabled = false;
+                    RunButton.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+
+                    VerifyDfuButton.IsEnabled = true;
+                    VerifyDfuButton.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                }
+                else
+                {
+                    RunButton.IsEnabled = true;
+                    RunButton.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                }
                 TopInstruction.Visibility = Windows.UI.Xaml.Visibility.Visible;
 
                 ConnectionProgress.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
                 ConnectionProgress.IsIndeterminate = false;
                 ConnectionStatus.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
 
-                SendDFUButton.IsEnabled = false;
+                SendDfuButton.IsEnabled = false;
                 ServiceSelector.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
                 ChatBox.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-                DFUProgressBar.IsIndeterminate = false;
-                DFUProgressBar.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-                DFUProgressBar.Value = 0;
+                DfuProgressBar.IsIndeterminate = false;
+                DfuProgressBar.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                DfuProgressBar.Value = 0;
 
                 Instructions.Visibility = Windows.UI.Xaml.Visibility.Visible;
                 Instructions.Text = "Please select the file you want to update firmware with, then hit the Send DFU button!";
                 PickFileButton.Visibility = Windows.UI.Xaml.Visibility.Visible;
-                SendDFUButton.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                SendDfuButton.Visibility = Windows.UI.Xaml.Visibility.Visible;
+
+                UpdateButton.IsEnabled = true;
+                UpdateButton.Visibility = Windows.UI.Xaml.Visibility.Visible;
 
                 if(GaiaHandler != null)GaiaHandler.IsSendingFile = false;
                 ProgressStatus.Text = "";
@@ -512,7 +676,7 @@ namespace WearhausBluetoothApp
                 return;
             }
 
-            SendDFUButton.IsEnabled = true;
+            SendDfuButton.IsEnabled = true;
 
             // Get CRC first from File
             var buf = await FileIO.ReadBufferAsync(DfuFile);
@@ -526,9 +690,56 @@ namespace WearhausBluetoothApp
         }
 
         /// <summary>
+        /// Button to begin checking the server for a DFU File according to which firmware version is the most updated.
+        /// Will continue without further user input (except in the case of an error).
+        /// </summary>
+        private async void UpdateButton_Click(object sender, RoutedEventArgs e)
+        {
+            MainPage.Current.NotifyUser("", NotifyType.StatusMessage);
+
+            string firmwareFullKey = "000001000AFFFF56150000000000000000";
+
+            FirmwareObj firmware = WearhausHttpController.FirmwareTable[firmwareFullKey];
+
+            DfuProgressBar.Visibility = Windows.UI.Xaml.Visibility.Visible;
+            DfuProgressBar.IsIndeterminate = true;
+            ProgressStatus.Visibility = Windows.UI.Xaml.Visibility.Visible;
+            ProgressStatus.Text = "Downloading Firmware Update...";
+            byte[] fileBuffer = await HttpController.DownloadDfuFile(firmware.url);
+
+            
+            if (fileBuffer == null)
+            {
+                MainPage.Current.NotifyUser("There was an error / problem downloading the Firmware Update. Please try again.", NotifyType.ErrorMessage);
+                ProgressStatus.Text = "There was an error downloading the Firmware Update!";
+                DfuProgressBar.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                DfuProgressBar.IsIndeterminate = false;
+                return;
+            }
+
+            HttpController.Attempted_fv = firmwareFullKey;
+            GaiaHandler.SetFileBuffer(fileBuffer);
+            Instructions.Text = "Downloaded File: " + firmware.desc;
+            // Send DFU!
+            DisconnectButton.IsEnabled = false;
+            UpdateButton.IsEnabled = false;
+            GaiaMessage startDfuCmd = new GaiaMessage((ushort)GaiaMessage.ArcCommand.StartDfu);
+
+            SendRawBytes(startDfuCmd.BytesSrc);
+            DfuProgressBar.Visibility = Windows.UI.Xaml.Visibility.Visible;
+            DfuProgressBar.IsIndeterminate = true;
+            ProgressStatus.Visibility = Windows.UI.Xaml.Visibility.Visible;
+            ProgressStatus.Text = "Finished downloading file. Beginning Update...";
+
+            //Instructions.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+            PickFileButton.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+            SendDfuButton.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+        }
+
+        /// <summary>
         /// Button to begin DFU process, will start the process without any further user input (except in the case of an error)
         /// </summary>
-        private void SendDFUButton_Click(object sender, RoutedEventArgs e)
+        private void SendDfuButton_Click(object sender, RoutedEventArgs e)
         {
             MainPage.Current.NotifyUser("", NotifyType.StatusMessage);
             if (DfuFile == null)
@@ -540,14 +751,14 @@ namespace WearhausBluetoothApp
             DisconnectButton.IsEnabled = false;
             GaiaMessage startDfuCmd = new GaiaMessage((ushort)GaiaMessage.ArcCommand.StartDfu);
             SendRawBytes(startDfuCmd.BytesSrc);
-            DFUProgressBar.Visibility = Windows.UI.Xaml.Visibility.Visible;
-            DFUProgressBar.IsIndeterminate = true;
+            DfuProgressBar.Visibility = Windows.UI.Xaml.Visibility.Visible;
+            DfuProgressBar.IsIndeterminate = true;
             ProgressStatus.Visibility = Windows.UI.Xaml.Visibility.Visible;
             ProgressStatus.Text = "Beginning Update...";
 
             Instructions.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
             PickFileButton.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-            SendDFUButton.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+            SendDfuButton.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
         }
 
         /// <summary>
@@ -653,8 +864,9 @@ namespace WearhausBluetoothApp
                 {
                     if (GaiaHandler.IsSendingFile)
                     {
-                        TopInstruction.Text = "DFU Complete! Your Arc will automatically restart, please Listen to your Arc for a double beep startup sound to indicate a successful upgrade!";
+                        TopInstruction.Text = "Firmware Update Complete! Your Arc will automatically restart, please Listen to your Arc for a double beep startup sound to indicate a successful upgrade! When you hear the beep or have waited about 30 seconds, please press the Verify Update button to verify that the update worked!";
                         GaiaHandler.IsSendingFile = false;
+                        GaiaHandler.IsWaitingForVerification = true;
                         Disconnect();
                         return;
                     }
@@ -709,6 +921,28 @@ namespace WearhausBluetoothApp
                 {
                     string firmware_ver = WearhausHttpController.ParseFirmwareVersion(receivedMessage.PayloadSrc);
                     HttpController.Current_fv = firmware_ver;
+                    if (GaiaHandler.IsWaitingForVerification)
+                    {
+                        if (HttpController.Current_fv == HttpController.Attempted_fv)
+                        {
+                            GaiaHandler.IsWaitingForVerification = false;
+                            TopInstruction.Text = "Success! Your Firmware Update was Successfully Verified! Thank you for updating your Wearhaus Arc!";
+                            ConnectionProgress.IsIndeterminate = false;
+                            ConnectionProgress.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                            ConnectionStatus.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                            VerifyDfuButton.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                        }
+                        else
+                        {
+                            GaiaHandler.IsWaitingForVerification = false;
+                            TopInstruction.Text = "Oh no! Your Firmware Version does not match the version you tried to update to! Please try restarting the app and updating again. If the problem persists, contact Wearhaus Support";
+                            ConnectionProgress.IsIndeterminate = false;
+                            ConnectionProgress.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                            ConnectionStatus.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                            VerifyDfuButton.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+
+                        }
+                    }
                 }
 
                 ConversationList.Items.Add("Received: " + receivedStr);
@@ -718,7 +952,7 @@ namespace WearhausBluetoothApp
                 {
                     ProgressStatus.Text = resp.InfoMessage;
                     GaiaHandler.IsSendingFile = false;
-                    DFUProgressBar.IsIndeterminate = false;
+                    DfuProgressBar.IsIndeterminate = false;
                 }
 
                 // DFU Files Sending case
@@ -726,7 +960,7 @@ namespace WearhausBluetoothApp
                 {
                     ConversationList.Items.Add("Receieved Go Ahead for DFU! Starting DFU now!");
                     ProgressStatus.Text = "Received Go Ahead for Update! Starting Update now!";
-                    DFUProgressBar.IsIndeterminate = false;
+                    DfuProgressBar.IsIndeterminate = false;
                     //DFUProgressBar.Value = 0;
 
                     int chunksRemaining = GaiaHandler.ChunksRemaining();
@@ -746,7 +980,7 @@ namespace WearhausBluetoothApp
 
                         ProgressStatus.Text = "Update in progress...";
                         
-                        DFUProgressBar.Value = 100 * (float)(GaiaHandler.TotalChunks - chunksRemaining) / (float)GaiaHandler.TotalChunks;
+                        DfuProgressBar.Value = 100 * (float)(GaiaHandler.TotalChunks - chunksRemaining) / (float)GaiaHandler.TotalChunks;
 
                         if (chunksRemaining % 1000 == 0)
                         {
@@ -756,7 +990,7 @@ namespace WearhausBluetoothApp
 
                     }
                     ProgressStatus.Text = "Finished Sending File! Verifying... (Your Arc will restart soon after this step!)";
-                    DFUProgressBar.IsIndeterminate = true;
+                    DfuProgressBar.IsIndeterminate = true;
                     ConversationList.Items.Add("Finished Sending DFU! Verifying...");
 
                 }

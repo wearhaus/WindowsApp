@@ -13,20 +13,20 @@ namespace WearhausServer
     {
 
         public static Dictionary<string, FirmwareObj> FirmwareTable = new Dictionary<string, FirmwareObj>{
-            {"0000001000AFFFF56150000000000000000", 
-            new FirmwareObj("https://s3.amazonaws.com/wearhausfw/version615.dfu", "0000001000AFFFF56150000000000000000", "1.0.0", @"Base Firmware Version", 
-                1, 1, 1, 1, 1, 1, "", new string[1] {"Any"}) 
+            {"000001000AFFFF56150000000000000000", 
+            new FirmwareObj("", "000001000AFFFF56150000000000000000", "1.0.0", @"Base Firmware Version", 
+                1, 1, 1, 1, 1, 1, "https://s3.amazonaws.com/wearhausfw/version615.dfu", new string[1] {"Any"}) 
             },
 
-            {"0000001000AFFFF11000000000000000000",
-            new FirmwareObj("", "0000001000AFFFF11000000000000000000", "1.1.0", @"Firmware Version 1.1.0 adds the ability to use the Aux cable as 
-            an audio source while the Arc is on and/or broadcasting",
+            {"000001000AFFFF11000000000000000000",
+            new FirmwareObj("", "000001000AFFFF11000000000000000000", "1.1.0", @"Firmware Version 1.1.0 adds the ability to use the Aux cable as 
+            an audio source while the Arc is on and/or broadcasting, along with other changes.",
                 8, 8, 1, 1, 1, 1, "", new string[2] {"1.0.0", "Any"}) 
             },
 
             {"????",
             new FirmwareObj("", "????", "1.2.0", @"Firmware Version 1.2.0 enables the bluetooth Microphone and be able to handle phone
-            calls and other uses of the mic during normal headphone operation.",
+            calls and other uses of the mic during normal headphone operation, along with other changes.",
                 8, 8, 1, 1, 1, 1, "", new string[3] {"1.1.0", "1.0.0", "Any"}) 
             }
         };
@@ -59,7 +59,9 @@ namespace WearhausServer
         private string User_id;
         private string Token;
 
+        public string Old_fv { get; set; }
         public string Current_fv { get; set; }
+        public string Attempted_fv { get; set; }
         // Last Successful Reponse from an HTTP Request
         public string LastHttpResponse { get; private set; }
 
@@ -68,9 +70,30 @@ namespace WearhausServer
             HID = WearhausHttpController.ParseHID(deviceID);
             User_id = null;
             Token = null;
-            
+
+            Old_fv = null;
             Current_fv = null;
+            Attempted_fv = null;
             LastHttpResponse = null;
+        }
+
+        public async Task<byte[]> DownloadDfuFile(string url)
+        {
+            byte[] fileArr;
+            using (var client = new HttpClient())
+            {
+                try
+                {
+                    HttpResponseMessage responseFile = await client.GetAsync(url);
+                    fileArr = await responseFile.Content.ReadAsByteArrayAsync();
+                }
+                catch (Exception e)
+                {
+                    System.Diagnostics.Debug.WriteLine("Exception in HttpGet response:" + e.Message);
+                    fileArr = null;
+                }
+            }
+            return fileArr;
         }
 
         public async Task<string> CreateNewUser(string email, string password)
@@ -113,9 +136,9 @@ namespace WearhausServer
         {
             var vals = new Dictionary<string, string>{
                 {"token", Token},
-                {"old_fv", Current_fv},
+                {"old_fv", Old_fv},
                 {"new_fv", Current_fv},
-                {"attempted_fv", Current_fv},
+                {"attempted_fv", Attempted_fv},
                 {"dfu_status", dfu_status},
 #if WINDOWS_PHONE_APP
                 {"device", "windows_phone"}
