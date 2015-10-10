@@ -13,10 +13,10 @@
 
     <Grid Background="#00bccc">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="2*"  MinWidth="230" MaxWidth="600"/>
-            <ColumnDefinition Width="8*"/>
+            <ColumnDefinition Width="0*"  MinWidth="0" MaxWidth="600"/>
+            <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <Grid x:Name="LeftPane" Background="#00bccc" Grid.Column="0" Visibility="Collapsed">
+        <Grid x:Name="LeftPane" Background="#00bccc" Grid.Column="0" Visibility="Collapsed" HorizontalAlignment="Left" Grid.ColumnSpan="2" Width="269">
             <Grid.RowDefinitions>
                 <RowDefinition Height="115"/>
                 <RowDefinition Height="*"/>

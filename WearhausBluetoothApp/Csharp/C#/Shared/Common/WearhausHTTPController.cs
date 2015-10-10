@@ -132,14 +132,14 @@ namespace WearhausServer
             return resp;
         }
 
-        public async Task<string> DfuReport(string dfu_status, bool dfu_success)
+        public async Task<string> DfuReport(int dfu_status)
         {
             var vals = new Dictionary<string, string>{
                 {"token", Token},
                 {"old_fv", Old_fv},
                 {"new_fv", Current_fv},
                 {"attempted_fv", Attempted_fv},
-                {"dfu_status", dfu_status},
+                {"dfu_status", dfu_status.ToString()},
 #if WINDOWS_PHONE_APP
                 {"device", "windows_phone"}
 #else

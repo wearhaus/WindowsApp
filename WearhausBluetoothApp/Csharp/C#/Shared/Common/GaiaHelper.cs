@@ -18,8 +18,11 @@ namespace Gaia
         public bool IsWaitingForResp { get; set; }
         public bool IsWaitingForVerification { get; set; }
 
-        public bool IsSendingFile;
-        public int TotalChunks;
+        public bool IsSendingFile { get; set; }
+
+        public int TotalChunks { get; set; }
+
+        public string AttemptedFirmware { get; set; }
 
         /// <summary>
         /// Default constructor
@@ -33,6 +36,8 @@ namespace Gaia
             TotalChunks = 0;
             IsWaitingForResp = false;
             IsWaitingForVerification = false;
+
+            AttemptedFirmware = null;
 
         }
 
@@ -205,7 +210,7 @@ namespace Gaia
                         else
                         {
                             resp = GaiaMessage.CreateErrorGaia(@" Firmware Update Failed. Try again, or if this error persists, contact customer support at
-                                support@wearhaus.com. (ERROR 9)");
+                                support@wearhaus.com. (ERROR 9)", 9);
                             //TODO: Send DFU Report to Server with Status 9
                         }
                         break;
@@ -214,7 +219,7 @@ namespace Gaia
                         if (receievedMessage.PayloadSrc[0] != 0x00)
                         {
                             resp = GaiaMessage.CreateErrorGaia(@" Firmware Update Failed. Try again, or if this error persists, contact customer support at
-                                support@wearhaus.com. (ERROR 9)");
+                                support@wearhaus.com. (ERROR 9)", 9);
                             //TODO: Send DFU Report to Server with Status 9
                         }
                         break;
@@ -231,23 +236,23 @@ namespace Gaia
                         if (receievedMessage.PayloadSrc[0] == 0x10)
                         {
                             switch(receievedMessage.PayloadSrc[1]){
-                                case (byte)GaiaMessage.DfuStatus.Download:
+                                case (byte)GaiaMessage.DfuStatusNotification.Download:
                                     IsSendingFile = true;
                                     // WE NEED TO LOOP SENDING CHUNKS
                                     break;
 
-                                case (byte)GaiaMessage.DfuStatus.Download_Failure:
-                                    resp = GaiaMessage.CreateErrorGaia(" Error 0x01, problem during file download. Please disconnect and try again. If the problem persists contact Wearhaus Support!");
+                                case (byte)GaiaMessage.DfuStatusNotification.Download_Failure:
+                                    resp = GaiaMessage.CreateErrorGaia(" Firmware Download to Arc Failed. Try again, and if this error persists, contact customer support at wearhaus.com. Error 1", 1);
                                     break;
 
-                                case (byte)GaiaMessage.DfuStatus.Verification:
+                                case (byte)GaiaMessage.DfuStatusNotification.Verification:
                                     break;
                                 
-                                case (byte)GaiaMessage.DfuStatus.Verification_Failure:
-                                    resp = GaiaMessage.CreateErrorGaia(" Error 0x03, problem during file verification. Please disconnect and try again. If the problem persists contact Wearhaus Support!");
+                                case (byte)GaiaMessage.DfuStatusNotification.Verification_Failure:
+                                    resp = GaiaMessage.CreateErrorGaia(" Verification Failed. Try again, and if this error persists, contact customer support at wearhaus.com. Error 3", 1);
                                     break;
 
-                                case (byte)GaiaMessage.DfuStatus.Verification_Success:
+                                case (byte)GaiaMessage.DfuStatusNotification.Verification_Success:
                                     break;
                             }
                         }

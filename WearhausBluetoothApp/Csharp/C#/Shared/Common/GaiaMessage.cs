@@ -50,13 +50,14 @@ namespace Gaia
         public byte[] PayloadSrc { get; private set; }
         public byte Checksum { get; private set; }
         public string InfoMessage { get; set; }
+        public int DfuStatus { get; set; }
 
 
         /// <summary>
         /// Constructor for creating an empty message to signify an error only
         /// </summary>
         /// <param name="errorMsg">Error Message to be displayed elsewhere for information purposes</param>
-        public GaiaMessage(string errorMsg)
+        public GaiaMessage(string errorMsg, int dfuStatus = 0)
         {
             BytesSrc = null;
             PayloadSrc = null;
@@ -64,6 +65,7 @@ namespace Gaia
             IsFlagSet = false;
 
             IsError = true;
+            DfuStatus = dfuStatus;
             InfoMessage = errorMsg;
         }
 
@@ -149,9 +151,9 @@ namespace Gaia
         {
         }
 
-        public static GaiaMessage CreateErrorGaia(string errMsg)
+        public static GaiaMessage CreateErrorGaia(string errMsg, int dfuStatus = 0)
         {
-            return new GaiaMessage(errMsg);
+            return new GaiaMessage(errMsg, dfuStatus);
         }
 
         public static GaiaMessage CreateAck(ushort usrCmd)
@@ -227,7 +229,7 @@ namespace Gaia
         /// <summary>
         /// Public enum for dfu state which is the payload for the Event Gaia Notification (0x4003)
         /// </summary>
-        public enum DfuStatus : byte
+        public enum DfuStatusNotification : byte
         {
             Download = 0x00,
             Download_Failure = 0x01,
