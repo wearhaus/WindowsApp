@@ -22,15 +22,16 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             <StackPanel Margin="0,0,0,250" Grid.ColumnSpan="2">
-                <TextBlock x:Name="TopInstruction" Style="{StaticResource ScenarioDescriptionTextStyle}" FontSize="20" TextWrapping="Wrap">
-                    Run to Update Firmware for your Wearhaus Arc! Please make sure you are connected the internet, and to your Arc in Windows Bluetooth Settings. Also make sure your Arc is charged. This may take up to 15 minutes.
-                </TextBlock>
             </StackPanel>
 
             <ScrollViewer x:Name="InfoViewer" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto" Grid.ColumnSpan="2" Margin="0,34,0,0" Grid.RowSpan="2" ViewChanged="InfoViewer_ViewChanged">
-                <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top">
-                    <Button x:Name="RunButton" Content="Run" Margin="0, 170, 20,20" Click="RunButton_Click"/>
-                    <Button x:Name="VerifyDfuButton" Content="Verify Update" Margin="0, 170, 20,20" Click="VerifyDfuButton_Click" Visibility="Collapsed"/>
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Top">
+                    <Image Source="Assets/logo_wordmark_white_no_bg620x300.png"  Stretch="Uniform" HorizontalAlignment="Center" Width="200" Grid.Column="1" Margin="0,0,0,10" Grid.Row="1" Height="100"/>
+                    <TextBlock x:Name="TopInstruction" Style="{StaticResource ScenarioDescriptionTextStyle}" FontSize="20" TextWrapping="Wrap">
+                        Run to Update Firmware for your Wearhaus Arc! Please make sure you are connected the internet, and to your Arc in Windows Bluetooth Settings. Also make sure your Arc is charged. This may take up to 15 minutes.
+                    </TextBlock>
+                    <Button x:Name="RunButton" Content="Run" Margin="0, 20, 20,20" Click="RunButton_Click"/>
+                    <Button x:Name="VerifyDfuButton" Content="Verify Update" Margin="0, 20, 20,20" Click="VerifyDfuButton_Click" Visibility="Collapsed"/>
                     <!-- Service Selector -->
                     <Grid x:Name="ServiceSelector" Visibility="Collapsed">
                         <StackPanel Orientation="Vertical">

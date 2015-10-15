@@ -12,25 +12,6 @@ namespace WearhausServer
     public class WearhausHttpController
     {
 
-        public static Dictionary<string, FirmwareObj> FirmwareTable = new Dictionary<string, FirmwareObj>{
-            {"000001000AFFFF56150000000000000000", 
-            new FirmwareObj("", "000001000AFFFF56150000000000000000", "1.0.0", @"Base Firmware Version", 
-                1, 1, 1, 1, 1, 1, "https://s3.amazonaws.com/wearhausfw/version615.dfu", new string[1] {"Any"}) 
-            },
-
-            {"000001000AFFFF11000000000000000000",
-            new FirmwareObj("", "000001000AFFFF11000000000000000000", "1.1.0", @"Firmware Version 1.1.0 adds the ability to use the Aux cable as 
-            an audio source while the Arc is on and/or broadcasting, along with other changes.",
-                8, 8, 1, 1, 1, 1, "", new string[2] {"1.0.0", "Any"}) 
-            },
-
-            {"????",
-            new FirmwareObj("", "????", "1.2.0", @"Firmware Version 1.2.0 enables the bluetooth Microphone and be able to handle phone
-            calls and other uses of the mic during normal headphone operation, along with other changes.",
-                8, 8, 1, 1, 1, 1, "", new string[3] {"1.1.0", "1.0.0", "Any"}) 
-            }
-        };
-
 
 #if DEBUG
         private const string WEARHAUS_URI = "http://wearhausapistaging.herokuapp.com/v1.2/";
@@ -147,6 +128,15 @@ namespace WearhausServer
 #endif
             };
             string resp = await HttpPost(PATH_HEADPHONES_DFU_REPORT, vals);
+
+            string text = "SENT DFU REPORT:\n";
+            foreach (KeyValuePair<string, string> kvp in vals)
+            {
+                //textBox3.Text += ("Key = {0}, Value = {1}", kvp.Key, kvp.Value);
+                text += string.Format("\n\tKey = {0}, Value = {1}", kvp.Key, kvp.Value);
+            }
+            System.Diagnostics.Debug.WriteLine(text);
+            System.Diagnostics.Debug.WriteLine("RESPONSE TO DFU REPORT:\n" + resp);
             return resp;
 
         }

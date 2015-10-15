@@ -94,14 +94,14 @@ namespace SDKTemplate
                 StatusBlock.Text = strMessage;
 
                 // Collapse the StatusBlock if it has no text to conserve real estate.
-                if (StatusBlock.Text != String.Empty)
-                {
-                    StatusBorder.Visibility = Windows.UI.Xaml.Visibility.Visible;
-                }
-                else
-                {
-                    StatusBorder.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-                }
+                //if (StatusBlock.Text != String.Empty)
+                //{
+                //    StatusBorder.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                //}
+                //else
+                //{
+                //    StatusBorder.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                //}
             }
         }
     }

@@ -242,14 +242,14 @@ namespace Gaia
                                     break;
 
                                 case (byte)GaiaMessage.DfuStatusNotification.Download_Failure:
-                                    resp = GaiaMessage.CreateErrorGaia(" Firmware Download to Arc Failed. Try again, and if this error persists, contact customer support at wearhaus.com. Error 1", 1);
+                                    resp = GaiaMessage.CreateErrorGaia(" Firmware Download to Arc Failed. Try again, and if this error persists, contact customer support at support@wearhaus.com. Error 1", 1);
                                     break;
 
                                 case (byte)GaiaMessage.DfuStatusNotification.Verification:
                                     break;
                                 
                                 case (byte)GaiaMessage.DfuStatusNotification.Verification_Failure:
-                                    resp = GaiaMessage.CreateErrorGaia(" Verification Failed. Try again, and if this error persists, contact customer support at wearhaus.com. Error 3", 1);
+                                    resp = GaiaMessage.CreateErrorGaia(" Verification Failed. Try again, and if this error persists, contact customer support at support@wearhaus.com. Error 3", 1);
                                     break;
 
                                 case (byte)GaiaMessage.DfuStatusNotification.Verification_Success:

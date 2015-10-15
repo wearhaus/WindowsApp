@@ -6,7 +6,7 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Common\ContinuationManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Common\DfuCRC.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Common\FirmwareObj.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Common\Firmware.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Common\GaiaHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Common\GaiaMessage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Common\NavigationHelper.cs" />
@@ -48,6 +48,12 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)Assets\arc_update_step1.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\arc_update_step2.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\arc_update_step3.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\arc_update_wp8_step1.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\arc_update_wp8_step2.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\arc_update_wp8_step3.png" />
     <Content Include="$(MSBuildThisFileDirectory)Assets\logo_black_transparent150x150.png" />
     <Content Include="$(MSBuildThisFileDirectory)Assets\logo_black_transparent30x30.png" />
     <Content Include="$(MSBuildThisFileDirectory)Assets\logo_black_transparent310x150.png" />
@@ -68,5 +74,13 @@
     <Content Include="$(MSBuildThisFileDirectory)Assets\logo_wordmark_white_no_bg310x150.png" />
     <Content Include="$(MSBuildThisFileDirectory)Assets\logo_wordmark_white_no_bg480x800.png" />
     <Content Include="$(MSBuildThisFileDirectory)Assets\logo_wordmark_white_no_bg620x300.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\wearhaus201502.502.jpg" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\wearhaus5.439.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\wearhaus6.179.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\wearhaus6.181.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\wearhaus6.182.cropped.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\wearhaus6.182.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\wearhaus6.464.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\wearhaus6.604.png" />
   </ItemGroup>
 </Project>
