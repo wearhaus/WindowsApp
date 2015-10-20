@@ -8,27 +8,27 @@ namespace WearhausServer
     {
 
         public static Dictionary<string, Firmware> FirmwareTable = new Dictionary<string, Firmware>{
-            {"000001000AFFFF56150000000000000000", 
-            new Firmware("", "000001000AFFFF56150000000000000000", "1.0.0", @"Base Firmware Version", 
-                1, 1, 1, 1, 1, 1, "https://s3.amazonaws.com/wearhausfw/version615.dfu", new string[1] {"Any"}) 
+            {"5425", 
+            new Firmware("000001000AFFFF56150000000000000000", "1.0.0", "5425", @"Base Firmware Version", 
+                1, 1, 1, 1, 1, 1, "https://s3.amazonaws.com/wearhausfw/version425.dfu", new string[0] {}) 
             },
 
-            {"000001000AFFFF11000000000000000000",
-            new Firmware("", "000001000AFFFF11000000000000000000", "1.1.0", @"Firmware Version 1.1.0 adds the ability to use the Aux cable as 
+            {"5615", 
+            new Firmware("000001000AFFFF56150000000000000000", "1.0.1", "5615", @"1.0.1", 
+                1, 1, 1, 1, 1, 1, "https://s3.amazonaws.com/wearhausfw/version615.dfu", new string[0] {}) 
+            },
+
+            {"1100",
+            new Firmware("000001000AFFFF11000000000000000000", "1.1.0", "1100", @"Firmware Version 1.1.0 adds the ability to use the Aux cable as 
             an audio source while the Arc is on and/or broadcasting, along with other changes.",
-                8, 8, 1, 1, 1, 1, "", new string[2] {"1.0.0", "Any"}) 
-            },
-
-            {"????",
-            new Firmware("", "????", "1.2.0", @"Firmware Version 1.2.0 enables the bluetooth Microphone and be able to handle phone
-            calls and other uses of the mic during normal headphone operation, along with other changes.",
-                8, 8, 1, 1, 1, 1, "", new string[3] {"1.1.0", "1.0.0", "Any"}) 
+                8, 8, 1, 1, 1, 1, "https://s3.amazonaws.com/wearhausfw/version1100.dfu", new string[4] {"5402", "5425", "5615", "5923"}) 
             }
+
         };
 
-        public string dateReleased { get; set; }
         public string fullCode { get; set; }
         public string humanName { get; set; }
+        public string uniqueCode { get; set; }
         public string desc { get; set; }
         public int androidRecVC { get; set; }
         public int androidMinVC { get; set; }
@@ -39,11 +39,11 @@ namespace WearhausServer
         public string url { get; set; }
         public string[] validBases { get; set; }
 
-        public Firmware(string dateReleased, string fullCode, string humanName, string desc, int androidRecVC, int androidMinVC, int iosRecVC, int iosMinVC, int windowsRecVC, int windowsMinVC, string url, string[] validBases)
+        public Firmware(string fullCode, string humanName, string uniqueCode, string desc, int androidRecVC, int androidMinVC, int iosRecVC, int iosMinVC, int windowsRecVC, int windowsMinVC, string url, string[] validBases)
         {
-            this.dateReleased = dateReleased;
             this.fullCode = fullCode;
             this.humanName = humanName;
+            this.uniqueCode = uniqueCode;
             this.desc = desc;
             this.androidRecVC = androidRecVC;
             this.androidMinVC = androidMinVC;

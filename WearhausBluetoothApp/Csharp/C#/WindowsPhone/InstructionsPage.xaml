@@ -18,7 +18,7 @@
                 <Image x:Name="InstructionImage" Source="Assets/logo_wordmark_white_no_bg620x300.png" Margin="10" HorizontalAlignment="Center" Height="460" />
             </StackPanel>
             <StackPanel Grid.Row="1" VerticalAlignment="Bottom">
-                <TextBlock x:Name="InstructionText" Margin="10" VerticalAlignment="Bottom"  Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="0" FontSize="18" TextWrapping="Wrap" HorizontalAlignment="Center">
+                <TextBlock x:Name="InstructionText" Margin="10" VerticalAlignment="Bottom"  Style="{StaticResource ScenarioDescriptionTextStyle}" FontSize="18" TextWrapping="Wrap" HorizontalAlignment="Center">
                     Welcome to the Wearhaus Arc Firmware Update App! Please turn on your Arc and press Next
                 </TextBlock>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">

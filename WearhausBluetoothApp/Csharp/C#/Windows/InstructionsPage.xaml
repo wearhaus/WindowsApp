@@ -23,7 +23,7 @@
             <StackPanel Grid.Row="1">
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0">
                     <TextBlock x:Name="InstructionText"  Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10" FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Center" TextWrapping="Wrap" Width="424">
-                        <Run Text="Step 1: Open Windows Bluetooth Settings by searching for Bluetooth Settings in the Windows Search Bar."/>
+                        Step 1: Open Windows Bluetooth Settings by searching for Bluetooth Settings in the Windows Search Bar.
                     </TextBlock>
                     <Image x:Name="InstructionImage" Source="Assets/arc_update_step1.png" Margin="10" HorizontalAlignment="Center" Height="450" />
                 </StackPanel>

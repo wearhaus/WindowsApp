@@ -47,7 +47,7 @@ namespace WearhausBluetoothApp
     {
         // Wearhaus UUID for GAIA: 00001107-D102-11E1-9B23-00025B00A5A5
         // Only looking for this UUID e.g. App only looks for Wearhaus Arc!
-        private static readonly Guid RfcommChatServiceUuid = Guid.Parse("00001107-D102-11E1-9B23-00025B00A5A5"); // "CSR Gaia Service"
+        private static readonly Guid RfcommGAIAServiceUuid = Guid.Parse("00001107-D102-11E1-9B23-00025B00A5A5"); // "CSR Gaia Service"
 
         // The Id of the Service Name SDP attribute
         private const UInt16 SdpServiceNameAttributeId = 0x100;
@@ -178,7 +178,7 @@ namespace WearhausBluetoothApp
 
             // Find all paired instances of the Rfcomm chat service
             BluetoothServiceInfoCollection = await DeviceInformation.FindAllAsync(
-                RfcommDeviceService.GetDeviceSelector(RfcommServiceId.FromUuid(RfcommChatServiceUuid)));
+                RfcommDeviceService.GetDeviceSelector(RfcommServiceId.FromUuid(RfcommGAIAServiceUuid)));
 
             DeviceInformation bluetoothServiceInfo = null;
             if (BluetoothServiceInfoCollection.Count > 0)
@@ -321,7 +321,7 @@ namespace WearhausBluetoothApp
 
             // Find all paired instances of the Rfcomm chat service
             BluetoothServiceInfoCollection = await DeviceInformation.FindAllAsync(
-                RfcommDeviceService.GetDeviceSelector(RfcommServiceId.FromUuid(RfcommChatServiceUuid)));
+                RfcommDeviceService.GetDeviceSelector(RfcommServiceId.FromUuid(RfcommGAIAServiceUuid)));
 
             DeviceInformation bluetoothServiceInfo = null;
             if (BluetoothServiceInfoCollection.Count > 0)
@@ -430,7 +430,7 @@ namespace WearhausBluetoothApp
                     }
                     catch (Exception ex)
                     {
-                        TopInstruction.Text = "There was a problem connecting to your Wearhaus Arc. Please wait for the Wearhaus Arc to double-beep if you are doing a firmware update and then press Verify.";
+                        TopInstruction.Text = "There was a problem connecting to your Wearhaus Arc. Please wait for the Wearhaus Arc to double-beep if you are doing a firmware update and then press Verify. If this keeps happening, try turning your Arc off and on and reconnecting to your Arc in Windows Bluetooth Settings. Then press Verify.";
                         MainPage.Current.NotifyUser("Error: " + ex.HResult.ToString() + " - " + ex.Message,
                             NotifyType.ErrorMessage);
                         Disconnect();
@@ -438,12 +438,12 @@ namespace WearhausBluetoothApp
                 }
                 else
                 {
-                    TopInstruction.Text = "No Wearhaus Arc found! Please wait for the Wearhaus Arc to double-beep if you are doing a firmware update and then press Verify.";
+                    TopInstruction.Text = "No Wearhaus Arc found! Please wait for the Wearhaus Arc to double-beep if you are doing a firmware update and then press Verify. If this keeps happening, try turning your Arc off and on and reconnecting to your Arc in Windows Bluetooth Settings. Then press Verify.";
                 }
             }
             else
             {
-                TopInstruction.Text = "No Bluetooth Devices found! Please wait for the Wearhaus Arc to double-beep if you are doing a firmware update and then press Verify.";
+                TopInstruction.Text = "No Bluetooth Devices found! Please wait for the Wearhaus Arc to double-beep if you are doing a firmware update and then press Verify. If this keeps happening, try turning your Arc off and on and reconnecting to your Arc in Windows Bluetooth Settings. Then press Verify.";
                 MainPage.Current.NotifyUser(
                     "No chat services were found. Please pair with a device that is advertising the chat service.",
                     NotifyType.ErrorMessage);
@@ -584,7 +584,7 @@ namespace WearhausBluetoothApp
                 DfuProgressBar.Value = 0;
 
                 Instructions.Visibility = Windows.UI.Xaml.Visibility.Visible;
-                Instructions.Text = "Please select the file you want to update firmware with, then hit the Send DFU button!";
+                Instructions.Text = "Please press update when ready to begin firmware update!";
                 PickFileButton.Visibility = Windows.UI.Xaml.Visibility.Visible;
                 SendDfuButton.Visibility = Windows.UI.Xaml.Visibility.Visible;
 
@@ -687,16 +687,26 @@ namespace WearhausBluetoothApp
         {
             MainPage.Current.NotifyUser("", NotifyType.StatusMessage);
 
-            // TODO: replace this line with a call to the server to return the proper firmware key
-            string firmwareFullKey = "000001000AFFFF56150000000000000000";
-            GaiaHandler.AttemptedFirmware = firmwareFullKey;
+            string latestFirmware = await HttpController.GetLatestFirmwareTable();
+            System.Diagnostics.Debug.WriteLine("LATEST FIRMWARE: " + latestFirmware);
+            Firmware firmwareToUpdate = Firmware.FirmwareTable[latestFirmware];
 
-            Firmware firmwareToUpdate = Firmware.FirmwareTable[GaiaHandler.AttemptedFirmware];
+
 
             DfuProgressBar.Visibility = Windows.UI.Xaml.Visibility.Visible;
             DfuProgressBar.IsIndeterminate = true;
             ProgressStatus.Visibility = Windows.UI.Xaml.Visibility.Visible;
             ProgressStatus.Text = "Downloading Firmware Update...";
+
+            GaiaHandler.AttemptedFirmware = firmwareToUpdate.fullCode;
+            if (!firmwareToUpdate.validBases.Contains(HttpController.Current_fv))
+            {
+                // TODO: write the actual logic here instead of just defaulting to 5615
+                ProgressStatus.Text = "This version of the firmware cannot be directly updated to the latest version. You must update to another version first. Fetching older update...";
+                firmwareToUpdate = Firmware.FirmwareTable["5615"];
+                GaiaHandler.AttemptedFirmware = firmwareToUpdate.fullCode;
+            }
+
             byte[] fileBuffer = await HttpController.DownloadDfuFile(firmwareToUpdate.url);
 
             
@@ -1027,7 +1037,7 @@ namespace WearhausBluetoothApp
 
         private void InfoViewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
         {
-
+        
         }
 
     }

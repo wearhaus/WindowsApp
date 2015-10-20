@@ -28,6 +28,7 @@ namespace WearhausServer
         private const string PATH_ACCOUNT_FORGOT_PASSWORD_LOGIN = "account/forgot_password_login";
 
         private const string PATH_HEADPHONES_DFU_REPORT = "headphones/dfu_report";
+        private const string PATH_FIRMWARE_TABLE = "headphones/firmware_table";
 
         private const string PATH_USERS_SHOW = "users/forgot_password_login";
         private const string PATH_USERS_PRIVATE_PROFILE = "users/forgot_password_login";
@@ -75,6 +76,53 @@ namespace WearhausServer
                 }
             }
             return fileArr;
+        }
+
+        public async Task<string> GetLatestFirmwareTable()
+        {
+            var param = new Dictionary<string, string>();
+            string resp = await HttpPost(PATH_FIRMWARE_TABLE, param);
+
+            JsonObject x = JsonObject.Parse(resp);
+            JsonObject f = x.GetNamedObject("firmware");
+            string latestVer = x["latest"].GetString();
+
+            // Update Firmware Table
+            foreach(string key in f.Keys)
+            {
+                JsonObject firmwareJsonObj = f.GetNamedObject(key);
+
+
+                int android_min_vc = int.Parse(firmwareJsonObj["android_min_vc"].GetString());
+                int android_rec_vc = int.Parse(firmwareJsonObj["android_rec_vc"].GetString());
+                string desc = firmwareJsonObj["desc"].GetString();
+                string full_code = firmwareJsonObj["full_code"].GetString();
+                string human_name = firmwareJsonObj["human_name"].GetString();
+                string unique_code = firmwareJsonObj["unique_code"].GetString();
+                string url = firmwareJsonObj["url"].GetString();
+
+                var jsonArr_valid_bases = firmwareJsonObj["valid_bases"].GetArray();
+                string[] valid_bases = new string[jsonArr_valid_bases.Count];
+                for (int i = 0; i < jsonArr_valid_bases.Count; i++){
+                    valid_bases[i] = jsonArr_valid_bases[i].GetString();
+                }
+
+                Firmware firmwareObj = new Firmware(full_code, human_name, unique_code, desc, android_rec_vc, android_min_vc, 1, 1, 1, 1, url, valid_bases);
+                if (Firmware.FirmwareTable.ContainsKey(key))
+                {
+                    Firmware.FirmwareTable[key] = firmwareObj;
+                }
+                else
+                {
+                    Firmware.FirmwareTable.Add(key, firmwareObj);
+                }
+            }
+
+            JsonObject latestObj = f.GetNamedObject(latestVer);
+            
+            
+
+            return latestVer;
         }
 
         public async Task<string> CreateNewUser(string email, string password)
