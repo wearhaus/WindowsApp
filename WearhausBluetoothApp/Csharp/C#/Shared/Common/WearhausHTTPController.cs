@@ -118,10 +118,6 @@ namespace WearhausServer
                 }
             }
 
-            JsonObject latestObj = f.GetNamedObject(latestVer);
-            
-            
-
             return latestVer;
         }
 

@@ -22,8 +22,6 @@ namespace Gaia
 
         public int TotalChunks { get; set; }
 
-        public string AttemptedFirmware { get; set; }
-
         /// <summary>
         /// Default constructor
         /// </summary>
@@ -36,9 +34,6 @@ namespace Gaia
             TotalChunks = 0;
             IsWaitingForResp = false;
             IsWaitingForVerification = false;
-
-            AttemptedFirmware = null;
-
         }
 
         /// <summary>

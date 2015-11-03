@@ -430,7 +430,7 @@ namespace WearhausBluetoothApp
                     }
                     catch (Exception ex)
                     {
-                        TopInstruction.Text = "There was a problem connecting to your Wearhaus Arc. Please wait for the Wearhaus Arc to double-beep if you are doing a firmware update and then press Verify. If this keeps happening, try turning your Arc off and on and reconnecting to your Arc in Windows Bluetooth Settings. Then press Verify.";
+                        TopInstruction.Text = "There was a problem connecting to your Wearhaus Arc. Please wait for the Wearhaus Arc to double-beep if you are doing a firmware update and then press Verify. If this keeps happening, leave this app running and try turning your Arc off and on and reconnecting to your Arc in Windows Bluetooth Settings. Then press Verify.";
                         MainPage.Current.NotifyUser("Error: " + ex.HResult.ToString() + " - " + ex.Message,
                             NotifyType.ErrorMessage);
                         Disconnect();
@@ -438,12 +438,12 @@ namespace WearhausBluetoothApp
                 }
                 else
                 {
-                    TopInstruction.Text = "No Wearhaus Arc found! Please wait for the Wearhaus Arc to double-beep if you are doing a firmware update and then press Verify. If this keeps happening, try turning your Arc off and on and reconnecting to your Arc in Windows Bluetooth Settings. Then press Verify.";
+                    TopInstruction.Text = "No Wearhaus Arc found! Please wait for the Wearhaus Arc to double-beep if you are doing a firmware update and then press Verify. If this keeps happening, leave this app running and try turning your Arc off and on and reconnecting to your Arc in Windows Bluetooth Settings. Then press Verify.";
                 }
             }
             else
             {
-                TopInstruction.Text = "No Bluetooth Devices found! Please wait for the Wearhaus Arc to double-beep if you are doing a firmware update and then press Verify. If this keeps happening, try turning your Arc off and on and reconnecting to your Arc in Windows Bluetooth Settings. Then press Verify.";
+                TopInstruction.Text = "No Bluetooth Devices found! Please wait for the Wearhaus Arc to double-beep if you are doing a firmware update and then press Verify. If this keeps happening, leave this app running and try turning your Arc off and on and reconnecting to your Arc in Windows Bluetooth Settings. Then press Verify.";
                 MainPage.Current.NotifyUser(
                     "No chat services were found. Please pair with a device that is advertising the chat service.",
                     NotifyType.ErrorMessage);
@@ -688,6 +688,20 @@ namespace WearhausBluetoothApp
             MainPage.Current.NotifyUser("", NotifyType.StatusMessage);
 
             string latestFirmware = await HttpController.GetLatestFirmwareTable();
+
+            // If latest Firmware is empty from the server, then we have disabled firmware updates for now
+            if (latestFirmware == "" || latestFirmware == null)
+            {
+                Instructions.Text = "It seems the update service is temporarily down. There are no updates for now!";
+                return;
+            }
+
+            if (latestFirmware == HttpController.Current_fv)
+            {
+                Instructions.Text = "Your Wearhaus Arc is already up to date. You're all done!";
+                return;
+            }
+
             System.Diagnostics.Debug.WriteLine("LATEST FIRMWARE: " + latestFirmware);
             Firmware firmwareToUpdate = Firmware.FirmwareTable[latestFirmware];
 
@@ -698,13 +712,13 @@ namespace WearhausBluetoothApp
             ProgressStatus.Visibility = Windows.UI.Xaml.Visibility.Visible;
             ProgressStatus.Text = "Downloading Firmware Update...";
 
-            GaiaHandler.AttemptedFirmware = firmwareToUpdate.fullCode;
+            HttpController.Attempted_fv = firmwareToUpdate.fullCode;
             if (!firmwareToUpdate.validBases.Contains(HttpController.Current_fv))
             {
                 // TODO: write the actual logic here instead of just defaulting to 5615
                 ProgressStatus.Text = "This version of the firmware cannot be directly updated to the latest version. You must update to another version first. Fetching older update...";
                 firmwareToUpdate = Firmware.FirmwareTable["5615"];
-                GaiaHandler.AttemptedFirmware = firmwareToUpdate.fullCode;
+                HttpController.Attempted_fv = firmwareToUpdate.fullCode;
             }
 
             byte[] fileBuffer = await HttpController.DownloadDfuFile(firmwareToUpdate.url);
@@ -721,7 +735,6 @@ namespace WearhausBluetoothApp
                 return;
             }
 
-            HttpController.Attempted_fv = GaiaHandler.AttemptedFirmware;
             GaiaHandler.SetFileBuffer(fileBuffer);
             Instructions.Text = "Downloaded File: " + firmwareToUpdate.desc;
             // Send DFU!
@@ -868,7 +881,7 @@ namespace WearhausBluetoothApp
                 {
                     if (GaiaHandler.IsSendingFile)
                     {
-                        TopInstruction.Text = "Firmware Update Complete! Your Arc will automatically restart, please Listen to your Arc for a double beep startup sound to indicate a restart! When you hear the beep or have waited about 30 seconds, please press the Verify Update button to verify that the update worked!";
+                        TopInstruction.Text = "Firmware Update Complete! Your Arc will automatically restart - please listen to your Arc for a double beep startup sound to indicate a restart. When you hear the beep or have waited 30 seconds, please press the \"Verify\" Update button to verify that the update worked.";
                         GaiaHandler.IsSendingFile = false;
                         GaiaHandler.IsWaitingForVerification = true;
                         Disconnect();
