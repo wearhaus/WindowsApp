@@ -289,9 +289,16 @@ namespace WearhausBluetoothApp
                     }
                     catch (Exception ex)
                     {
-                        TopInstruction.Text = "There was an error connecting to your Arc. Please make sure you are connected to the internet and are connected to your Wearhaus Arc in Bluetooth Settings and then run the App again!";
-                        MainPage.Current.NotifyUser("Error: " + ex.HResult.ToString() + " - " + ex.Message,
-                            NotifyType.ErrorMessage);
+                        if (ex.Message.ToLower().Contains("json"))
+                        {
+                            TopInstruction.Text = "There was an error connecting to your Arc. Could not reach the server. Your internet may be disconnected or the server is down.";
+                            System.Diagnostics.Debug.WriteLine("Error: " + ex.HResult.ToString() + " - " + ex.Message);
+                        }
+                        else
+                        {
+                            TopInstruction.Text = "There was an error connecting to your Arc. Please make sure you are connected to the internet and are connected to your Wearhaus Arc in Bluetooth Settings and then run the App again!";
+                            System.Diagnostics.Debug.WriteLine("Error: " + ex.HResult.ToString() + " - " + ex.Message);
+                        }
                         Disconnect();
                     }
                 }
@@ -687,39 +694,49 @@ namespace WearhausBluetoothApp
         {
             MainPage.Current.NotifyUser("", NotifyType.StatusMessage);
 
-            string latestFirmware = await HttpController.GetLatestFirmwareTable();
+            // NOTE: This not only returns the most recent Firmware ID but it also updates our entire Static Firmware Table in Firmware.cs
+            string latestFirmwareShortCode = await HttpController.GetLatestFirmwareTable();
 
             // If latest Firmware is empty from the server, then we have disabled firmware updates for now
-            if (latestFirmware == "" || latestFirmware == null)
+            if (latestFirmwareShortCode == "" || latestFirmwareShortCode == null)
             {
                 Instructions.Text = "It seems the update service is temporarily down. There are no updates for now!";
                 return;
             }
 
-            if (latestFirmware == HttpController.Current_fv)
+            System.Diagnostics.Debug.WriteLine("LATEST FIRMWARE: " + latestFirmwareShortCode);
+            Firmware firmwareToUpdate = Firmware.FirmwareTable[latestFirmwareShortCode];
+
+            if (firmwareToUpdate.fullCode == HttpController.Current_fv)
             {
                 Instructions.Text = "Your Wearhaus Arc is already up to date. You're all done!";
                 return;
             }
 
-            System.Diagnostics.Debug.WriteLine("LATEST FIRMWARE: " + latestFirmware);
-            Firmware firmwareToUpdate = Firmware.FirmwareTable[latestFirmware];
-
-
-
-            DfuProgressBar.Visibility = Windows.UI.Xaml.Visibility.Visible;
-            DfuProgressBar.IsIndeterminate = true;
             ProgressStatus.Visibility = Windows.UI.Xaml.Visibility.Visible;
             ProgressStatus.Text = "Downloading Firmware Update...";
 
             HttpController.Attempted_fv = firmwareToUpdate.fullCode;
-            if (!firmwareToUpdate.validBases.Contains(HttpController.Current_fv))
+            string currentFV_ShortCode = HttpController.Current_fv.Substring(14, 4);
+            if (!firmwareToUpdate.validBases.Contains(currentFV_ShortCode))
             {
+                string text = "Invalid base in update - valid bases are: [";
+                foreach (string s in firmwareToUpdate.validBases)
+                {
+                    //textBox3.Text += ("Key = {0}, Value = {1}", kvp.Key, kvp.Value);
+                    text += string.Format("\t{0},", s);
+                }
+                text += "]";
+                System.Diagnostics.Debug.WriteLine(text);
+                ProgressStatus.Text = "This version of the firmware cannot be directly updated to the latest version. Please contact customer support at support@wearhaus.com";
+                return;
                 // TODO: write the actual logic here instead of just defaulting to 5615
-                ProgressStatus.Text = "This version of the firmware cannot be directly updated to the latest version. You must update to another version first. Fetching older update...";
-                firmwareToUpdate = Firmware.FirmwareTable["5615"];
-                HttpController.Attempted_fv = firmwareToUpdate.fullCode;
+                //firmwareToUpdate = Firmware.FirmwareTable["5615"];
+                //HttpController.Attempted_fv = firmwareToUpdate.fullCode;
             }
+
+            DfuProgressBar.Visibility = Windows.UI.Xaml.Visibility.Visible;
+            DfuProgressBar.IsIndeterminate = true;
 
             byte[] fileBuffer = await HttpController.DownloadDfuFile(firmwareToUpdate.url);
 
@@ -990,8 +1007,6 @@ namespace WearhausBluetoothApp
                 // DFU Files Sending case
                 if (GaiaHandler.IsSendingFile)
                 {
-                    ConversationList.Items.Add("Receieved Go Ahead for DFU! Starting DFU now!");
-                    ProgressStatus.Text = "Received Go Ahead for Update! Starting Update now!";
                     DfuProgressBar.IsIndeterminate = false;
                     //DFUProgressBar.Value = 0;
 

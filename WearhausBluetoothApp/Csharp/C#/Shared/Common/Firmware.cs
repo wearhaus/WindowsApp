@@ -7,9 +7,15 @@ namespace WearhausServer
     public class Firmware
     {
 
+        // Cosntants for position and len of a "short code" for Firmware Version given a full firmware code
+        // e.g. "000001000AFFFF54250000000000000000" has short code "5425"
+        public const int SHORT_FV_CODE_INDEX = 14;
+        public const int SHORT_FC_CODE_LEN = 4;
+
+        // This table will be re-written upon initiating the Update but below is the temporarily initialized table
         public static Dictionary<string, Firmware> FirmwareTable = new Dictionary<string, Firmware>{
             {"5425", 
-            new Firmware("000001000AFFFF56150000000000000000", "1.0.0", "5425", @"Base Firmware Version", 
+            new Firmware("000001000AFFFF54250000000000000000", "1.0.0", "5425", @"Base Firmware Version", 
                 1, 1, 1, 1, 1, 1, "https://s3.amazonaws.com/wearhausfw/version425.dfu", new string[0] {}) 
             },
 
