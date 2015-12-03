@@ -1,9 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/2010/manifest" xmlns:m2="http://schemas.microsoft.com/appx/2013/manifest">
-  <Identity Name="Wearhaus.Bluetooth.WindowsApp.CS" Publisher="CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US" Version="1.0.0.3" />
+  <Identity Name="Wearhaus.WearhausArc" Publisher="CN=0549E365-B657-4981-93B6-C6C578780710" Version="1.1.0.4" />
   <Properties>
-    <DisplayName>Wearhaus Windows Bluetooth App</DisplayName>
-    <PublisherDisplayName>Wearhaus Inc</PublisherDisplayName>
+    <DisplayName>Wearhaus Arc</DisplayName>
+    <PublisherDisplayName>Wearhaus</PublisherDisplayName>
     <Logo>Assets\logo_white_transparent50x50.png</Logo>
   </Properties>
   <Prerequisites>
@@ -24,6 +24,9 @@
         </m2:DefaultTile>
         <m2:SplashScreen Image="Assets\logo_wordmark_white_no_bg620x300.png" BackgroundColor="#00bccc" />
         <m2:ApplicationView MinWidth="width320" />
+        <m2:InitialRotationPreference>
+          <m2:Rotation Preference="landscape" />
+        </m2:InitialRotationPreference>
       </m2:VisualElements>
     </Application>
   </Applications>

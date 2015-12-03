@@ -88,4 +88,7 @@
       <Generator>MSBuild:Compile</Generator>
     </AppxManifest>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Package.StoreAssociation.xml" />
+  </ItemGroup>
 </Project>

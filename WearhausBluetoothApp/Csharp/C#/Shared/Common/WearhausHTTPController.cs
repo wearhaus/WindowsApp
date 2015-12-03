@@ -331,8 +331,9 @@ namespace WearhausServer
 
         public static string ParseHID(string chatserviceinfoID)
         {
-            string[] words = chatserviceinfoID.Split('_')[1].Split('&');
-            return words[words.Length - 1];
+            string[] words = chatserviceinfoID.Split('_');
+            var sub_words = words[words.Length - 2].Split('&');
+            return sub_words[sub_words.Length - 1];
         }
 
         public static string ParseFirmwareVersion(byte[] payload)

@@ -6,6 +6,7 @@
     xmlns:local="using:SDKTemplate"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:debug="debug-mode"
     mc:Ignorable="d">
     <Page.Resources>
         <CollectionViewSource x:Name="cvs" />
@@ -60,11 +61,13 @@
                             <Button x:Name="DisconnectButton" HorizontalAlignment="Left" Content="Disconnect" Click="DisconnectButton_Click"/>
                             <TextBlock x:Name="Instructions" HorizontalAlignment="Left" Style="{StaticResource SampleHeaderTextStyle}" Text="Please press update when ready to begin firmware update!" Margin="0,10,0,10" TextWrapping="Wrap"/>
                             <Button x:Name="UpdateButton" HorizontalAlignment="Left" FontSize="20" Content="Update" Click="UpdateButton_Click"/>
-                            <Button x:Name="PickFileButton" HorizontalAlignment="Left" FontSize="20" Content="Pick DFU File" Click="PickFileButton_Click"/>
-                            <Button x:Name="SendDfuButton" HorizontalAlignment="Left" FontSize="20" Content="Send DFU" Click="SendDfuButton_Click" IsEnabled="False"/>
                             <TextBlock x:Name="ProgressStatus" HorizontalAlignment="Left" Style="{StaticResource SubheaderTextBlockStyle}" Margin="10" Visibility="Collapsed"/>
                             <ProgressBar x:Name="DfuProgressBar" Visibility="Collapsed" Margin="10" Height="15" Value="0"  IsIndeterminate="False" Maximum="100"/>
-                            <CheckBox x:Name="DebugCheckBox" VerticalAlignment="Bottom" Content="Debug" Click="DebugButton_Click"/>
+
+                            <!-- DEBUG ONLY -->
+                            <Button x:Name="PickFileButton" Visibility="Collapsed" HorizontalAlignment="Left" FontSize="20" Content="Pick DFU File" Click="PickFileButton_Click"/>
+                            <Button x:Name="SendDfuButton" Visibility="Collapsed" HorizontalAlignment="Left" FontSize="20" Content="Send DFU" Click="SendDfuButton_Click" IsEnabled="False"/>
+                            <CheckBox x:Name="DebugCheckBox" Visibility="Collapsed" VerticalAlignment="Bottom" Content="Debug" Click="DebugButton_Click"/>
                             <Grid x:Name="DebugControlGrid" Visibility="Collapsed">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
@@ -80,6 +83,8 @@
                                 <Button x:Name="SendButton" Grid.Column="1" Grid.Row="1" Content="Send" Click="SendButton_Click" Margin="5,10,10,0"/>
                                 <ListBox x:Name="ConversationList" Grid.Row="2" Grid.ColumnSpan="2" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="300" Margin="0,10,0,0" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollMode="Auto"/>
                             </Grid>
+                            <!-- END DEBUG -->
+
                         </StackPanel>
                     </Grid>
                 </StackPanel>

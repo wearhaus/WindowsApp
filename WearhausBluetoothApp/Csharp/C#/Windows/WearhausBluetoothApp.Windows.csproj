@@ -16,8 +16,8 @@
     <SynthesizeLinkMetadata>true</SynthesizeLinkMetadata>
     <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
     <AppxBundlePlatforms>neutral</AppxBundlePlatforms>
-    <PackageCertificateThumbprint>AB3EC1C760601C02150339A92F79D1CBF3D69144</PackageCertificateThumbprint>
-    <PackageCertificateKeyFile>BluetoothRfcommChat.Windows_TemporaryKey.pfx</PackageCertificateKeyFile>
+    <PackageCertificateThumbprint>E73E7CC8300CE81D4A44037D513974B7E08ED6E4</PackageCertificateThumbprint>
+    <PackageCertificateKeyFile>WearhausBluetoothApp.Windows_StoreKey.pfx</PackageCertificateKeyFile>
     <AppxBundle>Always</AppxBundle>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -79,5 +79,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </AppxManifest>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Package.StoreAssociation.xml" />
+    <None Include="WearhausBluetoothApp.Windows_StoreKey.pfx" />
+    <None Include="WearhausBluetoothApp.Windows_TemporaryKey.pfx" />
   </ItemGroup>
 </Project>

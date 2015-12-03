@@ -1,10 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/2010/manifest" xmlns:m2="http://schemas.microsoft.com/appx/2013/manifest" xmlns:m3="http://schemas.microsoft.com/appx/2014/manifest" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest">
-  <Identity Name="Wearhaus.Bluetooth.WindowsPhoneApp.CS" Publisher="CN=Microsoft Corporation, O=Microsoft Corporation, L=Redmond, S=Washington, C=US" Version="1.0.0.0" />
-  <mp:PhoneIdentity PhoneProductId="7498215d-1fed-4094-be80-375dd1ee4aed" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
+  <Identity Name="Wearhaus.WearhausArc" Publisher="CN=0549E365-B657-4981-93B6-C6C578780710" Version="1.1.0.4" />
+  <mp:PhoneIdentity PhoneProductId="cac36888-138d-4fe2-843e-62ead1a0f55a" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
-    <DisplayName>Wearhaus Windows Phone Bluetooth App</DisplayName>
-    <PublisherDisplayName>Wearhaus Inc</PublisherDisplayName>
+    <DisplayName>Wearhaus Arc</DisplayName>
+    <PublisherDisplayName>Wearhaus</PublisherDisplayName>
     <Logo>Assets\logo_white_transparent50x50.png</Logo>
   </Properties>
   <Prerequisites>
@@ -16,7 +16,7 @@
   </Resources>
   <Applications>
     <Application Id="SDKSample.App" Executable="$targetnametoken$.exe" EntryPoint="SDKSample.App">
-      <m3:VisualElements DisplayName="Wearhaus Bluetooth" Description="Bluetooth Firmware Update App for Wearhaus Arc" ForegroundText="light" BackgroundColor="#00bccc" Square150x150Logo="Assets\logo_wordmark_white_no_bg150x150.png" Square44x44Logo="Assets\logo_white_transparent44x44.png">
+      <m3:VisualElements DisplayName="Wearhaus Bluetooth App" Description="Bluetooth Firmware Update App for Wearhaus Arc" ForegroundText="light" BackgroundColor="#00bccc" Square150x150Logo="Assets\logo_wordmark_white_no_bg150x150.png" Square44x44Logo="Assets\logo_white_transparent44x44.png">
         <m3:DefaultTile ShortName="BluetoothRfcommChat C#" DefaultSize="square150x150Logo" Wide310x150Logo="Assets\logo_wordmark_white_no_bg310x150.png" Square71x71Logo="Assets\logo_white_transparent71x71.png">
           <m3:ShowNameOnTiles>
             <m3:ShowOn Tile="square150x150Logo" />
@@ -25,6 +25,9 @@
         </m3:DefaultTile>
         <m3:SplashScreen Image="Assets\logo_wordmark_white_no_bg480x800.png" BackgroundColor="#00bccc" />
         <m3:ApplicationView MinWidth="width320" />
+        <m3:InitialRotationPreference>
+          <m3:Rotation Preference="portrait" />
+        </m3:InitialRotationPreference>
       </m3:VisualElements>
     </Application>
   </Applications>

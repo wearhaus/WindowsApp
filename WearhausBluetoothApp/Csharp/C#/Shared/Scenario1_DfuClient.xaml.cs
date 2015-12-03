@@ -209,6 +209,13 @@ namespace WearhausBluetoothApp
                         ConnectionProgress.IsIndeterminate = true;
                         ConnectionStatus.Visibility = Windows.UI.Xaml.Visibility.Visible;
 
+#if DEBUG
+                        PickFileButton.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                        SendDfuButton.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                        DebugCheckBox.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                        DebugControlGrid.Visibility = Windows.UI.Xaml.Visibility.Visible;
+#endif
+
                         //var bluetoothServiceInfo = BluetoothServiceInfoCollection[ServiceList.SelectedIndex];
 
 
@@ -225,6 +232,7 @@ namespace WearhausBluetoothApp
 
                         if (BluetoothService == null)
                         {
+                            TopInstruction.Text = "Windows was not given permission to connect to your Wearhaus Arc. Try reconnecting to your headphone and clicking \"Yes\" to any prompts for permission.";
                             MainPage.Current.NotifyUser(
                                 "Access to the device is denied because the application was not granted access",
                                 NotifyType.StatusMessage);
@@ -232,25 +240,25 @@ namespace WearhausBluetoothApp
                         }
 
                         var attributes = await BluetoothService.GetSdpRawAttributesAsync();
-                        if (!attributes.ContainsKey(SdpServiceNameAttributeId))
+                        /*if (!attributes.ContainsKey(SdpServiceNameAttributeId))
                         {
                             MainPage.Current.NotifyUser(
                                 "The Chat service is not advertising the Service Name attribute (attribute id=0x100). " +
                                 "Please verify that you are running the BluetoothRfcommChat server.",
                                 NotifyType.ErrorMessage);
                             return;
-                        }
+                        }*/
 
                         var attributeReader = DataReader.FromBuffer(attributes[SdpServiceNameAttributeId]);
                         var attributeType = attributeReader.ReadByte();
-                        if (attributeType != SdpServiceNameAttributeType)
+                        /*if (attributeType != SdpServiceNameAttributeType)
                         {
                             MainPage.Current.NotifyUser(
                                 "The Chat service is using an unexpected format for the Service Name attribute. " +
                                 "Please verify that you are running the BluetoothRfcommChat server.",
                                 NotifyType.ErrorMessage);
                             return;
-                        }
+                        }*/
 
                         var serviceNameLength = attributeReader.ReadByte();
 
@@ -294,9 +302,13 @@ namespace WearhausBluetoothApp
                             TopInstruction.Text = "There was an error connecting to your Arc. Could not reach the server. Your internet may be disconnected or the server is down.";
                             System.Diagnostics.Debug.WriteLine("Error: " + ex.HResult.ToString() + " - " + ex.Message);
                         }
+                        else if(ex.Message.ToLower().Contains("datagram socket")){
+                            TopInstruction.Text = "Sorry this app does not run on Windows 8. Please consider upgrading to Windows 10 or visit wearhaus.com/updater for other options on Android or iOS.";
+                            System.Diagnostics.Debug.WriteLine("Error: " + ex.HResult.ToString() + " - " + ex.Message);
+                        }
                         else
                         {
-                            TopInstruction.Text = "There was an error connecting to your Arc. Please make sure you are connected to the internet and are connected to your Wearhaus Arc in Bluetooth Settings and then run the App again!";
+                            TopInstruction.Text = "There was an error connecting to your Arc. Please make sure you are connected to the internet and are connected to your Wearhaus Arc in Bluetooth Settings and then run the App again.";
                             System.Diagnostics.Debug.WriteLine("Error: " + ex.HResult.ToString() + " - " + ex.Message);
                         }
                         Disconnect();
@@ -304,12 +316,12 @@ namespace WearhausBluetoothApp
                 }
                 else
                 {
-                    TopInstruction.Text = "No Wearhaus Arc found! Please double check to make sure you are connected to a Wearhaus Arc in Windows Bluetooth Settings. Then run the App again!";
+                    TopInstruction.Text = "No Wearhaus Arc found. Please double check to make sure you are connected to a Wearhaus Arc in Windows Bluetooth Settings. Then run the App again.";
                 }
             }
             else
             {
-                TopInstruction.Text = "No Bluetooth Devices found! Please connect to a Wearhaus Arc and then run the App again!";
+                TopInstruction.Text = "No Bluetooth Devices found. Please connect to a Wearhaus Arc and then run the App again.";
                 MainPage.Current.NotifyUser(
                     "No chat services were found. Please pair with a device that is advertising the chat service.",
                     NotifyType.ErrorMessage);
@@ -445,12 +457,12 @@ namespace WearhausBluetoothApp
                 }
                 else
                 {
-                    TopInstruction.Text = "No Wearhaus Arc found! Please wait for the Wearhaus Arc to double-beep if you are doing a firmware update and then press Verify. If this keeps happening, leave this app running and try turning your Arc off and on and reconnecting to your Arc in Windows Bluetooth Settings. Then press Verify.";
+                    TopInstruction.Text = "No Wearhaus Arc found. Please wait for the Wearhaus Arc to double-beep if you are doing a firmware update and then press Verify. If this keeps happening, leave this app running and try turning your Arc off and on and reconnecting to your Arc in Windows Bluetooth Settings. Then press Verify.";
                 }
             }
             else
             {
-                TopInstruction.Text = "No Bluetooth Devices found! Please wait for the Wearhaus Arc to double-beep if you are doing a firmware update and then press Verify. If this keeps happening, leave this app running and try turning your Arc off and on and reconnecting to your Arc in Windows Bluetooth Settings. Then press Verify.";
+                TopInstruction.Text = "No Bluetooth Devices found. Please wait for the Wearhaus Arc to double-beep if you are doing a firmware update and then press Verify. If this keeps happening, leave this app running and try turning your Arc off and on and reconnecting to your Arc in Windows Bluetooth Settings. Then press Verify.";
                 MainPage.Current.NotifyUser(
                     "No chat services were found. Please pair with a device that is advertising the chat service.",
                     NotifyType.ErrorMessage);
@@ -564,7 +576,7 @@ namespace WearhausBluetoothApp
         {
             try
             {
-                if (GaiaHandler.IsWaitingForVerification)
+                if (GaiaHandler != null && GaiaHandler.IsWaitingForVerification)
                 {
                     RunButton.IsEnabled = false;
                     RunButton.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
@@ -591,7 +603,7 @@ namespace WearhausBluetoothApp
                 DfuProgressBar.Value = 0;
 
                 Instructions.Visibility = Windows.UI.Xaml.Visibility.Visible;
-                Instructions.Text = "Please press update when ready to begin firmware update!";
+                Instructions.Text = "Please press update when ready to begin firmware update.";
                 PickFileButton.Visibility = Windows.UI.Xaml.Visibility.Visible;
                 SendDfuButton.Visibility = Windows.UI.Xaml.Visibility.Visible;
 
@@ -695,79 +707,106 @@ namespace WearhausBluetoothApp
             MainPage.Current.NotifyUser("", NotifyType.StatusMessage);
 
             // NOTE: This not only returns the most recent Firmware ID but it also updates our entire Static Firmware Table in Firmware.cs
-            string latestFirmwareShortCode = await HttpController.GetLatestFirmwareTable();
-
-            // If latest Firmware is empty from the server, then we have disabled firmware updates for now
-            if (latestFirmwareShortCode == "" || latestFirmwareShortCode == null)
+            try
             {
-                Instructions.Text = "It seems the update service is temporarily down. There are no updates for now!";
-                return;
-            }
+                ProgressStatus.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                ProgressStatus.Text = "Checking for updates...";
+                DfuProgressBar.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                DfuProgressBar.IsIndeterminate = true;
 
-            System.Diagnostics.Debug.WriteLine("LATEST FIRMWARE: " + latestFirmwareShortCode);
-            Firmware firmwareToUpdate = Firmware.FirmwareTable[latestFirmwareShortCode];
+                string latestFirmwareShortCode = await HttpController.GetLatestFirmwareTable();
 
-            if (firmwareToUpdate.fullCode == HttpController.Current_fv)
-            {
-                Instructions.Text = "Your Wearhaus Arc is already up to date. You're all done!";
-                return;
-            }
-
-            ProgressStatus.Visibility = Windows.UI.Xaml.Visibility.Visible;
-            ProgressStatus.Text = "Downloading Firmware Update...";
-
-            HttpController.Attempted_fv = firmwareToUpdate.fullCode;
-            string currentFV_ShortCode = HttpController.Current_fv.Substring(14, 4);
-            if (!firmwareToUpdate.validBases.Contains(currentFV_ShortCode))
-            {
-                string text = "Invalid base in update - valid bases are: [";
-                foreach (string s in firmwareToUpdate.validBases)
+                // If latest Firmware is empty from the server, then we have disabled firmware updates for now
+                if (latestFirmwareShortCode == "" || latestFirmwareShortCode == null)
                 {
-                    //textBox3.Text += ("Key = {0}, Value = {1}", kvp.Key, kvp.Value);
-                    text += string.Format("\t{0},", s);
+                    Instructions.Text = "It seems the update service is temporarily down. There are no updates for now.";
+                    ProgressStatus.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                    DfuProgressBar.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                    DfuProgressBar.IsIndeterminate = false;
+                    return;
                 }
-                text += "]";
-                System.Diagnostics.Debug.WriteLine(text);
-                ProgressStatus.Text = "This version of the firmware cannot be directly updated to the latest version. Please contact customer support at support@wearhaus.com";
-                return;
-                // TODO: write the actual logic here instead of just defaulting to 5615
-                //firmwareToUpdate = Firmware.FirmwareTable["5615"];
-                //HttpController.Attempted_fv = firmwareToUpdate.fullCode;
+
+                System.Diagnostics.Debug.WriteLine("LATEST FIRMWARE: " + latestFirmwareShortCode);
+                Firmware firmwareToUpdate = Firmware.FirmwareTable[latestFirmwareShortCode];
+
+                if (firmwareToUpdate.fullCode == HttpController.Current_fv)
+                {
+                    Instructions.Text = "Your Wearhaus Arc is already up to date. You're all done!";
+                    ProgressStatus.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                    DfuProgressBar.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                    DfuProgressBar.IsIndeterminate = false;
+                    return;
+                }
+
+                ProgressStatus.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                ProgressStatus.Text = "Downloading Firmware Update...";
+
+                HttpController.Attempted_fv = firmwareToUpdate.fullCode;
+                string currentFV_ShortCode = HttpController.Current_fv.Substring(14, 4);
+                if (!firmwareToUpdate.validBases.Contains(currentFV_ShortCode))
+                {
+                    string text = "Invalid base in update - valid bases are: [";
+                    foreach (string s in firmwareToUpdate.validBases)
+                    {
+                        //textBox3.Text += ("Key = {0}, Value = {1}", kvp.Key, kvp.Value);
+                        text += string.Format("\t{0},", s);
+                    }
+                    text += "]";
+                    System.Diagnostics.Debug.WriteLine(text);
+                    ProgressStatus.Text = "This version of the firmware cannot be directly updated to the latest version. Please contact customer support at support@wearhaus.com ERROR 10";
+                    string response = await HttpController.DfuReport(10);
+                    return;
+                }
+
+                DfuProgressBar.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                DfuProgressBar.IsIndeterminate = true;
+
+                byte[] fileBuffer = await HttpController.DownloadDfuFile(firmwareToUpdate.url);
+
+                
+                if (fileBuffer == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("There was an error / problem downloading the firmware update. Please try again.");
+                    ProgressStatus.Text = "There was an error downloading the firmware update. Please make sure you are connected to the internet.";
+                    DfuProgressBar.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                    DfuProgressBar.IsIndeterminate = false;
+
+                    string response = await HttpController.DfuReport(2);
+                    return;
+                }
+
+                GaiaHandler.SetFileBuffer(fileBuffer);
+                Instructions.Text = "Downloaded File: " + firmwareToUpdate.desc;
+                // Send DFU!
+                DisconnectButton.IsEnabled = false;
+                UpdateButton.IsEnabled = false;
+                GaiaMessage startDfuCmd = new GaiaMessage((ushort)GaiaMessage.ArcCommand.StartDfu);
+
+                SendRawBytes(startDfuCmd.BytesSrc);
+                DfuProgressBar.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                DfuProgressBar.IsIndeterminate = true;
+                ProgressStatus.Visibility = Windows.UI.Xaml.Visibility.Visible;
+                ProgressStatus.Text = "Finished downloading file. Beginning Update...";
+
+                //Instructions.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                PickFileButton.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                SendDfuButton.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
             }
-
-            DfuProgressBar.Visibility = Windows.UI.Xaml.Visibility.Visible;
-            DfuProgressBar.IsIndeterminate = true;
-
-            byte[] fileBuffer = await HttpController.DownloadDfuFile(firmwareToUpdate.url);
-
-            
-            if (fileBuffer == null)
+            catch (Exception ex)
             {
-                MainPage.Current.NotifyUser("There was an error / problem downloading the Firmware Update. Please try again.", NotifyType.ErrorMessage);
-                ProgressStatus.Text = "There was an error downloading the Firmware Update. Please make sure you are connected to the internet!";
-                DfuProgressBar.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-                DfuProgressBar.IsIndeterminate = false;
-
-                string response = await HttpController.DfuReport(2);
-                return;
+                if (ex.Message.ToLower().Contains("json"))
+                {
+                    Instructions.Text = "Could not reach the server. Your internet may be disconnected or the server is down.";
+                    System.Diagnostics.Debug.WriteLine("Error: " + ex.HResult.ToString() + " - " + ex.Message);
+                    return;
+                }
+                else
+                {
+                    Instructions.Text = "There was an error downloading the update. Please make sure you are connected to the internet and are connected to your Wearhaus Arc. The server may be down. If the problem persists, contact Wearhaus Support support@wearhaus.com";
+                    System.Diagnostics.Debug.WriteLine("Error: " + ex.HResult.ToString() + " - " + ex.Message);
+                    return;
+                }
             }
-
-            GaiaHandler.SetFileBuffer(fileBuffer);
-            Instructions.Text = "Downloaded File: " + firmwareToUpdate.desc;
-            // Send DFU!
-            DisconnectButton.IsEnabled = false;
-            UpdateButton.IsEnabled = false;
-            GaiaMessage startDfuCmd = new GaiaMessage((ushort)GaiaMessage.ArcCommand.StartDfu);
-
-            SendRawBytes(startDfuCmd.BytesSrc);
-            DfuProgressBar.Visibility = Windows.UI.Xaml.Visibility.Visible;
-            DfuProgressBar.IsIndeterminate = true;
-            ProgressStatus.Visibility = Windows.UI.Xaml.Visibility.Visible;
-            ProgressStatus.Text = "Finished downloading file. Beginning Update...";
-
-            //Instructions.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-            PickFileButton.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-            SendDfuButton.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
         }
 
         /// <summary>
@@ -778,7 +817,7 @@ namespace WearhausBluetoothApp
             MainPage.Current.NotifyUser("", NotifyType.StatusMessage);
             if (DfuFile == null)
             {
-                MainPage.Current.NotifyUser("No DFU File Picked. Please Pick a DFU File!", NotifyType.StatusMessage);
+                MainPage.Current.NotifyUser("No DFU File Picked. Please Pick a DFU File.", NotifyType.StatusMessage);
                 return;
             }
             // Send DFU!
@@ -898,7 +937,7 @@ namespace WearhausBluetoothApp
                 {
                     if (GaiaHandler.IsSendingFile)
                     {
-                        TopInstruction.Text = "Firmware Update Complete! Your Arc will automatically restart - please listen to your Arc for a double beep startup sound to indicate a restart. When you hear the beep or have waited 30 seconds, please press the \"Verify\" Update button to verify that the update worked.";
+                        TopInstruction.Text = "Firmware update complete. Your Arc will automatically restart - please listen to your Arc for a double beep sound to indicate a restart. When you hear the beep or have waited 30 seconds, please press the \"Verify Update\" button to verify that the update worked.";
                         GaiaHandler.IsSendingFile = false;
                         GaiaHandler.IsWaitingForVerification = true;
                         Disconnect();
@@ -960,7 +999,7 @@ namespace WearhausBluetoothApp
                         if (HttpController.Current_fv == HttpController.Attempted_fv)
                         {
                             GaiaHandler.IsWaitingForVerification = false;
-                            TopInstruction.Text = "Success! Your Firmware Update was Successfully Verified! Thank you for updating your Wearhaus Arc!";
+                            TopInstruction.Text = "Success! Your firmware update was successfully verified. Thank you for updating your Wearhaus Arc!";
                             ConnectionProgress.IsIndeterminate = false;
                             ConnectionProgress.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
                             ConnectionStatus.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
@@ -1036,9 +1075,9 @@ namespace WearhausBluetoothApp
                         System.Diagnostics.Debug.WriteLine("Chunks Remaining: " + chunksRemaining);
 
                     }
-                    ProgressStatus.Text = "Finished Sending File! Verifying... (Your Arc will restart soon after this step!)";
+                    ProgressStatus.Text = "Finished sending file. Verifying... (Your Arc will restart soon after this step.)";
                     DfuProgressBar.IsIndeterminate = true;
-                    ConversationList.Items.Add("Finished Sending DFU! Verifying...");
+                    ConversationList.Items.Add("Finished Sending DFU. Verifying...");
 
                 }
 
