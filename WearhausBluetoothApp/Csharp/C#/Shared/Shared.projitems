@@ -48,12 +48,9 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="$(MSBuildThisFileDirectory)Assets\arc_update_step1.png" />
-    <Content Include="$(MSBuildThisFileDirectory)Assets\arc_update_step2.png" />
-    <Content Include="$(MSBuildThisFileDirectory)Assets\arc_update_step3.png" />
-    <Content Include="$(MSBuildThisFileDirectory)Assets\arc_update_wp8_step1.png" />
-    <Content Include="$(MSBuildThisFileDirectory)Assets\arc_update_wp8_step2.png" />
-    <Content Include="$(MSBuildThisFileDirectory)Assets\arc_update_wp8_step3.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\arc_update_1.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\arc_update_2.png" />
+    <Content Include="$(MSBuildThisFileDirectory)Assets\arc_update_3.png" />
     <Content Include="$(MSBuildThisFileDirectory)Assets\logo_black_transparent150x150.png" />
     <Content Include="$(MSBuildThisFileDirectory)Assets\logo_black_transparent30x30.png" />
     <Content Include="$(MSBuildThisFileDirectory)Assets\logo_black_transparent310x150.png" />

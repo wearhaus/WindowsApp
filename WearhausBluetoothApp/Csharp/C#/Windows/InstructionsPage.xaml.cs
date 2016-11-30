@@ -116,9 +116,9 @@ namespace WearhausBluetoothApp
             ImageCount = 0;
             PreviousButton.IsEnabled = false;
 
-            Images.Add("arc_update_step1.png");
-            Images.Add("arc_update_step2.png");
-            Images.Add("arc_update_step3.png");
+            Images.Add("arc_update_1.png");
+            Images.Add("arc_update_2.png");
+            Images.Add("arc_update_3.png");
             InstructionTexts.Add("Step 1: Turn on your Wearhaus Arc! Then open Windows Bluetooth Settings by searching for Bluetooth Settings in the Windows Search Bar. ");
             InstructionTexts.Add("Step 2: Find Wearhaus Arc and click \"Pair\". Click \"Yes\" to any prompts that ask for permission. ");
             InstructionTexts.Add("Step 3: Wait for the progress bar to complete all the way after clicking Pair. After that, hit Ready below!");

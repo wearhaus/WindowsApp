@@ -4,7 +4,10 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:SDKTemplate"
-    xmlns:localData="using:Shared">
+    xmlns:localData="using:WearhausBluetoothApp">
+    <!--xmlns:localData="using:WearhausBluetoothApp">-->
+    <!-- For some reason, xmlns:localData="using:Shared"
+     gives error when it was working earlier. This change made it work again. -->
 
     <Application.Resources>
         <!-- Application-specific resources -->
