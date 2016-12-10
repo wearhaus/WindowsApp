@@ -2,6 +2,7 @@
 
 using Windows.Foundation.Collections;
 using Windows.UI.Xaml;
+using Common;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
 using Windows.UI.Xaml.Data;
@@ -15,6 +16,7 @@ using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Foundation;
 using SDKTemplate.Common;
+using WearhausServer;
 
 namespace SDKTemplate
 {
@@ -23,7 +25,11 @@ namespace SDKTemplate
     /// </summary>
     public sealed partial class MainPage : Page
     {
-        public static MainPage Current;        
+        public static MainPage Current;
+
+        public static ArcLink MyArcLink;
+
+        public static WearhausHttpController MyHttpController;
 
         public MainPage()
         {

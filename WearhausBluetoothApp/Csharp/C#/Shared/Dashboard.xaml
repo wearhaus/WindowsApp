@@ -1,0 +1,74 @@
+﻿<Page
+    x:Class="WearhausBluetoothApp.Dashboard"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:SDKTemplate"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Background="#00bccc">
+        <Grid x:Name="RootGrid" Margin="30">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="150"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <ScrollViewer x:Name="InfoViewer" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto" Grid.ColumnSpan="2" Margin="0" Grid.RowSpan="2" ViewChanged="InfoViewer_ViewChanged">
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Top" MaxWidth="800">
+                    <Image Source="Assets/logo_wordmark_white_no_bg620x300.png"  Stretch="Uniform" HorizontalAlignment="Center" Height="100" Width="200" Grid.Column="1" Margin="0,0,0,10" Grid.Row="0"/>
+                    <TextBlock x:Name="TopTitle" Style="{StaticResource ScenarioDescriptionTextStyle}" HorizontalAlignment="Center" Margin="10" FontSize="30" TextWrapping="Wrap">
+                    Wearhaus Arc Firmware Update App
+                    </TextBlock>
+
+                    <TextBlock x:Name="ArcDescText" Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="20" FontSize="20" TextWrapping="Wrap" TextAlignment="Center">
+                        Click Run to start the Update process for your Wearhaus Arc! <LineBreak/>
+                        Please make sure you are connected the internet, and to your Arc in Windows Bluetooth Settings. 
+                        Make sure your Arc is charged. This may take up to 15 minutes.
+                    </TextBlock>
+                    <TextBlock x:Name="ArcStateText" Style="{StaticResource ScenarioDescriptionTextStyle}" FontSize="20" TextWrapping="Wrap" TextAlignment="Center" Margin="30">
+                        No Arc Connected
+                    </TextBlock>
+                    <Button x:Name="ConnectButton" Content="Connect My Arc" FontSize="30" Margin="20" Click="ConnectButton_Click" HorizontalAlignment="Center"/>
+                    <ProgressBar x:Name="ConnectionProgress" IsIndeterminate="True" Visibility="Collapsed"/>
+                    
+
+                    <CheckBox x:Name="DebugCheckBox" Visibility="Collapsed" VerticalAlignment="Bottom" Content="Debug" Click="DebugButton_Click"/>
+                    <Grid x:Name="DebugControlGrid" Visibility="Collapsed">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.ColumnSpan="2" Style="{StaticResource BaseTextBlockStyle}" TextWrapping="Wrap">Enter a message to send:</TextBlock>
+                        <TextBox x:Name="MessageTextBox" Grid.Column="0" Grid.Row="1" Margin="0,10,10,0"/>
+                        <Button x:Name="SendButton" Grid.Column="1" Grid.Row="1" Content="Send" Click="SendButton_Click" Margin="5,10,10,0"/>
+                        <ListBox x:Name="ConversationList" Grid.Row="2" Grid.ColumnSpan="2" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="300" Margin="0,10,0,0" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollMode="Auto"/>
+                    </Grid>
+
+                    
+                    
+                </StackPanel>
+            </ScrollViewer>
+
+
+            <!-- Status Block for providing messages to the user.  Use the
+             NotifyUser() method to populate the message -->
+            <Border x:Name="ErrorBorder" Background="Red" Grid.Row="2" Grid.ColumnSpan="2"/>
+            <TextBlock x:Name="StatusBlock" Grid.Row="2" FontSize="16" Margin="12,10,12,-10" Visibility="Collapsed" Grid.ColumnSpan="2"/>
+        </Grid>
+    </Grid>
+</Page>
+
+    
+    
+    

@@ -14,12 +14,12 @@ namespace WearhausServer
 
 
 #if DEBUG
-        private const string WEARHAUS_URI = "http://wearhausapistaging.herokuapp.com/v1.2/";
+        private const string WEARHAUS_URI = "http://wearhausapistaging.herokuapp.com/v1.3/";
 #else
-        private const string WEARHAUS_URI = "http://wearhausapi.herokuapp.com/v1.2/";
+        private const string WEARHAUS_URI = "http://wearhausapi.herokuapp.com/v1.3/";
 #endif
         private const string PATH_ACCOUNT_CREATE = "account/create";
-        private const string PATH_ACCOUNT_VERIFY_GUEST = "account/verify_guest";
+        private const string PATH_ACCOUNT_VERIFY_GUEST = "account/create_guest";
         private const string PATH_ACCOUNT_VERIFY_CREDENTIALS = "account/,verify_credentials";
         private const string PATH_ACCOUNT_UPDATE_HID = "account/update_hid";
         private const string PATH_ACCOUNT_VERIFY_EMAIL = "account/verify_email";
@@ -28,6 +28,7 @@ namespace WearhausServer
         private const string PATH_ACCOUNT_FORGOT_PASSWORD_LOGIN = "account/forgot_password_login";
 
         private const string PATH_HEADPHONES_DFU_REPORT = "headphones/dfu_report";
+        private const string PATH_HEADPHONES_LOGIN = "headphones/login";
         private const string PATH_FIRMWARE_TABLE = "headphones/firmware_table";
 
         private const string PATH_USERS_SHOW = "users/forgot_password_login";
@@ -37,25 +38,40 @@ namespace WearhausServer
         private const string PATH_FRIENDS_REMOVE = "friends/forgot_password_login";
         private const string PATH_FRIENDS_IDS = "friends/forgot_password_login";
 
-        private string HID;
-        private string User_id;
-        private string Token;
+        
+        // STH this should not be where HID is stored; this should only store server related userId and token
+        // hid, fv, etc. should only be with the arclink object
 
-        public string Old_fv { get; set; }
-        public string Current_fv { get; set; }
-        public string Attempted_fv { get; set; }
+        private string HID;
+        private string Fv_full_code;
+
+        private string User_id;
+        private string Acc_token;
+        private string Hid_token;
+        
+
+
+        // to be moved or removed
+        //public string Old_fv { get; set; }
+        //public string Current_fv { get; set; }
+        //public string Attempted_fv { get; set; }
+
+
         // Last Successful Reponse from an HTTP Request
         public string LastHttpResponse { get; private set; }
 
-        public WearhausHttpController(string deviceID)
-        {
-            HID = WearhausHttpController.ParseHID(deviceID);
-            User_id = null;
-            Token = null;
 
-            Old_fv = null;
-            Current_fv = null;
-            Attempted_fv = null;
+
+        public WearhausHttpController()
+        {
+            //HID = WearhausHttpController.ParseHID(deviceID);
+            User_id = null;
+            Acc_token = null;
+            Hid_token = null;
+
+            //Old_fv = null;
+            //Current_fv = null;
+            //Attempted_fv = null;
             LastHttpResponse = null;
         }
 
@@ -88,7 +104,7 @@ namespace WearhausServer
             string latestVer = x["latest"].GetString();
 
             // Update Firmware Table
-            foreach(string key in f.Keys)
+            foreach (string key in f.Keys)
             {
                 JsonObject firmwareJsonObj = f.GetNamedObject(key);
 
@@ -103,7 +119,7 @@ namespace WearhausServer
 
                 var jsonArr_valid_bases = firmwareJsonObj["valid_bases"].GetArray();
                 string[] valid_bases = new string[jsonArr_valid_bases.Count];
-                for (int i = 0; i < jsonArr_valid_bases.Count; i++){
+                for (int i = 0; i < jsonArr_valid_bases.Count; i++) {
                     valid_bases[i] = jsonArr_valid_bases[i].GetString();
                 }
 
@@ -127,21 +143,36 @@ namespace WearhausServer
                 {"email", email},
                 {"password", password}
             };
-            
+
             string resp = await HttpPost(PATH_ACCOUNT_CREATE, param);
-            Token = ParseJsonResp("token", resp);
-            return resp; 
+            Acc_token = ParseJsonResp("acc_token", resp);
+            return resp;
         }
 
         public async Task<string> CreateGuest()
         {
             var vals = new Dictionary<string, string>{
-                {"hid", HID}
+                {"hid", HID} // ignored
             };
 
             string resp = await HttpPost(PATH_ACCOUNT_VERIFY_GUEST, vals);
             User_id = ParseJsonResp("guest_user_id", resp);
-            Token = ParseJsonResp("token", resp);
+            Acc_token = ParseJsonResp("acc_token", resp);
+            return resp;
+        }
+
+        public async Task<string> LoginHid()
+        {
+            var vals = new Dictionary<string, string>{
+                {"acc_token", Acc_token},
+                {"hid", HID},
+                {"fv_full_code", Fv_full_code},
+                {"gcm_reg_id", ""}
+            };
+
+            string resp = await HttpPost(PATH_HEADPHONES_LOGIN, vals);
+            User_id = ParseJsonResp("guest_user_id", resp);
+            Acc_token = ParseJsonResp("acc_token", resp);
             return resp;
         }
 
@@ -157,10 +188,10 @@ namespace WearhausServer
             return resp;
         }
 
-        public async Task<string> DfuReport(int dfu_status)
+        public async Task<string> DfuReport(int dfu_status, String Old_fv, String Current_fv, String Attempted_fv)
         {
             var vals = new Dictionary<string, string>{
-                {"token", Token},
+                {"token", Acc_token},
                 {"old_fv", Old_fv},
                 {"new_fv", Current_fv},
                 {"attempted_fv", Attempted_fv},
@@ -184,10 +215,10 @@ namespace WearhausServer
             return resp;
 
         }
-        
+
         private async Task<string> HttpPost(string destination, Dictionary<string, string> values)
         {
-            using (var client = new HttpClient()){
+            using (var client = new HttpClient()) {
                 try
                 {
                     var content = new FormUrlEncodedContent(values);
@@ -273,46 +304,46 @@ namespace WearhausServer
                     case 13:
                         return "Error: username already taken";
 
-                    case 100: 
+                    case 100:
                         return "Error: need one or both fb_id and password to be set at all times";
 
-                    case 102: 
+                    case 102:
                         return "new song object created. please upload image to S3 and call next server endpoint";
 
-                    case 104: 
+                    case 104:
                         return "Error: bad song metadata. Couldn't create song_id";
 
-                    case 111: 
+                    case 111:
                         return "Error: fb_id not tied to any account. Use create account";
 
-                    case 131: 
+                    case 131:
                         return "Error: station not on server";
 
-                    case 132: 
+                    case 132:
                         return "Error: station in wrong state; is currently idle";
 
-                    case 133: 
+                    case 133:
                         return "Error: station in wrong state; is currently listening";
 
-                    case 134: 
+                    case 134:
                         return "station/session exists, but may be stale (4+ hours since last update). Don't render metadata on app";
 
-                    case 140: 
+                    case 140:
                         return "Error: station is private; either master_user can't be found, or not friends with master_user";
 
-                    case 150: 
+                    case 150:
                         return "Error: friend request already sent";
 
-                    case 151: 
+                    case 151:
                         return "Error: already friends";
 
-                    case 180: 
+                    case 180:
                         return "Error: bad profile_pic_url. Needs to be image on S3 or facebook url";
 
-                    case 181: 
+                    case 181:
                         return "Error: Can't set password. An email needs to be set first";
 
-                    case 184: 
+                    case 184:
                         return "Error: No password has been set; use facebook to login to account";
 
                     default:
@@ -328,20 +359,6 @@ namespace WearhausServer
             return tempVal;
         }
 
-
-        public static string ParseHID(string chatserviceinfoID)
-        {
-            string[] words = chatserviceinfoID.Split('_');
-            var sub_words = words[words.Length - 2].Split('&');
-            return sub_words[sub_words.Length - 1];
-        }
-
-        public static string ParseFirmwareVersion(byte[] payload)
-        {
-            string firmwareStr = "";
-            firmwareStr = BitConverter.ToString(payload).Replace("-", string.Empty);
-            return firmwareStr;
-        }
 
     }
 }

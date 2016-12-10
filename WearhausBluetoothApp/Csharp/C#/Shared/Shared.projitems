@@ -4,6 +4,11 @@
     <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Common\ArcUtil.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Dashboard.xaml.cs">
+      <DependentUpon>Dashboard.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="$(MSBuildThisFileDirectory)Common\ArcLink.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Common\ContinuationManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Common\DfuCRC.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Common\Firmware.cs" />
@@ -34,6 +39,10 @@
     </ApplicationDefinition>
   </ItemGroup>
   <ItemGroup>
+    <Page Include="$(MSBuildThisFileDirectory)Dashboard.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="$(MSBuildThisFileDirectory)LoginPage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

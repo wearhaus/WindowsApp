@@ -24,6 +24,7 @@ namespace SDKTemplate
         List<Scenario> scenarios = new List<Scenario>
         {
             new Scenario() { Title = "Run Firmware Update App", ClassType = typeof(Scenario1_DfuClient) },
+            new Scenario() { Title = "Wearhaus Arc", ClassType = typeof(Dashboard) },
             //new Scenario() { Title = "Login", ClassType = typeof(LoginPage) }
         };
     }

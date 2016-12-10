@@ -19,6 +19,8 @@ using Windows.UI.Xaml.Navigation;
 using SDKTemplate.Common;
 
 using WearhausBluetoothApp;
+using Common;
+using WearhausServer;
 
 namespace SDKTemplate
 {
@@ -29,14 +31,22 @@ namespace SDKTemplate
     {
         public static MainPage Current;
 
+        public static ArcLink MyArcLink;
+
+        public static WearhausHttpController MyHttpController;
+
         public MainPage()
         {
             this.InitializeComponent();
             SampleTitle.Text = FEATURE_NAME;
 
+            App.Current.Suspending += App_Suspending;
+
             // This is a static public property that allows downstream pages to get a handle to the MainPage instance
             // in order to call methods that are in this class.
             Current = this;
+            MyArcLink = new ArcLink();
+            MyHttpController = new WearhausHttpController();
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -52,7 +62,8 @@ namespace SDKTemplate
             }
             else
             {
-                ScenarioControl.SelectedIndex = 0;
+                // SH: start at index 1 for now, as a test
+                ScenarioControl.SelectedIndex = 1;
             }
 
         }
@@ -82,6 +93,15 @@ namespace SDKTemplate
         {
             get { return this.scenarios; }
         }
+
+
+        void App_Suspending(object sender, Windows.ApplicationModel.SuspendingEventArgs e)
+        {
+            // Make sure we cleanup resources on suspend
+            MyArcLink.Disconnect("");
+        }
+
+
 
         /// <summary>
         /// Used to display messages to the user
