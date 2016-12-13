@@ -263,7 +263,7 @@ namespace Common
                         }
                         else
                         {
-                            ErrorHuman = "There was an error connecting to your Arc. Please make sure you are connected to the internet and are connected to your Wearhaus Arc in Bluetooth Settings and then run the App again.";
+                            ErrorHuman = "Couldn't connect to your Arc. Please make sure your Arc is powered on and connected in Bluetooth Settings.";
                             System.Diagnostics.Debug.WriteLine("Error: " + ex.HResult.ToString() + " - " + ex.Message);
                         }
                         Disconnect(ErrorHuman);
@@ -321,6 +321,8 @@ namespace Common
         /// </summary>
         public void Disconnect(String errorHuman)
         {
+            System.Diagnostics.Debug.WriteLine("ArcLink.Disconnect(" + errorHuman + ");");
+
             try
             {
                 // disconnect that's part of DFU should have a flag set here

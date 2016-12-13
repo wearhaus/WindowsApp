@@ -38,6 +38,8 @@ namespace SDKTemplate
         public MainPage()
         {
             this.InitializeComponent();
+            //Windows.UI.ViewManagement.ApplicationView.PreferredLaunchViewSize = new Size(800, 800);
+            //ApplicationView.PreferredLaunchWindowingMode = ApplicationViewWindowingMode.PreferredLaunchViewSize;
             SampleTitle.Text = FEATURE_NAME;
 
             App.Current.Suspending += App_Suspending;
@@ -110,6 +112,8 @@ namespace SDKTemplate
         /// <param name="type"></param>
         public void NotifyUser(string strMessage, NotifyType type)
         {
+            System.Diagnostics.Debug.WriteLine("NotifyUser( " + strMessage + " );");
+
             switch (type)
             {
                 case NotifyType.StatusMessage:
