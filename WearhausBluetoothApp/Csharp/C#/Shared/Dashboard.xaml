@@ -52,10 +52,55 @@
 
                     </StackPanel>
 
+                    <!-- DashboardLayout-->
+                    <StackPanel Background="#66e6e6e6" Grid.Row="1" x:Name="DashboardLayout" Orientation="Horizontal">
+                        <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Margin="0" Width="400">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0">
+                                <TextBlock  Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10" 
+                                        FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Right" 
+                                            Width="200" TextWrapping="Wrap" TextAlignment="Right">
+                                Firmware Version:
+                                </TextBlock>
+                                <TextBlock x:Name="FirmwareText"  Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10" 
+                                        FontWeight="Bold" FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Left"  TextWrapping="Wrap" TextAlignment="Left">
+                                1.1.0
+                                </TextBlock>
+                            </StackPanel>
+
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0">
+                                <TextBlock  Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10" 
+                                        FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Right" 
+                                            Width="200" TextWrapping="Wrap" TextAlignment="Right">
+                                Arc Generation:
+                                </TextBlock>
+                                <TextBlock x:Name="ProductIdText"  Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10" 
+                                        FontWeight="Bold" FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Left"  TextWrapping="Wrap" TextAlignment="Left">
+                                Gen 0
+                                </TextBlock>
+                            </StackPanel>
+
+
+                            <TextBlock x:Name="BatteryText"  Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10" 
+                                        FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Left" 
+                                        TextWrapping="Wrap" TextAlignment="Left">
+                                There is a new firmware update available for your Arc. Version 1.2.0 includes new features, blah blah, <LineBreak/><LineBreak/>- New something <LineBreak/>- Other new thing<LineBreak/><LineBreak/>Dec 13th 2016
+                            </TextBlock>
+
+                        </StackPanel>
+                        <Button x:Name="UpdateFV" Content="Update Firmware" Margin="10" HorizontalAlignment="Center" 
+                                Click="UpdateFV_Click" FontSize="30" FontWeight="Bold"/>
+                        <TextBlock x:Name="FirmwareUpToDate"  Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10" 
+                                       FontSize="30" VerticalAlignment="Center" HorizontalAlignment="Center" 
+                                       TextWrapping="Wrap" TextAlignment="Center" FontWeight="Bold">
+                        Your Arc is up to date
+                        </TextBlock>
+
+                    </StackPanel>
+
+
 
                     <!-- Instructions-->
-
-                    <StackPanel Background="#00e6e6e6" Grid.Row="1" x:Name="InstructionLayout">
+                    <StackPanel Background="#00e6e6e6" Grid.Row="2" x:Name="InstructionLayout">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0">
                             <TextBlock x:Name="InstructionText"  Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10" 
                                        FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Center" 
@@ -69,6 +114,8 @@
                             <Button x:Name="NextButton" Content="&gt;" Margin="10" HorizontalAlignment="Center" Click="nextItem_Click" />
                         </StackPanel>
                     </StackPanel>
+                    
+                    
 
 
                     

@@ -36,11 +36,13 @@ namespace WearhausBluetoothApp
 
             RenderedArcConnState = ArcLink.ArcConnState.NoArc;
 
-            MainPage.MyArcLink.ArcConnStateChanged += MyArcConnStateListener;
-            MainPage.MyArcLink.DFUStepChanged += MyArcConnStateListener;
+            MainPage.MyArcLink.ArcConnStateChanged += UpdateUIListener;
+            MainPage.MyArcLink.DFUStepChanged += UpdateUIListener;
+            MainPage.MyHttpController.AccountStateChanged += UpdateUIListener;
 
             ArcStateText.Text = "";
-            InstructionLayout.Visibility = Visibility.Collapsed;
+            // manually opened by button, so not directly related to UIState
+            updateInstructVisibility(false);
 
             InstructionImages.Add("arc_update_1.png");
             InstructionImages.Add("arc_update_2.png");
@@ -50,13 +52,15 @@ namespace WearhausBluetoothApp
             InstructionTexts.Add("Step 2: Find Wearhaus Arc and click \"Pair\". Click \"Yes\" to any prompts that ask for permission.");
             InstructionTexts.Add("Step 3: Wait for the progress bar to complete all the way after clicking Pair. After that, press Connect My Arc above.");
 
-            UpdateImage(0);
+            UpdateInstructionFrame(0); // fyi: if called when invisible, doesn't make visible
+            UpdateUIListener(null, null);
         }
 
         // in case we want any popups or onetime UI actions when the state changes in this page
         private ArcLink.ArcConnState RenderedArcConnState;
 
-        void MyArcConnStateListener(object sender, EventArgs e) {
+        void UpdateUIListener(object sender, EventArgs e) {
+            // first of all, server doesn't matter if no arc is connected
             switch (MainPage.MyArcLink.MyArcConnState)
             {
                 case ArcLink.ArcConnState.NoArc:
@@ -67,25 +71,26 @@ namespace WearhausBluetoothApp
                     HowToButton.IsEnabled = true;
                     HowToButton.Opacity = 1.0;
                     ConnectionProgress.Opacity = 0;
+                    updateDashboardVisibility(false);
                     break;
 
                 case ArcLink.ArcConnState.TryingToConnect:
+                case ArcLink.ArcConnState.GatheringInfo:
                     ArcStateText.Text = "connecting";
                     ConnectButton.IsEnabled = false;
                     ConnectButton.Opacity = 0.0;
                     HowToButton.IsEnabled = false;
                     HowToButton.Opacity = 0.0;
                     ConnectionProgress.Opacity = 1.0;
+                    updateDashboardVisibility(false);
                     //case ArcLink.ArcConnState.GatheringInfo:
                     break;
 
                 case ArcLink.ArcConnState.Connected:
-                    ArcStateText.Text = "Connected to " + MainPage.MyArcLink.DeviceHumanName;
-                    ConnectButton.IsEnabled = false;
-                    ConnectButton.Opacity = 0.0;
-                    HowToButton.IsEnabled = false;
-                    HowToButton.Opacity = 0.0;
-                    ConnectionProgress.Opacity = 1.0;
+                    
+                    // now we can check server status
+                    updateConnectUIServer();
+
                     break;
 
                 case ArcLink.ArcConnState.Error:
@@ -104,8 +109,7 @@ namespace WearhausBluetoothApp
                     HowToButton.IsEnabled = true;
                     HowToButton.Opacity = 1.0;
                     ConnectionProgress.Opacity = 0;
-                    MainPage.Current.NotifyUser(MainPage.MyArcLink.ErrorHuman,
-                            NotifyType.ErrorMessage);
+                    updateDashboardVisibility(false);
                     break;
 
 
@@ -116,28 +120,90 @@ namespace WearhausBluetoothApp
         }
 
 
-        
+        private void updateConnectUIServer()
+        {
+            // only called if arc is connected, updates specific state based on server status
+            // this method is just to keep things easier to read (switch inside a switch case...)
+
+            ConnectButton.IsEnabled = false;
+            ConnectButton.Opacity = 0.0;
+            HowToButton.IsEnabled = false;
+            HowToButton.Opacity = 0.0;
+            updateInstructVisibility(false);
+
+            switch (MainPage.MyHttpController.MyAccountState)
+            {
+                case WearhausServer.WearhausHttpController.AccountState.None:
+                    ArcStateText.Text = "Connecting to server";
+                    ConnectionProgress.Opacity = 1.0;
+                    updateDashboardVisibility(false);
+                    MainPage.MyHttpController.startServerRegistration(MainPage.MyArcLink);
+
+                    break;
+
+                case WearhausServer.WearhausHttpController.AccountState.Loading:
+                    ArcStateText.Text = "Connecting to server";
+                    ConnectionProgress.Opacity = 1.0;
+                    updateDashboardVisibility(false);
+                    break;
+
+                case WearhausServer.WearhausHttpController.AccountState.ValidGuest:
+                    ArcStateText.Text = "Connected to " + MainPage.MyArcLink.DeviceHumanName;
+                    ConnectionProgress.Opacity = 0.0;
+
+
+                    updateDashboardVisibility(true);
+                    FirmwareText.Text = MainPage.MyArcLink.Fv_full_code;
+
+
+
+                    break;
+
+                case WearhausServer.WearhausHttpController.AccountState.Error:
+                    ArcStateText.Text = "Error connecting to server. Please make sure you have internet access and try again. If this problem continues, try updating this app or contact customer support at wearhaus.com";
+                    ConnectButton.Content = "Try Again";
+                    ConnectButton.IsEnabled = true;
+                    ConnectButton.Opacity = 1.0;
+                    ConnectionProgress.Opacity = 0.0;
+                    updateDashboardVisibility(false);
+                    // try again button should appear
+                    break;
+
+            }
+
+
+        }
+
+
+
 
         /// <summary>
         /// Message to start the UI Services and functions to search for nearby bluetooth devices
         /// </summary>
         private void ConnectButton_Click(object sender, RoutedEventArgs e)
         {
-            MainPage.MyArcLink.ConnectArc();
+            if (MainPage.MyArcLink.MyArcConnState == ArcLink.ArcConnState.Connected)
+            {
+                // try again for internet connection part
+                MainPage.MyHttpController.startServerRegistration(MainPage.MyArcLink);
+            } else
+            { 
+                MainPage.MyArcLink.ConnectArc();
+            }
         }
 
 
 
         private void previousItem_Click(object sender, RoutedEventArgs e)
         {
-            UpdateImage(ImageFrame - 1);
+            UpdateInstructionFrame(ImageFrame - 1);
         }
         private void nextItem_Click(object sender, RoutedEventArgs e)
         {
-            UpdateImage(ImageFrame + 1);
+            UpdateInstructionFrame(ImageFrame + 1);
         }
 
-        private void UpdateImage(int newFrame)
+        private void UpdateInstructionFrame(int newFrame)
         {
             newFrame = Math.Min(newFrame, InstructionTexts.Count);
             newFrame = Math.Max(newFrame, 0);
@@ -174,19 +240,37 @@ namespace WearhausBluetoothApp
 
         }
         private Boolean InstrucVisible = false;
+        private Boolean DashboardVisible = false;
         private void HowToButton_Click(object sender, RoutedEventArgs e)
         {
-            InstrucVisible = !InstrucVisible;
+            updateInstructVisibility(!InstrucVisible);
+
+        }
+
+        private void updateInstructVisibility(Boolean b)
+        {
+            InstrucVisible = b;
             if (InstrucVisible)
             {
                 InstructionLayout.Visibility = Visibility.Visible;
-            } else
+            }
+            else
             {
                 InstructionLayout.Visibility = Visibility.Collapsed;
             }
+        }
 
-
-            
+        private void updateDashboardVisibility(Boolean b)
+        {
+            DashboardVisible = b;
+            if (DashboardVisible)
+            {
+                DashboardLayout.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                DashboardLayout.Visibility = Visibility.Collapsed;
+            }
         }
 
 

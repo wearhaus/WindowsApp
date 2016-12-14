@@ -92,9 +92,7 @@ namespace Common
         public String DeviceHumanName { get; private set; }
         public string HID { get; private set; }
         public string Fv_full_code { get; private set; }
-
-
-
+        public int ProductId { get; private set; }
 
 
 
@@ -151,14 +149,12 @@ namespace Common
             if (BluetoothServiceInfoCollection.Count > 0)
             {
 
-                List<string> items = new List<string>();
+                //List<string> items = new List<string>();
                 foreach (var chatServiceInfo in BluetoothServiceInfoCollection)
                 {
-                    items.Add(chatServiceInfo.Name);
-                    //Added to print services!
+                    //items.Add(chatServiceInfo.Name); //Added to print services!
 
-                    // here, this crashes if we are paired to a device, but it is not on.
-                    string hid = ArcUtil.ParseHID(chatServiceInfo.Id); // THIS IS THE CRASHING LINE
+                    string hid = ArcUtil.ParseHID(chatServiceInfo.Id);
                     System.Diagnostics.Debug.WriteLine("ParseHID result: " + hid);
 
                     if (hid.StartsWith("1CF03E") || hid.StartsWith("00025B"))
@@ -243,6 +239,12 @@ namespace Common
 
 
                         MyArcConnState = ArcConnState.GatheringInfo;
+                        HID = ArcUtil.ParseHID(bluetoothServiceInfo.Id);
+                        String productIdChar = HID.Substring(6, 1);
+                        ProductId = Convert.ToInt32(productIdChar, 16);
+                        . test this part
+                        System.Diagnostics.Debug.WriteLine("Connected Arc, now gathering.  HID: " + HID + ",  ProductId: " + ProductId);
+
                         ErrorHuman = "";
                         DeviceHumanName = bluetoothServiceInfo.Name;
                         onArcConnStateChanged();

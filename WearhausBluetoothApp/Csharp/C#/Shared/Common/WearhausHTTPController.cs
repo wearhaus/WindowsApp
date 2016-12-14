@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.Serialization.Json;
 using Windows.Data.Json;
-
+using Common;
 
 namespace WearhausServer
 {
@@ -42,8 +42,8 @@ namespace WearhausServer
         // STH this should not be where HID is stored; this should only store server related userId and token
         // hid, fv, etc. should only be with the arclink object
 
-        private string HID;
-        private string Fv_full_code;
+        //private string HID;
+        //private string Fv_full_code;
 
         private string User_id;
         private string Acc_token;
@@ -60,6 +60,30 @@ namespace WearhausServer
         // Last Successful Reponse from an HTTP Request
         public string LastHttpResponse { get; private set; }
 
+        
+        public enum AccountState
+        {
+            None,
+            Loading,
+            // Both guest account and hid have been registered with server
+            ValidGuest,
+            Error,
+        };
+
+        public AccountState MyAccountState { get; private set; }
+
+        // subscribe/unsubscribe with myArcLink.ArcConnStateChanged += myListenerMethod; 
+        // static void myListenerMethod(object sender, EventArgs e) {}
+        // myListenerMethod should read MyArcConnState and ErrorHuman and updateUI or logic
+        public event EventHandler AccountStateChanged;
+
+        protected virtual void onAccountStateChanged()
+        {
+            System.Diagnostics.Debug.WriteLine("AccountState has changed: " + MyAccountState);
+            AccountStateChanged?.Invoke(this, null);
+        }
+
+
 
 
         public WearhausHttpController()
@@ -68,12 +92,108 @@ namespace WearhausServer
             User_id = null;
             Acc_token = null;
             Hid_token = null;
+            MyAccountState = AccountState.None;
 
             //Old_fv = null;
             //Current_fv = null;
             //Attempted_fv = null;
             LastHttpResponse = null;
         }
+
+        // Need to pass in an ArcLink that this controller will represent
+        public async void startServerRegistration(ArcLink arcLink)
+        {
+            if (arcLink.MyArcConnState != ArcLink.ArcConnState.Connected)
+            {
+                System.Diagnostics.Debug.WriteLine("Programmer Error: Cannot connect to server until an Arc is fully connected");
+                return;
+            }
+
+            if (MyAccountState != AccountState.None || MyAccountState != AccountState.Error)
+            {
+                System.Diagnostics.Debug.WriteLine("Programmer Error: Should not attempt another startServerRegistration in current AccountState: " + MyAccountState);
+                return;
+            }
+
+            System.Diagnostics.Debug.WriteLine("HTTPController startServerRegistration");
+            MyAccountState = AccountState.Loading;
+            onAccountStateChanged();
+            
+            try
+            {
+                Boolean successfulFVTable = await GetLatestFirmwareTable();
+                if (!successfulFVTable)
+                {
+                    errorConnectingToServer();
+                    return;
+                }
+
+
+                string guestResp = await HttpPost(PATH_ACCOUNT_VERIFY_GUEST, new Dictionary<string, string> { });
+
+
+                JsonObject x = JsonObject.Parse(guestResp);
+                int status = (int) x["status"].GetNumber();
+                if (status != 0)
+                {
+                    System.Diagnostics.Debug.WriteLine("Non zero status returned from createGuest");
+                    errorConnectingToServer();
+                    return;
+                }
+                User_id = x["guest_user_id"].GetString();
+                Acc_token = x["acc_token"].GetString();
+
+                var hidVals = new Dictionary<string, string>{
+                    {"acc_token", Acc_token},
+                    {"hid", arcLink.HID},
+                    {"fv_full_code", arcLink.Fv_full_code},
+                    {"gcm_reg_id", ""}
+                };
+
+                string hidResp = await HttpPost(PATH_HEADPHONES_LOGIN, hidVals);
+
+
+                JsonObject x2 = JsonObject.Parse(guestResp);
+
+                int status2 = (int)x2["status"].GetNumber();
+                if (status2 != 0)
+                {
+                    System.Diagnostics.Debug.WriteLine("Non zero status returned from createGuest");
+                    errorConnectingToServer();
+                    return;
+                }
+
+                Hid_token = x2["hid_token"].GetString();
+
+
+                MyAccountState = AccountState.ValidGuest;
+                onAccountStateChanged();
+
+            }
+            catch (Exception e)
+            {
+                System.Diagnostics.Debug.WriteLine("Error parsing server response: " + e.HResult.ToString());
+                errorConnectingToServer();
+                return;
+            }
+
+        }
+
+        private void errorConnectingToServer()
+        {
+            System.Diagnostics.Debug.WriteLine("errorConnectingToServer");
+            User_id = null;
+            Acc_token = null;
+            Hid_token = null;
+            MyAccountState = AccountState.Error;
+            onAccountStateChanged();
+
+        }
+
+
+
+
+
 
         public async Task<byte[]> DownloadDfuFile(string url)
         {
@@ -94,47 +214,95 @@ namespace WearhausServer
             return fileArr;
         }
 
-        public async Task<string> GetLatestFirmwareTable()
+        // populates static tables in Firmware class
+        // returns success or failure boolean
+        public async Task<Boolean> GetLatestFirmwareTable()
         {
-            var param = new Dictionary<string, string>();
-            string resp = await HttpPost(PATH_FIRMWARE_TABLE, param);
-
-            JsonObject x = JsonObject.Parse(resp);
-            JsonObject f = x.GetNamedObject("firmware");
-            string latestVer = x["latest"].GetString();
-
-            // Update Firmware Table
-            foreach (string key in f.Keys)
+            try
             {
-                JsonObject firmwareJsonObj = f.GetNamedObject(key);
+                var param = new Dictionary<string, string>();
+                string resp = await HttpPost(PATH_FIRMWARE_TABLE, param);
 
+                JsonObject x = JsonObject.Parse(resp);
+                JsonObject f = x.GetNamedObject("firmware");
+                JsonObject lastestByProductId = x.GetNamedObject("latest");
+                //string latestVer = x["latest"].GetString();
 
-                int android_min_vc = int.Parse(firmwareJsonObj["android_min_vc"].GetString());
-                int android_rec_vc = int.Parse(firmwareJsonObj["android_rec_vc"].GetString());
-                string desc = firmwareJsonObj["desc"].GetString();
-                string full_code = firmwareJsonObj["full_code"].GetString();
-                string human_name = firmwareJsonObj["human_name"].GetString();
-                string unique_code = firmwareJsonObj["unique_code"].GetString();
-                string url = firmwareJsonObj["url"].GetString();
-
-                var jsonArr_valid_bases = firmwareJsonObj["valid_bases"].GetArray();
-                string[] valid_bases = new string[jsonArr_valid_bases.Count];
-                for (int i = 0; i < jsonArr_valid_bases.Count; i++) {
-                    valid_bases[i] = jsonArr_valid_bases[i].GetString();
-                }
-
-                Firmware firmwareObj = new Firmware(full_code, human_name, unique_code, desc, android_rec_vc, android_min_vc, 1, 1, 1, 1, url, valid_bases);
-                if (Firmware.FirmwareTable.ContainsKey(key))
+                // Update Firmware Table
+                foreach (string key in f.Keys)
                 {
-                    Firmware.FirmwareTable[key] = firmwareObj;
+                    JsonObject firmwareJsonObj = f.GetNamedObject(key);
+
+
+                    int android_min_vc = int.Parse(firmwareJsonObj["android_min_vc"].GetString());
+                    int android_rec_vc = int.Parse(firmwareJsonObj["android_rec_vc"].GetString());
+                    string desc = firmwareJsonObj["desc"].GetString();
+                    string full_code = firmwareJsonObj["full_code"].GetString();
+                    string human_name = firmwareJsonObj["human_name"].GetString();
+                    string unique_code = firmwareJsonObj["unique_code"].GetString();
+                    string url = firmwareJsonObj["url"].GetString();
+
+                    JsonArray temp_url_mirrors = firmwareJsonObj["url_mirrors"].GetArray();
+                    Firmware.UrlMirror[] url_mirrors = new Firmware.UrlMirror[temp_url_mirrors.Count];
+                    for (int i = 0; i < temp_url_mirrors.Count; i++)
+                    {
+                        String name = temp_url_mirrors[i].GetObject()["name"].GetString();
+                        String iso_3166_1_alpha_2 = temp_url_mirrors[i].GetObject()["iso_3166_1_alpha_2"].GetString();
+                        String url2 = temp_url_mirrors[i].GetObject()["url"].GetString();
+
+                        url_mirrors[i] = new Firmware.UrlMirror(name, iso_3166_1_alpha_2, url2);
+                    }
+
+                    var jsonArr_valid_bases = firmwareJsonObj["valid_bases"].GetArray();
+                    string[] valid_bases = new string[jsonArr_valid_bases.Count];
+                    for (int i = 0; i < jsonArr_valid_bases.Count; i++)
+                    {
+                        valid_bases[i] = jsonArr_valid_bases[i].GetString();
+                    }
+
+                    var jsonArr_supported_product_ids = firmwareJsonObj["supported_product_ids"].GetArray();
+                    int[] supported_product_ids = new int[jsonArr_supported_product_ids.Count];
+                    for (int i = 0; i < jsonArr_supported_product_ids.Count; i++)
+                    {
+                        supported_product_ids[i] = (int)jsonArr_supported_product_ids[i].GetNumber();
+                    }
+
+                    Firmware firmwareObj = new Firmware(full_code, human_name, unique_code, desc, android_rec_vc, android_min_vc,
+                        1, 1, 1, 1, url_mirrors, url, valid_bases, supported_product_ids);
+                    if (Firmware.FirmwareTable.ContainsKey(key))
+                    {
+                        Firmware.FirmwareTable[key] = firmwareObj;
+                    }
+                    else
+                    {
+                        Firmware.FirmwareTable.Add(key, firmwareObj);
+                    }
                 }
-                else
+
+
+                Firmware.LatestByProductId = new Dictionary<string, string> { };
+                if (lastestByProductId.ContainsKey("windows_dfu"))
                 {
-                    Firmware.FirmwareTable.Add(key, firmwareObj);
+                    JsonObject windowsDfu = lastestByProductId.GetNamedObject("windows_dfu");
+                    if (windowsDfu != null)
+                    {
+                        foreach (string key in windowsDfu.Keys)
+                        {
+                            Firmware.LatestByProductId[key] = windowsDfu[key].GetString();
+                        }
+                    }
+                    // So if null, then this DFU app is deprecated and we should display that you should update
+                    // this Windows app, or check wearhaus.com
+                    // For any new version of WindowsDFU, we can just change this string to "windows_dfu1", then "windows_dfu2", etc.
+                    // at the same time we release a new version
                 }
+                return true;
+            } catch (Exception e)
+            {
+                System.Diagnostics.Debug.WriteLine("Error Getting FV Table: " + e.HResult.ToString());
             }
+            return false;
 
-            return latestVer;
         }
 
         public async Task<string> CreateNewUser(string email, string password)
@@ -149,32 +317,26 @@ namespace WearhausServer
             return resp;
         }
 
-        public async Task<string> CreateGuest()
+        /*public async Task<Boolean> CreateGuest()
         {
             var vals = new Dictionary<string, string>{
-                {"hid", HID} // ignored
+                //{"hid", HID} // ignored
             };
 
             string resp = await HttpPost(PATH_ACCOUNT_VERIFY_GUEST, vals);
-            User_id = ParseJsonResp("guest_user_id", resp);
-            Acc_token = ParseJsonResp("acc_token", resp);
-            return resp;
-        }
 
-        public async Task<string> LoginHid()
-        {
-            var vals = new Dictionary<string, string>{
-                {"acc_token", Acc_token},
-                {"hid", HID},
-                {"fv_full_code", Fv_full_code},
-                {"gcm_reg_id", ""}
-            };
+            try
+            {
+                User_id = ParseJsonResp("guest_user_id", resp);
+                Acc_token = ParseJsonResp("acc_token", resp);
+            } catch (Exception e)
+            {
+                User_id = 
+                return false;
+            }
+            return true;
+        }*/
 
-            string resp = await HttpPost(PATH_HEADPHONES_LOGIN, vals);
-            User_id = ParseJsonResp("guest_user_id", resp);
-            Acc_token = ParseJsonResp("acc_token", resp);
-            return resp;
-        }
 
         public async Task<string> VerifyCredentials(string email, string password)
         {
@@ -251,16 +413,18 @@ namespace WearhausServer
             }
         }
 
-        public static string ParseJsonResp(string key, string jsonResp)
+        // returns status type, 0 = good, 1 = either error or special notif
+        public static int ParseJsonResp(string jsonResp)
         {
             JsonObject x = JsonObject.Parse(jsonResp);
-            string tempVal = null;
+            //string tempVal = null;
             string status = null;
             try
             {
-                tempVal = x[key].GetString();
+                //tempVal = x[key].GetString();
                 status = x["status"].GetString();
-                switch (Convert.ToInt32(status))
+
+                /*switch (Convert.ToInt32(status))
                 {
                     case 0:
                         break;
@@ -349,7 +513,7 @@ namespace WearhausServer
                     default:
                         return "Error: unknown error";
 
-                }
+                }*/
             }
             catch (Exception e)
             {

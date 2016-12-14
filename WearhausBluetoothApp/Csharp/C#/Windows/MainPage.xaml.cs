@@ -29,7 +29,7 @@ namespace SDKTemplate
     /// </summary>
     public sealed partial class MainPage : Page
     {
-        public static MainPage Current;
+        public static MainPage MyMainPage;
 
         public static ArcLink MyArcLink;
 
@@ -46,7 +46,7 @@ namespace SDKTemplate
 
             // This is a static public property that allows downstream pages to get a handle to the MainPage instance
             // in order to call methods that are in this class.
-            Current = this;
+            MyMainPage = this;
             MyArcLink = new ArcLink();
             MyHttpController = new WearhausHttpController();
         }
@@ -141,6 +141,7 @@ namespace SDKTemplate
             await Windows.System.Launcher.LaunchUriAsync(new Uri(((HyperlinkButton)sender).Tag.ToString()));
         }
 
+
     }
 
     public enum NotifyType
@@ -154,7 +155,7 @@ namespace SDKTemplate
         public object Convert(object value, Type targetType, object parameter, string language)
         {
             Scenario s = value as Scenario;
-            return (MainPage.Current.Scenarios.IndexOf(s) + 1) + ") " + s.Title;
+            return (MainPage.MyMainPage.Scenarios.IndexOf(s) + 1) + ") " + s.Title;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, string language)
