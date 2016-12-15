@@ -14,6 +14,17 @@ namespace Common
             return firmwareStr;
         }
 
+        public static string GetUniqueCodeFromFull(String fv_full)
+        {
+            if (fv_full != null && fv_full.Length == FV_Full_code_length)
+            {
+                return fv_full.Replace("000001000AFFFF", "").Replace("0000000000000000", "");
+            }
+            return null;
+
+
+        }
+
         // format '000001000AFFFF12000000000000000000'
         public static readonly int FV_Full_code_length = 34;
 

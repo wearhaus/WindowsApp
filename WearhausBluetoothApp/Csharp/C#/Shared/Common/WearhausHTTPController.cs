@@ -109,7 +109,7 @@ namespace WearhausServer
                 return;
             }
 
-            if (MyAccountState != AccountState.None || MyAccountState != AccountState.Error)
+            if (MyAccountState != AccountState.None && MyAccountState != AccountState.Error)
             {
                 System.Diagnostics.Debug.WriteLine("Programmer Error: Should not attempt another startServerRegistration in current AccountState: " + MyAccountState);
                 return;
@@ -130,10 +130,10 @@ namespace WearhausServer
 
 
                 string guestResp = await HttpPost(PATH_ACCOUNT_VERIFY_GUEST, new Dictionary<string, string> { });
-
+                System.Diagnostics.Debug.WriteLine("guestResp  " + guestResp);
 
                 JsonObject x = JsonObject.Parse(guestResp);
-                int status = (int) x["status"].GetNumber();
+                int status = Convert.ToInt32(x["status"].GetString());
                 if (status != 0)
                 {
                     System.Diagnostics.Debug.WriteLine("Non zero status returned from createGuest");
@@ -151,14 +151,14 @@ namespace WearhausServer
                 };
 
                 string hidResp = await HttpPost(PATH_HEADPHONES_LOGIN, hidVals);
+                System.Diagnostics.Debug.WriteLine("hidResp  " + hidResp);
 
 
-                JsonObject x2 = JsonObject.Parse(guestResp);
-
-                int status2 = (int)x2["status"].GetNumber();
+                JsonObject x2 = JsonObject.Parse(hidResp);
+                int status2 = Convert.ToInt32(x2["status"].GetString());
                 if (status2 != 0)
                 {
-                    System.Diagnostics.Debug.WriteLine("Non zero status returned from createGuest");
+                    System.Diagnostics.Debug.WriteLine("Non zero status returned from login headphones");
                     errorConnectingToServer();
                     return;
                 }
@@ -172,7 +172,7 @@ namespace WearhausServer
             }
             catch (Exception e)
             {
-                System.Diagnostics.Debug.WriteLine("Error parsing server response: " + e.HResult.ToString());
+                System.Diagnostics.Debug.WriteLine("Error parsing server response: " + e.ToString());
                 errorConnectingToServer();
                 return;
             }
@@ -222,15 +222,18 @@ namespace WearhausServer
             {
                 var param = new Dictionary<string, string>();
                 string resp = await HttpPost(PATH_FIRMWARE_TABLE, param);
+                System.Diagnostics.Debug.WriteLine("resp" + resp);
+
 
                 JsonObject x = JsonObject.Parse(resp);
                 JsonObject f = x.GetNamedObject("firmware");
-                JsonObject lastestByProductId = x.GetNamedObject("latest");
+                JsonObject lastestByProductId = x.GetNamedObject("latest_by_product_id");
                 //string latestVer = x["latest"].GetString();
 
                 // Update Firmware Table
                 foreach (string key in f.Keys)
                 {
+                    System.Diagnostics.Debug.WriteLine("foreach (string key " + key);
                     JsonObject firmwareJsonObj = f.GetNamedObject(key);
 
 
@@ -241,30 +244,46 @@ namespace WearhausServer
                     string human_name = firmwareJsonObj["human_name"].GetString();
                     string unique_code = firmwareJsonObj["unique_code"].GetString();
                     string url = firmwareJsonObj["url"].GetString();
+                    System.Diagnostics.Debug.WriteLine("   url " + url);
 
-                    JsonArray temp_url_mirrors = firmwareJsonObj["url_mirrors"].GetArray();
-                    Firmware.UrlMirror[] url_mirrors = new Firmware.UrlMirror[temp_url_mirrors.Count];
-                    for (int i = 0; i < temp_url_mirrors.Count; i++)
+                    Firmware.UrlMirror[] url_mirrors = null;
+                    if (firmwareJsonObj.ContainsKey("url_mirrors"))
                     {
-                        String name = temp_url_mirrors[i].GetObject()["name"].GetString();
-                        String iso_3166_1_alpha_2 = temp_url_mirrors[i].GetObject()["iso_3166_1_alpha_2"].GetString();
-                        String url2 = temp_url_mirrors[i].GetObject()["url"].GetString();
+                        JsonArray temp_url_mirrors = firmwareJsonObj["url_mirrors"].GetArray();
+                        url_mirrors = new Firmware.UrlMirror[temp_url_mirrors.Count];
+                        System.Diagnostics.Debug.WriteLine("    temp_url_mirrors.Count " + temp_url_mirrors.Count);
 
-                        url_mirrors[i] = new Firmware.UrlMirror(name, iso_3166_1_alpha_2, url2);
+                        for (int i = 0; i < temp_url_mirrors.Count; i++)
+                        {
+                            System.Diagnostics.Debug.WriteLine("    name " + temp_url_mirrors[i]);
+                            String name = temp_url_mirrors[i].GetObject()["name"].GetString();
+                            String iso_3166_1_alpha_2 = temp_url_mirrors[i].GetObject()["iso_3166_1_alpha_2"].GetString();
+                            String url2 = temp_url_mirrors[i].GetObject()["url"].GetString();
+
+                            url_mirrors[i] = new Firmware.UrlMirror(name, iso_3166_1_alpha_2, url2);
+                        }
                     }
+                    
 
                     var jsonArr_valid_bases = firmwareJsonObj["valid_bases"].GetArray();
                     string[] valid_bases = new string[jsonArr_valid_bases.Count];
                     for (int i = 0; i < jsonArr_valid_bases.Count; i++)
                     {
+                        System.Diagnostics.Debug.WriteLine("    jsonArr_valid_bases[i].GetString() " + jsonArr_valid_bases[i].GetString());
                         valid_bases[i] = jsonArr_valid_bases[i].GetString();
                     }
 
                     var jsonArr_supported_product_ids = firmwareJsonObj["supported_product_ids"].GetArray();
+                    System.Diagnostics.Debug.WriteLine("    jsonArr_supported_product_ids " + jsonArr_supported_product_ids);
+
                     int[] supported_product_ids = new int[jsonArr_supported_product_ids.Count];
                     for (int i = 0; i < jsonArr_supported_product_ids.Count; i++)
                     {
-                        supported_product_ids[i] = (int)jsonArr_supported_product_ids[i].GetNumber();
+
+                        supported_product_ids[i] = Convert.ToInt32(jsonArr_supported_product_ids[i].GetString());
+
+                        System.Diagnostics.Debug.WriteLine("    jsonArr_supported_product_ids[i].GetNumber() " + supported_product_ids[i]);
+
                     }
 
                     Firmware firmwareObj = new Firmware(full_code, human_name, unique_code, desc, android_rec_vc, android_min_vc,
@@ -280,9 +299,13 @@ namespace WearhausServer
                 }
 
 
+
                 Firmware.LatestByProductId = new Dictionary<string, string> { };
+                System.Diagnostics.Debug.WriteLine("lastestByProductId " + lastestByProductId);
+
                 if (lastestByProductId.ContainsKey("windows_dfu"))
                 {
+
                     JsonObject windowsDfu = lastestByProductId.GetNamedObject("windows_dfu");
                     if (windowsDfu != null)
                     {
@@ -299,13 +322,13 @@ namespace WearhausServer
                 return true;
             } catch (Exception e)
             {
-                System.Diagnostics.Debug.WriteLine("Error Getting FV Table: " + e.HResult.ToString());
+                System.Diagnostics.Debug.WriteLine("Error Getting FV Table: " + e.ToString());
             }
             return false;
 
         }
 
-        public async Task<string> CreateNewUser(string email, string password)
+        /*public async Task<string> CreateNewUser(string email, string password)
         {
             var param = new Dictionary<string, string>{
                 {"email", email},
@@ -315,7 +338,7 @@ namespace WearhausServer
             string resp = await HttpPost(PATH_ACCOUNT_CREATE, param);
             Acc_token = ParseJsonResp("acc_token", resp);
             return resp;
-        }
+        }*/
 
         /*public async Task<Boolean> CreateGuest()
         {
@@ -338,7 +361,7 @@ namespace WearhausServer
         }*/
 
 
-        public async Task<string> VerifyCredentials(string email, string password)
+        /*public async Task<string> VerifyCredentials(string email, string password)
         {
             var vals = new Dictionary<string, string>{
                 {"email", email},
@@ -348,7 +371,7 @@ namespace WearhausServer
 
             string resp = await HttpPost(PATH_ACCOUNT_VERIFY_CREDENTIALS, vals);
             return resp;
-        }
+        }*/
 
         public async Task<string> DfuReport(int dfu_status, String Old_fv, String Current_fv, String Attempted_fv)
         {
@@ -383,6 +406,8 @@ namespace WearhausServer
             using (var client = new HttpClient()) {
                 try
                 {
+                    System.Diagnostics.Debug.WriteLine("HTTPController connecting to url=" + destination);
+
                     var content = new FormUrlEncodedContent(values);
                     var response = await client.PostAsync(WEARHAUS_URI + destination, content);
                     var responseString = await response.Content.ReadAsStringAsync();
@@ -402,6 +427,8 @@ namespace WearhausServer
             {
                 try
                 {
+                    System.Diagnostics.Debug.WriteLine("HTTPController connecting to url=" + destination);
+                    
                     var responseString = await client.GetStringAsync(WEARHAUS_URI + destination);
                     LastHttpResponse = responseString;
                     return responseString;
@@ -413,7 +440,9 @@ namespace WearhausServer
             }
         }
 
+        // H: to be deprecated; checks for bad statuses can be handled differently
         // returns status type, 0 = good, 1 = either error or special notif
+        /*
         public static int ParseJsonResp(string jsonResp)
         {
             JsonObject x = JsonObject.Parse(jsonResp);
@@ -513,7 +542,7 @@ namespace WearhausServer
                     default:
                         return "Error: unknown error";
 
-                }*/
+                }
             }
             catch (Exception e)
             {
@@ -522,6 +551,7 @@ namespace WearhausServer
             }
             return tempVal;
         }
+        */
 
 
     }

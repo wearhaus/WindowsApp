@@ -15,6 +15,7 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 using Windows.UI.Xaml.Media.Imaging;
+using WearhausServer;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=234238
 
@@ -40,7 +41,10 @@ namespace WearhausBluetoothApp
             MainPage.MyArcLink.DFUStepChanged += UpdateUIListener;
             MainPage.MyHttpController.AccountStateChanged += UpdateUIListener;
 
+            
+
             ArcStateText.Text = "";
+            UpdateFV.IsEnabled = false;
             // manually opened by button, so not directly related to UIState
             updateInstructVisibility(false);
 
@@ -76,7 +80,7 @@ namespace WearhausBluetoothApp
 
                 case ArcLink.ArcConnState.TryingToConnect:
                 case ArcLink.ArcConnState.GatheringInfo:
-                    ArcStateText.Text = "connecting";
+                    ArcStateText.Text = "Connecting";
                     ConnectButton.IsEnabled = false;
                     ConnectButton.Opacity = 0.0;
                     HowToButton.IsEnabled = false;
@@ -151,9 +155,54 @@ namespace WearhausBluetoothApp
                     ArcStateText.Text = "Connected to " + MainPage.MyArcLink.DeviceHumanName;
                     ConnectionProgress.Opacity = 0.0;
 
-
                     updateDashboardVisibility(true);
                     FirmwareText.Text = MainPage.MyArcLink.Fv_full_code;
+                    String uniqueCode = ArcUtil.GetUniqueCodeFromFull(MainPage.MyArcLink.Fv_full_code);
+                    ProductIdText.Text = MainPage.MyArcLink.GetArcGeneration();
+
+                    bool showDfuStartUI = false;
+
+                    if (MainPage.MyArcLink.FirmwareVersion != null)
+                    {
+                        // we know our version, let's check if we can update
+                        FirmwareText.Text = Firmware.FirmwareTable[uniqueCode].humanName;
+
+                        String latestUnique = Firmware.LatestByProductId[MainPage.MyArcLink.ProductId + ""];
+                        if (latestUnique != null && latestUnique.Length == 4 
+                            && Firmware.FirmwareTable[latestUnique] != null && Firmware.FirmwareTable[latestUnique].validBases.Contains(uniqueCode))
+                        {
+
+                            System.Diagnostics.Debug.WriteLine("Detected new firmware version available for this Arc: " + latestUnique);
+                            Firmware latest = Firmware.FirmwareTable[latestUnique];
+                            showDfuStartUI = true;
+                            .
+                        }
+
+                    } else
+                    {
+                        FirmwareText.Text = "Unknown";
+                        showDfuStartUI = false;
+                        // TODO report to server
+                    }
+
+
+                    if (showDfuStartUI) {
+                        UpdateFV.Visibility = Visibility.Visible;
+                        UpdateFV.IsEnabled = true;
+                        FirmwareUpToDate.Visibility = Visibility.Collapsed;
+                    } else {
+                        UpdateFV.Visibility = Visibility.Collapsed;
+                        UpdateFV.IsEnabled = false;
+                        FirmwareUpToDate.Visibility = Visibility.Visible;
+                        FirmwareDescText.Text = "";
+                    }
+
+                    
+                    //FirmwareDescText.Text = Firmware.FirmwareTable[uniqueCode].desc;
+
+
+                    
+
 
 
 
@@ -244,8 +293,14 @@ namespace WearhausBluetoothApp
         private void HowToButton_Click(object sender, RoutedEventArgs e)
         {
             updateInstructVisibility(!InstrucVisible);
+        }
+
+        private void UpdateFV_Click(object sender, RoutedEventArgs e)
+        {
 
         }
+
+        
 
         private void updateInstructVisibility(Boolean b)
         {

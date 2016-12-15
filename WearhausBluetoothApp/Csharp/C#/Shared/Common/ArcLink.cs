@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using WearhausServer;
 using Windows.Devices.Bluetooth.Rfcomm;
 using Windows.Devices.Enumeration;
 using Windows.Networking.Sockets;
@@ -92,7 +93,15 @@ namespace Common
         public String DeviceHumanName { get; private set; }
         public string HID { get; private set; }
         public string Fv_full_code { get; private set; }
+        // null value means unknown version that was not on our table
+        public Firmware FirmwareVersion { get; private set; }
+        // int from 0 to 15, To translate to generation, add 1. 
+        // So pid = 0 results in 1st Gen Arc. pid = 1 is 2nd Gen arc
         public int ProductId { get; private set; }
+        public String GetArcGeneration()
+        {
+            return "" + (ProductId + 1);
+        }
 
 
 
@@ -242,7 +251,6 @@ namespace Common
                         HID = ArcUtil.ParseHID(bluetoothServiceInfo.Id);
                         String productIdChar = HID.Substring(6, 1);
                         ProductId = Convert.ToInt32(productIdChar, 16);
-                        . test this part
                         System.Diagnostics.Debug.WriteLine("Connected Arc, now gathering.  HID: " + HID + ",  ProductId: " + ProductId);
 
                         ErrorHuman = "";
@@ -444,7 +452,7 @@ namespace Common
                     else
                     {
                         //MainPage.Current.NotifyUser("Disconnected from Stream!", NotifyType.ErrorMessage);
-                        Disconnect("Disconnected from Stream!");
+                        Disconnect("Arc Disconnected");
                         // TODO better error message
                         return;
                     }
@@ -526,6 +534,13 @@ namespace Common
                     else
                     {
                         Fv_full_code = firmware_ver;
+                        if (Firmware.FirmwareTable.ContainsKey(ArcUtil.GetUniqueCodeFromFull(Fv_full_code)))
+                        {
+                            FirmwareVersion = Firmware.FirmwareTable[ArcUtil.GetUniqueCodeFromFull(Fv_full_code)];
+                        } else
+                        {
+                            FirmwareVersion = null;
+                        }
 
                         CheckGathering();
                     }

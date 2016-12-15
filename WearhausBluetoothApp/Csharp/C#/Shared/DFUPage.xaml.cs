@@ -13,9 +13,6 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 
-using WearhausServer;
-
-
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=234238
 
 namespace WearhausBluetoothApp
@@ -23,21 +20,11 @@ namespace WearhausBluetoothApp
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class SignupPage : Page
+    public sealed partial class DFUPage : Page
     {
-        WearhausHttpController HttpController;
-
-        public SignupPage(WearhausHttpController httpController)
+        public DFUPage()
         {
             this.InitializeComponent();
-
-            HttpController = httpController;
-
-        }
-
-        private async void SignupButton_Click(object sender, RoutedEventArgs e)
-        {
-            //string resp = await HttpController.CreateNewUser(EmailTextBox.Text, PasswordTextBox.Text);
         }
     }
 }

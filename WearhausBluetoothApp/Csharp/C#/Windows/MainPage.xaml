@@ -58,6 +58,6 @@
                 </StackPanel>
             </StackPanel>
         </Grid>
-        <Frame Grid.Column="1" x:Name="ScenarioFrame" Margin="30,50,30,0" />
+        <Frame Grid.Column="1" x:Name="ScenarioFrame" />
     </Grid>
 </Page>
