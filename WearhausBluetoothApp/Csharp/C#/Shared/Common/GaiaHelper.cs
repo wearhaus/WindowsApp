@@ -76,6 +76,7 @@ namespace Gaia
         /// <param name="buf">FileBuffer as a byte array</param>
         public void SetFileBuffer(byte[] buf)
         {
+            System.Diagnostics.Debug.WriteLine("SetFileBuffer()");
             FileBuffer = buf;
             TotalChunks = (int)Math.Ceiling((float)buf.Length / CHUNK_SIZE);
         }
@@ -135,6 +136,8 @@ namespace Gaia
                 System.Diagnostics.Debug.WriteLine("Did not specify a DFU File! Please Pick a File!");
                 return null;
             }
+            System.Diagnostics.Debug.WriteLine("CreateDfuBegin()...");
+
 
             // Get CRC first from File
             uint fileSize = (uint)FileBuffer.Length;
@@ -182,6 +185,8 @@ namespace Gaia
         /// </returns>
         public GaiaMessage CreateResponseToMessage(GaiaMessage receievedMessage, byte checkSum = 0x00)
         {
+            System.Diagnostics.Debug.WriteLine("CreateResponseToMessage()...");
+
             // Check if the Response is a command or an ACK
             ushort command = receievedMessage.CommandId;
             GaiaMessage resp = null;
@@ -194,6 +199,7 @@ namespace Gaia
 
             if (receievedMessage.IsAck) // If this message is an ACK, we must find what the acked command id is
             {
+                System.Diagnostics.Debug.WriteLine("receievedMessage.IsAck");
 
                 switch (command)
                 {
@@ -237,17 +243,25 @@ namespace Gaia
                                     break;
 
                                 case (byte)GaiaMessage.DfuStatusNotification.Download_Failure:
+                                    System.Diagnostics.Debug.WriteLine("DfuStatusNotification.Download_Failure");
+
                                     resp = GaiaMessage.CreateErrorGaia(" Firmware Download to Arc Failed. Try again, and if this error persists, contact customer support at support@wearhaus.com. Error 1", 1);
                                     break;
 
                                 case (byte)GaiaMessage.DfuStatusNotification.Verification:
+                                    System.Diagnostics.Debug.WriteLine("DfuStatusNotification.Verification");
+
                                     break;
                                 
                                 case (byte)GaiaMessage.DfuStatusNotification.Verification_Failure:
+                                    System.Diagnostics.Debug.WriteLine("DfuStatusNotification.Verification_Failure");
+
                                     resp = GaiaMessage.CreateErrorGaia(" Verification Failed. Try again, and if this error persists, contact customer support at support@wearhaus.com. Error 3", 1);
                                     break;
 
                                 case (byte)GaiaMessage.DfuStatusNotification.Verification_Success:
+                                    System.Diagnostics.Debug.WriteLine("DfuStatusNotification.Verification_Success");
+
                                     break;
                             }
                         }
@@ -255,6 +269,8 @@ namespace Gaia
 
                     case (ushort)GaiaMessage.GaiaCommand.DFURequest:
                         resp = GaiaMessage.CreateAck(command);
+                        System.Diagnostics.Debug.WriteLine("GaiaCommand.DFURequest received");
+
                         break;
 
                     default:

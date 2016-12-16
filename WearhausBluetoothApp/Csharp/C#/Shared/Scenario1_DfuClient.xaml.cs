@@ -335,6 +335,8 @@ namespace WearhausBluetoothApp
         /// </summary>
         private async void VerifyDfuButton_Click(object sender, RoutedEventArgs e)
         {
+            System.Diagnostics.Debug.WriteLine("VerifyDfuButton_Click...");
+
             // Clear any previous messages
             MainPage.Current.NotifyUser("", NotifyType.StatusMessage);
 
@@ -576,6 +578,8 @@ namespace WearhausBluetoothApp
         {
             try
             {
+                System.Diagnostics.Debug.WriteLine("Disconnect()");
+
                 if (GaiaHandler != null && GaiaHandler.IsWaitingForVerification)
                 {
                     RunButton.IsEnabled = false;
@@ -704,6 +708,8 @@ namespace WearhausBluetoothApp
         /// </summary>
         private async void UpdateButton_Click(object sender, RoutedEventArgs e)
         {
+            System.Diagnostics.Debug.WriteLine("UpdateButton_Click()");
+
             MainPage.Current.NotifyUser("", NotifyType.StatusMessage);
 
             // NOTE: This not only returns the most recent Firmware ID but it also updates our entire Static Firmware Table in Firmware.cs
@@ -880,6 +886,8 @@ namespace WearhausBluetoothApp
                 if (print)
                 {
                     ConversationList.Items.Add("Sent: " + sendStr);
+                    System.Diagnostics.Debug.WriteLine("Sent: " + sendStr);
+
                 }
                 MessageTextBox.Text = "";
             }
@@ -927,6 +935,8 @@ namespace WearhausBluetoothApp
         {
             try
             {
+                System.Diagnostics.Debug.WriteLine("ReceiveStringLoop()");
+
                 byte frameLen = GaiaMessage.GAIA_FRAME_LEN;
 
                 // Frame is always FRAME_LEN long at least, so load that many bytes and process the frame
@@ -935,8 +945,11 @@ namespace WearhausBluetoothApp
                 // Buffer / Stream is closed 
                 if (size < frameLen)
                 {
+                    System.Diagnostics.Debug.WriteLine("   size < frameLen");
+
                     if (GaiaHandler.IsSendingFile)
                     {
+                        System.Diagnostics.Debug.WriteLine("TopInstruction.Text = Firmware update complete.Your Arc will...");
                         TopInstruction.Text = "Firmware update complete. Your Arc will automatically restart - please listen to your Arc for a double beep sound to indicate a restart. When you hear the beep or have waited 30 seconds, please press the \"Verify Update\" button to verify that the update worked.";
                         GaiaHandler.IsSendingFile = false;
                         GaiaHandler.IsWaitingForVerification = true;
@@ -975,6 +988,8 @@ namespace WearhausBluetoothApp
                     await chatReader.LoadAsync(sizeof(byte));
                     byte checksum = chatReader.ReadByte();
                     receivedStr += " CRC: " + checksum.ToString("X2");
+                    System.Diagnostics.Debug.WriteLine(" CRC: " + checksum.ToString("X2"));
+
 
                     // Now we should have all the bytes, lets process the whole thing!
                     resp = GaiaHandler.CreateResponseToMessage(receivedMessage, checksum);
@@ -993,6 +1008,8 @@ namespace WearhausBluetoothApp
                 if (receivedMessage.CommandId == (ushort)GaiaMessage.GaiaCommand.GetAppVersion) // Specifically handling the case to find out the current Firmware version
                 {
                     string firmware_ver = WearhausHttpController.ParseFirmwareVersion(receivedMessage.PayloadSrc);
+                    System.Diagnostics.Debug.WriteLine("firmware_ver: " + firmware_ver);
+
                     if (GaiaHandler.IsWaitingForVerification)
                     {
                         HttpController.Current_fv = firmware_ver;
@@ -1029,10 +1046,14 @@ namespace WearhausBluetoothApp
                 }
 
                 ConversationList.Items.Add("Received: " + receivedStr);
+                System.Diagnostics.Debug.WriteLine("Received: " + receivedStr);
 
-                
+
+
                 if (resp != null && resp.IsError)
                 {
+                    System.Diagnostics.Debug.WriteLine(" resp.IsError ");
+
                     ProgressStatus.Text = resp.InfoMessage;
                     GaiaHandler.IsSendingFile = false;
                     DfuProgressBar.IsIndeterminate = false;
@@ -1071,13 +1092,16 @@ namespace WearhausBluetoothApp
                         if (chunksRemaining % 1000 == 0)
                         {
                             ConversationList.Items.Add("DFU Progress | Chunks Remaining: " + chunksRemaining);
+                            System.Diagnostics.Debug.WriteLine("Chunks Remaining: " + chunksRemaining);
                         }
-                        System.Diagnostics.Debug.WriteLine("Chunks Remaining: " + chunksRemaining);
+                        
 
                     }
                     ProgressStatus.Text = "Finished sending file. Verifying... (Your Arc will restart soon after this step.)";
                     DfuProgressBar.IsIndeterminate = true;
                     ConversationList.Items.Add("Finished Sending DFU. Verifying...");
+                    System.Diagnostics.Debug.WriteLine("Finished Sending DFU. Verifying...");
+
 
                 }
 
