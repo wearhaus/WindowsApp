@@ -371,10 +371,11 @@ namespace Common
                 // disconnect that's part of DFU should have a flag set here
                 if (GaiaHelper != null && GaiaHelper.IsWaitingForVerification)
                 {
-
-                    MyDFUStep = DFUStep.AwaitingManualPowerCycle;
-                    MyDFUResultStatus = DFUResultStatus.None;
-                    onDFUStepChanged();
+                    System.Diagnostics.Debug.WriteLine(" Disconnecting and detected GaiaHelper.IsWaitingForVerification");
+                    // this really only did UI stuff, so don't bother with code here?
+                    //MyDFUStep = DFUStep.AwaitingManualPowerCycle;
+                    //MyDFUResultStatus = DFUResultStatus.None;
+                    //onDFUStepChanged();
 
                     // TODO set DFU flag for waiting it to reconnect
                     //RunButton.IsEnabled = false;
@@ -441,6 +442,9 @@ namespace Common
                 await BluetoothWriter.StoreAsync();
                 string sendStr = BitConverter.ToString(msg);
 
+
+                System.Diagnostics.Debug.WriteLine("Sent: " + sendStr);
+
                 /*if (print)
                 {
                     ConversationList.Items.Add("Sent: " + sendStr);
@@ -483,14 +487,15 @@ namespace Common
                     System.Diagnostics.Debug.WriteLine("size < frameLen");
                     if (GaiaHelper.IsSendingFile)
                     {
-                        System.Diagnostics.Debug.WriteLine("GaiaHelper.IsWaitingForVerification = true;");
+                        // why is this never called??? TODO
+                        System.Diagnostics.Debug.WriteLine("!?!??! Special line was hit!!!! GaiaHelper.IsWaitingForVerification = true;");
 
                         //TopInstruction.Text = "Your Arc will automatically restart - please listen to your Arc for a double beep sound to indicate a restart. When you hear the beep or have waited 30 seconds, please press the \"Verify Update\" button to verify that the update worked.";
                         GaiaHelper.IsSendingFile = false;
                         GaiaHelper.IsWaitingForVerification = true;
                         Disconnect(null);
 
-                        MyDFUStep = DFUStep.ChipPowerCycle;
+                        MyDFUStep = DFUStep.AwaitingManualPowerCycle;
                         MyDFUResultStatus = DFUResultStatus.None;
                         onDFUStepChanged();
                         return;
@@ -530,6 +535,8 @@ namespace Common
                     await chatReader.LoadAsync(sizeof(byte));
                     byte checksum = chatReader.ReadByte();
                     receivedStr += " CRC: " + checksum.ToString("X2");
+                    System.Diagnostics.Debug.WriteLine(" CRC: " + checksum.ToString("X2"));
+
 
                     // Now we should have all the bytes, lets process the whole thing!
                     resp = GaiaHelper.CreateResponseToMessage(receivedMessage, checksum);
@@ -548,7 +555,7 @@ namespace Common
                 if (receivedMessage.CommandId == (ushort)GaiaMessage.GaiaCommand.GetAppVersion) // Specifically handling the case to find out the current Firmware version
                 {
                     string firmware_ver = ArcUtil.ParseFirmwareVersion(receivedMessage.PayloadSrc);
-
+                    System.Diagnostics.Debug.WriteLine("firmware_ver = " + firmware_ver);
 
                     if (GaiaHelper.IsWaitingForVerification)
                     {
@@ -632,8 +639,6 @@ namespace Common
                     // TODO move UI
                     //DfuProgressBar.IsIndeterminate = false;
                     //DFUProgressBar.Value = 0;
-                    
-
 
                     int chunksRemaining = GaiaHelper.ChunksRemaining();
                     if (chunksRemaining > 0)
@@ -694,15 +699,14 @@ namespace Common
                     }
                     else
                     {
-                        System.Diagnostics.Debug.WriteLine("DFU Read stream failed with error: " + ex.Message);
-                        // DFU error state
+                        System.Diagnostics.Debug.WriteLine("DFU Read stream failed with error: " + ex.ToString());
 
-                        MyDFUStep = DFUStep.Error;
-                        MyDFUResultStatus = DFUResultStatus.IOException;
-                        onDFUStepChanged();
+                        //MyDFUStep = DFUStep.Error;
+                        //MyDFUResultStatus = DFUResultStatus.IOException;
+                        //onDFUStepChanged();
                         // TODO
                         //MainPage.Current.NotifyUser("Read stream failed with error: " + ex.Message, NotifyType.ErrorMessage);
-                        //Disconnect();
+                        Disconnect("Error disconnected from Arc");
                         // TODO disconnect yet?
                     }
                 }

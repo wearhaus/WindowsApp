@@ -161,21 +161,33 @@ namespace WearhausBluetoothApp
 
                     updateDashboardVisibility(true);
                     String uniqueCode = ArcUtil.GetUniqueCodeFromFull(MainPage.MyArcLink.MyFv_full_code);
+
+
+
                     ProductIdText.Text = MainPage.MyArcLink.GetArcGeneration();
                     HidText.Text = MainPage.MyArcLink.MyHID;
                     FvFullText.Text = MainPage.MyArcLink.MyFv_full_code;
 
                     bool showDfuStartUI = false;
 
+
                     if (MainPage.MyArcLink.MyFirmwareVersion != null)
                     {
+                        System.Diagnostics.Debug.WriteLine("MyFirmwareVersion != null ");
+
                         // we know our version, let's check if we can update
                         FirmwareText.Text = Firmware.FirmwareTable[uniqueCode].humanName;
+                        System.Diagnostics.Debug.WriteLine("FirmwareText.Text ");
+
 
                         String latestUnique = Firmware.LatestByProductId[MainPage.MyArcLink.MyProductId + ""];
+                        System.Diagnostics.Debug.WriteLine("latestUnique = " + latestUnique);
+
+
                         if (latestUnique != null && latestUnique.Length == 4 
                             && Firmware.FirmwareTable[latestUnique] != null && Firmware.FirmwareTable[latestUnique].validBases.Contains(uniqueCode))
                         {
+
 
                             System.Diagnostics.Debug.WriteLine("Detected new firmware version available for this Arc: " + latestUnique);
                             Firmware latest = Firmware.FirmwareTable[latestUnique];
@@ -303,11 +315,19 @@ namespace WearhausBluetoothApp
 
         private void UpdateFV_Click(object sender, RoutedEventArgs e)
         {
+            MainPage.MyArcLink.ArcConnStateChanged -= UpdateUIListener;
+            MainPage.MyArcLink.DFUStepChanged -= UpdateUIListener;
+            MainPage.MyHttpController.AccountStateChanged -= UpdateUIListener;
+
             MainPage.MyMainPage.NavigateTo(typeof(DFUPage));
         }
 
         private void UpdateDbg_Click(object sender, RoutedEventArgs e)
         {
+            MainPage.MyArcLink.ArcConnStateChanged -= UpdateUIListener;
+            MainPage.MyArcLink.DFUStepChanged -= UpdateUIListener;
+            MainPage.MyHttpController.AccountStateChanged -= UpdateUIListener;
+
             MainPage.MyMainPage.NavigateTo(typeof(DFUPage));
         }
 

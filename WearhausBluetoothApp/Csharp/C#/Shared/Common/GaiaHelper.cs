@@ -81,6 +81,7 @@ namespace Gaia
         {
             FileBuffer = buf;
             TotalChunks = (int)Math.Ceiling((float)buf.Length / CHUNK_SIZE);
+            System.Diagnostics.Debug.WriteLine("SetFileBuffer() TotalChunks: " + TotalChunks);
         }
 
         /// <summary>
@@ -138,6 +139,8 @@ namespace Gaia
                 System.Diagnostics.Debug.WriteLine("Programmer Error: Did not specify a DFU File! Please Pick a File!");
                 return null;
             }
+            System.Diagnostics.Debug.WriteLine("CreateDfuBegin()");
+
 
             // Get CRC first from File
             uint fileSize = (uint)FileBuffer.Length;
@@ -146,6 +149,8 @@ namespace Gaia
             crcBuffer[0] = crcBuffer[1] = crcBuffer[2] = crcBuffer[3] = (byte)0xff;
 
             long crc = DfuCRC.fileCrc(crcBuffer);
+            System.Diagnostics.Debug.WriteLine("crc " + crc);
+
 
             // Send DfuBegin with CRC and fileSize
             uint mCrc = (uint)(((crc & 0xFFFFL) << 16) | ((crc & 0xFFFF0000L) >> 16));
@@ -241,13 +246,12 @@ namespace Gaia
 
                                 case (byte)GaiaMessage.DfuStatusNotification.Download_Failure:
                                     System.Diagnostics.Debug.WriteLine("DfuStatusNotification.Download_Failure received; dfu aborted by pcb");
-
                                     resp = GaiaMessage.CreateErrorGaia(Common.ArcLink.DFUResultStatus.DownloadFailed);
                                     break;
 
                                 case (byte)GaiaMessage.DfuStatusNotification.Verification:
-                                    MyArcLink.FromDfuStateNotifState(ArcLink.DFUStep.VerifyingImage);
                                     System.Diagnostics.Debug.WriteLine("DfuStatusNotification.Verification received");
+                                    MyArcLink.FromDfuStateNotifState(ArcLink.DFUStep.VerifyingImage);
                                     break;
                                 
                                 case (byte)GaiaMessage.DfuStatusNotification.Verification_Failure:
@@ -258,9 +262,11 @@ namespace Gaia
                                     System.Diagnostics.Debug.WriteLine("DfuStatusNotification.Verification_Success received");
                                     MyArcLink.FromDfuStateNotifState(ArcLink.DFUStep.ChipPowerCycle);
 
-                                    IsSendingFile = false;
-                                    IsWaitingForVerification = true;
-                                    MyArcLink.Disconnect(null);
+                                    // this disconnect really shouldn't be here, but I can't figure out why this version doesn't get called at the top of the loop in ArcLink?
+                                    // It seemed to be doing that before refactoring
+                                    //IsSendingFile = false;
+                                    //IsWaitingForVerification = true;
+                                    //MyArcLink.Disconnect(null);
 
                                     // how do we tell ArcLink to change DfuStep?
                                     // "Arc will soon disconnect. Wait for it to reconnect; this may take 10-30 seconds. The board is currently power cycling itself. After it does, go to step 8:"
@@ -271,6 +277,8 @@ namespace Gaia
 
                     case (ushort)GaiaMessage.GaiaCommand.DFURequest:
                         resp = GaiaMessage.CreateAck(command);
+                        System.Diagnostics.Debug.WriteLine("GaiaCommand.DFURequest received");
+
                         break;
 
                     default:

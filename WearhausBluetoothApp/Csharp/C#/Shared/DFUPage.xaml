@@ -20,6 +20,9 @@
 
             <Button x:Name="StartButton" Content="Start" Margin="30" HorizontalAlignment="Center" 
                                     Click="StartButton_Click" FontSize="30" FontWeight="Bold"/>
+            
+            <Button x:Name="VerifyButton" Content="Verify" Margin="30" HorizontalAlignment="Center" 
+                                    Click="VerifyButton_Click" FontSize="30" FontWeight="Bold"/>
 
 
             <ProgressBar x:Name="DfuProgress" IsIndeterminate="True" Opacity="0.0" Width="400"/>

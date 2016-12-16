@@ -43,6 +43,8 @@ namespace WearhausBluetoothApp
 
         void UpdateUIListener(object sender, EventArgs e)
         {
+            VerifyButton.Visibility = Visibility.Collapsed;
+
             if (MainPage.MyArcLink.MyDFUStep == DFUStep.None)
             {
                 DfuStateText.Text = "Firmware Update will take 10-15 minutes. Make sure your headphones remain powered on. Don't play music for the duration of the update.";
@@ -54,7 +56,6 @@ namespace WearhausBluetoothApp
                 DfuProgress.Opacity = 1.0;
                 StartButton.Opacity = 0.0;
                 StartButton.IsEnabled = false;
-
 
                 switch (MainPage.MyArcLink.MyDFUStep)
                 {
@@ -71,6 +72,8 @@ namespace WearhausBluetoothApp
                         DfuStateText.Text = "Your Arc will automatically restart - please listen to your Arc for a double beep sound to indicate a restart. When you hear the beep or have waited 30 seconds, please press the \"Verify Update\" button to verify that the update worked."; // TODO
                         break;
                     case DFUStep.AwaitingManualPowerCycle:
+                        VerifyButton.Visibility = Visibility.Visible;
+                        DfuProgress.Opacity = 0.0;
                         DfuStateText.Text = "Please turn your Arc off (hold power button for 5 seconds). Then turn it back on and reconnect the Arc under Bluetooth Settings";
                         break;
                     case DFUStep.Success:
@@ -133,5 +136,11 @@ namespace WearhausBluetoothApp
         }
 
 
+        private void VerifyButton_Click(object sender, RoutedEventArgs e)
+        {
+            MainPage.MyArcLink.ConnectArc();
+
+        }
+        
     }
 }

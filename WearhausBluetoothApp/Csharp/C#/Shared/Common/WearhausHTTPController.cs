@@ -224,7 +224,6 @@ namespace WearhausServer
                 string resp = await HttpPost(PATH_FIRMWARE_TABLE, param);
                 System.Diagnostics.Debug.WriteLine("resp" + resp);
 
-
                 JsonObject x = JsonObject.Parse(resp);
                 JsonObject f = x.GetNamedObject("firmware");
                 JsonObject lastestByProductId = x.GetNamedObject("latest_by_product_id");
@@ -233,7 +232,6 @@ namespace WearhausServer
                 // Update Firmware Table
                 foreach (string key in f.Keys)
                 {
-                    System.Diagnostics.Debug.WriteLine("foreach (string key " + key);
                     JsonObject firmwareJsonObj = f.GetNamedObject(key);
 
 
@@ -244,18 +242,15 @@ namespace WearhausServer
                     string human_name = firmwareJsonObj["human_name"].GetString();
                     string unique_code = firmwareJsonObj["unique_code"].GetString();
                     string url = firmwareJsonObj["url"].GetString();
-                    System.Diagnostics.Debug.WriteLine("   url " + url);
 
                     Firmware.UrlMirror[] url_mirrors = null;
                     if (firmwareJsonObj.ContainsKey("url_mirrors"))
                     {
                         JsonArray temp_url_mirrors = firmwareJsonObj["url_mirrors"].GetArray();
                         url_mirrors = new Firmware.UrlMirror[temp_url_mirrors.Count];
-                        System.Diagnostics.Debug.WriteLine("    temp_url_mirrors.Count " + temp_url_mirrors.Count);
 
                         for (int i = 0; i < temp_url_mirrors.Count; i++)
                         {
-                            System.Diagnostics.Debug.WriteLine("    name " + temp_url_mirrors[i]);
                             String name = temp_url_mirrors[i].GetObject()["name"].GetString();
                             String iso_3166_1_alpha_2 = temp_url_mirrors[i].GetObject()["iso_3166_1_alpha_2"].GetString();
                             String url2 = temp_url_mirrors[i].GetObject()["url"].GetString();
@@ -269,12 +264,10 @@ namespace WearhausServer
                     string[] valid_bases = new string[jsonArr_valid_bases.Count];
                     for (int i = 0; i < jsonArr_valid_bases.Count; i++)
                     {
-                        System.Diagnostics.Debug.WriteLine("    jsonArr_valid_bases[i].GetString() " + jsonArr_valid_bases[i].GetString());
                         valid_bases[i] = jsonArr_valid_bases[i].GetString();
                     }
 
                     var jsonArr_supported_product_ids = firmwareJsonObj["supported_product_ids"].GetArray();
-                    System.Diagnostics.Debug.WriteLine("    jsonArr_supported_product_ids " + jsonArr_supported_product_ids);
 
                     int[] supported_product_ids = new int[jsonArr_supported_product_ids.Count];
                     for (int i = 0; i < jsonArr_supported_product_ids.Count; i++)
@@ -282,7 +275,6 @@ namespace WearhausServer
 
                         supported_product_ids[i] = Convert.ToInt32(jsonArr_supported_product_ids[i].GetString());
 
-                        System.Diagnostics.Debug.WriteLine("    jsonArr_supported_product_ids[i].GetNumber() " + supported_product_ids[i]);
 
                     }
 
@@ -301,7 +293,6 @@ namespace WearhausServer
 
 
                 Firmware.LatestByProductId = new Dictionary<string, string> { };
-                System.Diagnostics.Debug.WriteLine("lastestByProductId " + lastestByProductId);
 
                 if (lastestByProductId.ContainsKey("windows_dfu"))
                 {

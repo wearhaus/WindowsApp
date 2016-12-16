@@ -41,7 +41,13 @@ namespace SDKTemplate
 
             Windows.Phone.UI.Input.HardwareButtons.BackPressed += HardwareButtons_BackPressed;
         }
-		
+
+        public void NavigateTo(Type newPage)
+        {
+            //typeof(DFUPage)
+            ScenarioFrame.Navigate(newPage);
+        }
+
         /// <summary>
         /// Invoked when this page is about to be displayed in a Frame.
         /// </summary>
