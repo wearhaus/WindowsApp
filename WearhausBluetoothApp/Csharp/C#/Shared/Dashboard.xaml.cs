@@ -47,6 +47,7 @@ namespace WearhausBluetoothApp
             UpdateFV.IsEnabled = false;
             // manually opened by button, so not directly related to UIState
             updateInstructVisibility(false);
+            updateDashboardExpandVisibility(false);
 
             InstructionImages.Add("arc_update_1.png");
             InstructionImages.Add("arc_update_2.png");
@@ -64,6 +65,8 @@ namespace WearhausBluetoothApp
         private ArcLink.ArcConnState RenderedArcConnState;
 
         void UpdateUIListener(object sender, EventArgs e) {
+
+            DisconnectButton.Visibility = Visibility.Collapsed;
             // first of all, server doesn't matter if no arc is connected
             switch (MainPage.MyArcLink.MyArcConnState)
             {
@@ -98,9 +101,9 @@ namespace WearhausBluetoothApp
                     break;
 
                 case ArcLink.ArcConnState.Error:
-                    if (MainPage.MyArcLink.ErrorHuman != null && MainPage.MyArcLink.ErrorHuman.Length > 0)
+                    if (MainPage.MyArcLink.MyErrorHuman != null && MainPage.MyArcLink.MyErrorHuman.Length > 0)
                     {
-                        ArcStateText.Text = MainPage.MyArcLink.ErrorHuman;
+                        ArcStateText.Text = MainPage.MyArcLink.MyErrorHuman;
                     } else
                     {
                         ArcStateText.Text = "We've ran into a problem";
@@ -152,22 +155,24 @@ namespace WearhausBluetoothApp
                     break;
 
                 case WearhausServer.WearhausHttpController.AccountState.ValidGuest:
-                    ArcStateText.Text = "Connected to " + MainPage.MyArcLink.DeviceHumanName;
+                    ArcStateText.Text = "Connected to " + MainPage.MyArcLink.MyDeviceHumanName;
                     ConnectionProgress.Opacity = 0.0;
+                    DisconnectButton.Visibility = Visibility.Visible;
 
                     updateDashboardVisibility(true);
-                    FirmwareText.Text = MainPage.MyArcLink.Fv_full_code;
-                    String uniqueCode = ArcUtil.GetUniqueCodeFromFull(MainPage.MyArcLink.Fv_full_code);
+                    String uniqueCode = ArcUtil.GetUniqueCodeFromFull(MainPage.MyArcLink.MyFv_full_code);
                     ProductIdText.Text = MainPage.MyArcLink.GetArcGeneration();
+                    HidText.Text = MainPage.MyArcLink.MyHID;
+                    FvFullText.Text = MainPage.MyArcLink.MyFv_full_code;
 
                     bool showDfuStartUI = false;
 
-                    if (MainPage.MyArcLink.FirmwareVersion != null)
+                    if (MainPage.MyArcLink.MyFirmwareVersion != null)
                     {
                         // we know our version, let's check if we can update
                         FirmwareText.Text = Firmware.FirmwareTable[uniqueCode].humanName;
 
-                        String latestUnique = Firmware.LatestByProductId[MainPage.MyArcLink.ProductId + ""];
+                        String latestUnique = Firmware.LatestByProductId[MainPage.MyArcLink.MyProductId + ""];
                         if (latestUnique != null && latestUnique.Length == 4 
                             && Firmware.FirmwareTable[latestUnique] != null && Firmware.FirmwareTable[latestUnique].validBases.Contains(uniqueCode))
                         {
@@ -175,7 +180,6 @@ namespace WearhausBluetoothApp
                             System.Diagnostics.Debug.WriteLine("Detected new firmware version available for this Arc: " + latestUnique);
                             Firmware latest = Firmware.FirmwareTable[latestUnique];
                             showDfuStartUI = true;
-                            .
                         }
 
                     } else
@@ -290,6 +294,8 @@ namespace WearhausBluetoothApp
         }
         private Boolean InstrucVisible = false;
         private Boolean DashboardVisible = false;
+        private Boolean DashboardExpandVisible = false;
+
         private void HowToButton_Click(object sender, RoutedEventArgs e)
         {
             updateInstructVisibility(!InstrucVisible);
@@ -297,10 +303,29 @@ namespace WearhausBluetoothApp
 
         private void UpdateFV_Click(object sender, RoutedEventArgs e)
         {
+            MainPage.MyMainPage.NavigateTo(typeof(DFUPage));
+        }
 
+        private void UpdateDbg_Click(object sender, RoutedEventArgs e)
+        {
+            MainPage.MyMainPage.NavigateTo(typeof(DFUPage));
+        }
+
+
+
+        private void DetailsExpand_Click(object sender, RoutedEventArgs e)
+        {
+            updateDashboardExpandVisibility(!DashboardExpandVisible);
+        }
+
+        private void DisconnectButton_Click(object sender, RoutedEventArgs e)
+        {
+            MainPage.MyArcLink.Disconnect(null);
+            MainPage.MyHttpController = new WearhausHttpController();
         }
 
         
+
 
         private void updateInstructVisibility(Boolean b)
         {
@@ -325,6 +350,27 @@ namespace WearhausBluetoothApp
             else
             {
                 DashboardLayout.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void updateDashboardExpandVisibility(Boolean b)
+        {
+            DashboardExpandVisible = b;
+            if (DashboardExpandVisible)
+            {
+                HeadphoneIdTextLeft.Visibility = Visibility.Visible;
+                FVStringTextLeft.Visibility = Visibility.Visible;
+                HidText.Visibility = Visibility.Visible;
+                FvFullText.Visibility = Visibility.Visible;
+                DetailsExpand.Content = "Show Less";
+            }
+            else
+            {
+                HeadphoneIdTextLeft.Visibility = Visibility.Collapsed;
+                FVStringTextLeft.Visibility = Visibility.Collapsed;
+                HidText.Visibility = Visibility.Collapsed;
+                FvFullText.Visibility = Visibility.Collapsed;
+                DetailsExpand.Content = "Show More";
             }
         }
 

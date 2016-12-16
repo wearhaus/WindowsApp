@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using static Common.ArcLink;
 
 namespace Gaia
 {
@@ -50,14 +51,14 @@ namespace Gaia
         public byte[] PayloadSrc { get; private set; }
         public byte Checksum { get; private set; }
         public string InfoMessage { get; set; }
-        public int DfuStatus { get; set; }
+        public DFUResultStatus MyDFUResultStatus { get; set; }
 
 
         /// <summary>
         /// Constructor for creating an empty message to signify an error only
         /// </summary>
         /// <param name="errorMsg">Error Message to be displayed elsewhere for information purposes</param>
-        public GaiaMessage(string errorMsg, int dfuStatus = 0)
+        public GaiaMessage(DFUResultStatus dfuStatus)
         {
             BytesSrc = null;
             PayloadSrc = null;
@@ -65,8 +66,19 @@ namespace Gaia
             IsFlagSet = false;
 
             IsError = true;
-            DfuStatus = dfuStatus;
-            InfoMessage = errorMsg;
+            MyDFUResultStatus = dfuStatus;
+            InfoMessage = "";
+        }
+        public GaiaMessage(String error)
+        {
+            BytesSrc = null;
+            PayloadSrc = null;
+            VendorId = GaiaMessage.GAIA_CSR_VENDOR_ID;
+            IsFlagSet = false;
+
+            MyDFUResultStatus = DFUResultStatus.None;
+            IsError = true;
+            InfoMessage = error;
         }
 
         public GaiaMessage(ushort usrCmd, byte flag, byte[] payload)
@@ -92,6 +104,7 @@ namespace Gaia
             CommandId = IsAck ? (ushort)(CommandId ^ GAIA_ACK_MASK) : CommandId; // Here we re-check the command id and remove the mask if it is an ACK
             IsError = false;
             InfoMessage = null;
+            MyDFUResultStatus = DFUResultStatus.None;
 
             if (Enum.IsDefined(typeof(GaiaMessage.ArcCommand), usrCmd))
             {
@@ -130,6 +143,7 @@ namespace Gaia
             CommandId = IsAck ? (ushort)(CommandId ^ GAIA_ACK_MASK) : CommandId; // Here we re-check the command id and remove the mask if it is an ACK
             IsError = false;
             InfoMessage = null;
+            MyDFUResultStatus = DFUResultStatus.None;
 
             if (IsFlagSet)
             {
@@ -151,9 +165,14 @@ namespace Gaia
         {
         }
 
-        public static GaiaMessage CreateErrorGaia(string errMsg, int dfuStatus = 0)
+        public static GaiaMessage CreateErrorGaia(DFUResultStatus dfuStatus)
         {
-            return new GaiaMessage(errMsg, dfuStatus);
+            return new GaiaMessage(dfuStatus);
+        }
+
+        public static GaiaMessage CreateErrorGaia(String error)
+        {
+            return new GaiaMessage(error);
         }
 
         public static GaiaMessage CreateAck(ushort usrCmd)
@@ -257,12 +276,12 @@ namespace Gaia
             SetTouch = 0x7347,
             GetTouch = 0x6747,
 
-            VolumeUp = 0x7655,
-            VolumeDown = 0x7644,
+            //VolumeUp = 0x7655,
+            //VolumeDown = 0x7644,
 
-            StartDfu = 0x6346,
+            StartDfu46 = 0x6346,
 
-            StartScan = 0x6353,
+            //StartScan = 0x6353,
 
             StartBroadcast = 0x6342,
             JoinStation = 0x634C,

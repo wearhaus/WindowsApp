@@ -38,8 +38,10 @@
                         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Width="400" Orientation="Vertical">
                             <Button x:Name="ConnectButton" Content="My Arc Is Paired" FontSize="25" Margin="20,20,20,0" 
                                     Click="ConnectButton_Click" HorizontalAlignment="Center" MinWidth="300"/>
-                            <Button x:Name="HowToButton" Content="How To Pair" FontSize="25" Margin="20,0,20,20" 
+                            <Button x:Name="HowToButton" Content="How To Pair" FontSize="25" Margin="20,0,20,0" 
                                     Click="HowToButton_Click" HorizontalAlignment="Center" MinWidth="300"/>
+                            <Button x:Name="DisconnectButton" Content="Disconnect" FontSize="25" Margin="20,0,20,20" 
+                                        Click="DisconnectButton_Click" HorizontalAlignment="Center" MinWidth="300"/>
 
                             <ProgressBar x:Name="ConnectionProgress" IsIndeterminate="True" Opacity="0" Width="200"/>
 
@@ -59,16 +61,25 @@
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0">
                                 <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Margin="0">
                                     <TextBlock  Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10" 
-                                                        FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Right" 
-                                                         TextWrapping="Wrap" TextAlignment="Right">
+                                                        FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Right"  TextWrapping="Wrap" TextAlignment="Right">
                                              Firmware Version:
                                     </TextBlock>
                                     <TextBlock  Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10" 
-                                                FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Right" 
-                                                  TextWrapping="Wrap" TextAlignment="Right">
+                                                FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Right"  TextWrapping="Wrap" TextAlignment="Right">
                                         Arc Generation:
                                     </TextBlock>
-                                </StackPanel>
+
+                                    <TextBlock  x:Name="HeadphoneIdTextLeft" Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10" 
+                                                    FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Right"  TextWrapping="Wrap" TextAlignment="Right">
+                                            Headphone ID:
+                                    </TextBlock>
+                                    <TextBlock  x:Name="FVStringTextLeft" Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10" 
+                                                    FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Right"  TextWrapping="Wrap" TextAlignment="Right">
+                                            Full Firmware:
+                                    </TextBlock>
+                                <Button x:Name="DetailsExpand" Content="Show More" HorizontalAlignment="Center" 
+                                    Click="DetailsExpand_Click" FontSize="15" FontWeight="Bold"/>
+                            </StackPanel>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0">
                                     <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Margin="0">
                                         <TextBlock x:Name="FirmwareText"  Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10" 
@@ -79,7 +90,17 @@
                                             FontWeight="Bold" FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Left"  TextWrapping="Wrap" TextAlignment="Left">
                                         Gen 0
                                         </TextBlock>
-                                    </StackPanel>
+                                    <TextBlock x:Name="HidText"  Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10,14,10,10" 
+                                            Width="150"
+                                               FontSize="15" VerticalAlignment="Center" HorizontalAlignment="Left"  TextWrapping="Wrap" TextAlignment="Left">
+                                        001222334455
+                                    </TextBlock>
+                                    <TextBlock x:Name="FvFullText"  Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10,14,10,10" 
+                                               Width="150"
+                                             FontSize="15" VerticalAlignment="Center" HorizontalAlignment="Left"  TextWrapping="Wrap" TextAlignment="Left">
+                                        000001000AFFFF12020000000000000000
+                                    </TextBlock>
+                                </StackPanel>
                                 </StackPanel>
                                 
                             </StackPanel>
@@ -109,7 +130,10 @@
                             Your Arc is up to date
                             </TextBlock>
 
-                        </StackPanel>
+                        <Button x:Name="UpdateDbg" Content="UpdateDbg" Margin="10" HorizontalAlignment="Center" 
+                                    Click="UpdateDbg_Click" FontSize="20" FontWeight="Bold"/>
+
+                    </StackPanel>
                     </StackPanel>
 
 

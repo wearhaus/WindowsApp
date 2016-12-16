@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Common;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -13,6 +14,7 @@ namespace Gaia
 
         private byte[] FileBuffer;
         private int FileChunksSent;
+        private ArcLink MyArcLink;
 
         //public ThreadPoolTimer PeriodicTimer;
         public bool IsWaitingForResp { get; set; }
@@ -25,7 +27,7 @@ namespace Gaia
         /// <summary>
         /// Default constructor
         /// </summary>
-        public GaiaHelper()
+        public GaiaHelper(ArcLink arcLink)
         {
             FileBuffer = null;
             FileChunksSent = 0;
@@ -34,6 +36,7 @@ namespace Gaia
             TotalChunks = 0;
             IsWaitingForResp = false;
             IsWaitingForVerification = false;
+            MyArcLink = arcLink;
         }
 
         /// <summary>
@@ -132,7 +135,7 @@ namespace Gaia
         {
             if (FileBuffer == null)
             {
-                System.Diagnostics.Debug.WriteLine("Did not specify a DFU File! Please Pick a File!");
+                System.Diagnostics.Debug.WriteLine("Programmer Error: Did not specify a DFU File! Please Pick a File!");
                 return null;
             }
 
@@ -189,6 +192,8 @@ namespace Gaia
             // See if we need to verify the checksum first
             if (receievedMessage.IsFlagSet && !receievedMessage.MatchesChecksum(checkSum))
             {
+                            //TODO: Send DFU Report to Server with Status 9
+
                 resp = GaiaMessage.CreateErrorGaia(" Checksum did not match! Expected Checksum: " + receievedMessage.Checksum.ToString("X2") + ", Receieved Checksum: " + checkSum.ToString("X2"));
             }
 
@@ -197,15 +202,14 @@ namespace Gaia
 
                 switch (command)
                 {
-                    case (ushort)GaiaMessage.ArcCommand.StartDfu:
+                    case (ushort)GaiaMessage.ArcCommand.StartDfu46:
                         if (receievedMessage.PayloadSrc[0] == 0x00)
                         {
                             resp = CreateDfuBegin();
                         }
                         else
                         {
-                            resp = GaiaMessage.CreateErrorGaia(@" Firmware Update Failed. Try again, or if this error persists, contact customer support at
-                                support@wearhaus.com. (ERROR 9)", 9);
+                            resp = GaiaMessage.CreateErrorGaia(Common.ArcLink.DFUResultStatus.DfuRequestBadAck);
                             //TODO: Send DFU Report to Server with Status 9
                         }
                         break;
@@ -213,8 +217,7 @@ namespace Gaia
                     case (ushort)GaiaMessage.GaiaCommand.DFUBegin:
                         if (receievedMessage.PayloadSrc[0] != 0x00)
                         {
-                            resp = GaiaMessage.CreateErrorGaia(@" Firmware Update Failed. Try again, or if this error persists, contact customer support at
-                                support@wearhaus.com. (ERROR 9)", 9);
+                            resp = GaiaMessage.CreateErrorGaia(Common.ArcLink.DFUResultStatus.DfuRequestBadAck);
                             //TODO: Send DFU Report to Server with Status 9
                         }
                         break;
@@ -237,17 +240,30 @@ namespace Gaia
                                     break;
 
                                 case (byte)GaiaMessage.DfuStatusNotification.Download_Failure:
-                                    resp = GaiaMessage.CreateErrorGaia(" Firmware Download to Arc Failed. Try again, and if this error persists, contact customer support at support@wearhaus.com. Error 1", 1);
+                                    System.Diagnostics.Debug.WriteLine("DfuStatusNotification.Download_Failure received; dfu aborted by pcb");
+
+                                    resp = GaiaMessage.CreateErrorGaia(Common.ArcLink.DFUResultStatus.DownloadFailed);
                                     break;
 
                                 case (byte)GaiaMessage.DfuStatusNotification.Verification:
+                                    MyArcLink.FromDfuStateNotifState(ArcLink.DFUStep.VerifyingImage);
+                                    System.Diagnostics.Debug.WriteLine("DfuStatusNotification.Verification received");
                                     break;
                                 
                                 case (byte)GaiaMessage.DfuStatusNotification.Verification_Failure:
-                                    resp = GaiaMessage.CreateErrorGaia(" Verification Failed. Try again, and if this error persists, contact customer support at support@wearhaus.com. Error 3", 1);
+                                    resp = GaiaMessage.CreateErrorGaia(Common.ArcLink.DFUResultStatus.VerifyFailed);
                                     break;
 
                                 case (byte)GaiaMessage.DfuStatusNotification.Verification_Success:
+                                    System.Diagnostics.Debug.WriteLine("DfuStatusNotification.Verification_Success received");
+                                    MyArcLink.FromDfuStateNotifState(ArcLink.DFUStep.ChipPowerCycle);
+
+                                    IsSendingFile = false;
+                                    IsWaitingForVerification = true;
+                                    MyArcLink.Disconnect(null);
+
+                                    // how do we tell ArcLink to change DfuStep?
+                                    // "Arc will soon disconnect. Wait for it to reconnect; this may take 10-30 seconds. The board is currently power cycling itself. After it does, go to step 8:"
                                     break;
                             }
                         }

@@ -196,7 +196,7 @@ namespace WearhausBluetoothApp
         }
 
 
-
+        /*
 #if WINDOWS_PHONE_APP
         /// <summary> 
         /// Handle the returned files from file picker 
@@ -211,15 +211,15 @@ namespace WearhausBluetoothApp
             if (args.Files.Count > 0)
             {
                 DfuFile = args.Files[0];
-                MainPage.Current.NotifyUser("Picked File: " + DfuFile.Name, NotifyType.StatusMessage);
+                MainPage.MyMainPage.NotifyUser("Picked File: " + DfuFile.Name, NotifyType.StatusMessage);
             }
             else
             {
                 DfuFile = null;
-                MainPage.Current.NotifyUser("Not a Valid File / No File Chosen!", NotifyType.StatusMessage);
+                MainPage.MyMainPage.NotifyUser("Not a Valid File / No File Chosen!", NotifyType.StatusMessage);
             }
         }
-#endif
+#endif*/
 
     }
 }

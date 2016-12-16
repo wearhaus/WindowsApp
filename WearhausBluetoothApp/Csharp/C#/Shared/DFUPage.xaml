@@ -7,7 +7,27 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    <Grid Background="#00bccc">
+
+        <StackPanel Orientation="Vertical" HorizontalAlignment="Center" Margin="50">
+            <Image Source="Assets/arc_solo_state_whited.png"  Stretch="Uniform" HorizontalAlignment="Center" Height="200" Width="200" Grid.Column="1" Margin="50" Grid.Row="0"/>
+
+
+            <TextBlock x:Name="DfuStateText" Style="{StaticResource ScenarioDescriptionTextStyle}" FontSize="25" TextWrapping="Wrap" 
+                    TextAlignment="Center" Margin="0" Width="450">
+                    Firmware Update will take 10-15 minutes.
+            </TextBlock>
+
+            <Button x:Name="StartButton" Content="Start" Margin="30" HorizontalAlignment="Center" 
+                                    Click="StartButton_Click" FontSize="30" FontWeight="Bold"/>
+
+
+            <ProgressBar x:Name="DfuProgress" IsIndeterminate="True" Opacity="0.0" Width="400"/>
+
+            
+
+
+        </StackPanel>
 
     </Grid>
 </Page>

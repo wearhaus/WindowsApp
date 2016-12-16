@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using static Common.ArcLink;
 
 namespace Common
 {
@@ -28,6 +29,52 @@ namespace Common
         // format '000001000AFFFF12000000000000000000'
         public static readonly int FV_Full_code_length = 34;
 
+
+        public static String GetHumanFromDfuResultStatus(DFUResultStatus s)
+        {
+            switch (s)
+            {
+
+                case DFUResultStatus.Success:
+                    return "Firmware Update Succeeded!";
+
+                case DFUResultStatus.Aborted:
+                    return "Firmware Update Failed. Try again, and if this error persists, contact customer support at wearhaus.com. Error 1";
+                case
+                    DFUResultStatus.IOException:
+                    return "Firmware Update Failed. Try again, and if this error persists, contact customer support at wearhaus.com. Error 2";
+                case
+                    DFUResultStatus.VerifyFailed:
+                    return "Verification Failed. Try again, and if this error persists, contact customer support at wearhaus.com. Error 3";
+                case
+                    DFUResultStatus.OtherFailure:
+                    return "Firmware Update Failed. Try again, and if this error persists, contact customer support at wearhaus.com. Error 4";
+                case
+                    DFUResultStatus.DownloadFailed:
+                    return "Download Failed. Make sure you are connected to the internet and try again. If this error persists, contact customer support at wearhaus.com. Error 5";
+                case
+                    DFUResultStatus.FvMismatch:
+                    return "Firmware Update Failed. Try again, and if this error persists, contact customer support at wearhaus.com. Error 6";
+                case
+                    DFUResultStatus.DisconnectedDuring:
+                    return "Arc Disconnected. Try again, and if this error persists, contact customer support at wearhaus.com. Error 7";
+                case
+                    DFUResultStatus.TimeoutDfuState:
+                    return "Firmware Update Failed. Try again, and if this error persists, contact customer support at wearhaus.com. Error 8";
+                case
+                    DFUResultStatus.DfuRequestBadAck:
+                    return "Firmware Update Failed. Try again, and if this error persists, contact customer support at wearhaus.com. Error 9";
+                case
+                    DFUResultStatus.CantStartWeirdOldFV:
+                    return "To perform the update, try updating this app. If this doesn't solve this problem, contact customer support and mention Error 10";
+                case
+                    DFUResultStatus.TimeoutFinalizing:
+                    return "Firmware Update failed. Try again after restarting your Arc, and if this error persists, contact customer support at wearhaus.com. Error 11";
+
+            }
+            return null;
+
+        }
 
 
         public static string ParseHID(string chatserviceinfoID)

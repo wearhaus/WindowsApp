@@ -49,9 +49,19 @@ namespace SDKTemplate
             MyMainPage = this;
             MyArcLink = new ArcLink();
             MyHttpController = new WearhausHttpController();
+
+            NavigateTo(typeof(Dashboard));
         }
 
-        protected override void OnNavigatedTo(NavigationEventArgs e)
+
+
+        public void NavigateTo(Type newPage)
+        {
+            //typeof(DFUPage)
+            ScenarioFrame.Navigate(newPage);
+        }
+
+        /*protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             // Populate the scenario list from the SampleConfiguration.cs file
             ScenarioControl.ItemsSource = scenarios;
@@ -68,7 +78,7 @@ namespace SDKTemplate
                 ScenarioControl.SelectedIndex = 1;
             }
 
-        }
+        }*/
 
         /// <summary>
         /// Called whenever the user changes selection in the scenarios list.  This method will navigate to the respective
@@ -79,7 +89,7 @@ namespace SDKTemplate
         private void ScenarioControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             // Clear the status block when navigating scenarios.
-            NotifyUser(String.Empty, NotifyType.StatusMessage);
+            //NotifyUser(String.Empty, NotifyType.StatusMessage);
 
             ListBox scenarioListBox = sender as ListBox;
             Scenario s = scenarioListBox.SelectedItem as Scenario;
@@ -110,7 +120,7 @@ namespace SDKTemplate
         /// </summary>
         /// <param name="strMessage"></param>
         /// <param name="type"></param>
-        public void NotifyUser(string strMessage, NotifyType type)
+        /*public void NotifyUser(string strMessage, NotifyType type)
         {
             System.Diagnostics.Debug.WriteLine("NotifyUser( " + strMessage + " );");
 
@@ -134,7 +144,7 @@ namespace SDKTemplate
             {
                 StatusBorder.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
             }
-        }
+        }*/
 
         async void Footer_Click(object sender, RoutedEventArgs e)
         {
@@ -144,13 +154,13 @@ namespace SDKTemplate
 
     }
 
-    public enum NotifyType
-    {
-        StatusMessage,
-        ErrorMessage
-    };
+    //public enum NotifyType
+    //{
+    //    StatusMessage,
+    //    ErrorMessage
+    //};
 
-    public class ScenarioBindingConverter : IValueConverter
+    /*public class ScenarioBindingConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, string language)
         {
@@ -163,5 +173,6 @@ namespace SDKTemplate
             return true;
         }
     }
+    */
 
 }

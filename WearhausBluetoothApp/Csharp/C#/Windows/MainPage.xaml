@@ -7,9 +7,11 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
+    <!--- 
     <Page.Resources>
         <local:ScenarioBindingConverter x:Key="ScenarioConverter"></local:ScenarioBindingConverter>
     </Page.Resources>
+    -->
 
     <Grid Background="#00bccc">
         <Grid.ColumnDefinitions>
@@ -29,6 +31,8 @@
                 </StackPanel>
                 <TextBlock x:Name="SampleTitle" Foreground="White" Style="{StaticResource SampleHeaderTextStyle}" Margin="30,10,30,0" TextWrapping="Wrap" Text="Sample title here"/>
             </StackPanel>
+
+            <!-- 
             <ListBox x:Name="ScenarioControl" Grid.Row="1" SelectionChanged="ScenarioControl_SelectionChanged"
                  SelectionMode="Single" HorizontalAlignment="Left" Style="{StaticResource ScenarioListBoxStyle}"
                  VerticalAlignment="Top">
@@ -38,6 +42,7 @@
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
+            -->
             <StackPanel Grid.Row="2" Orientation="Vertical" Margin="0,10,0,20" VerticalAlignment="Top">
                 <TextBlock Margin="10,0,0,0" FontSize="16" Foreground="White" TextWrapping="Wrap" >Status:</TextBlock>
                 <Border x:Name="StatusBorder" Margin="0,0,0,0" Visibility="Collapsed">

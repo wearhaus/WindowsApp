@@ -145,8 +145,8 @@ namespace WearhausServer
 
                 var hidVals = new Dictionary<string, string>{
                     {"acc_token", Acc_token},
-                    {"hid", arcLink.HID},
-                    {"fv_full_code", arcLink.Fv_full_code},
+                    {"hid", arcLink.MyHID},
+                    {"fv_full_code", arcLink.MyFv_full_code},
                     {"gcm_reg_id", ""}
                 };
 
