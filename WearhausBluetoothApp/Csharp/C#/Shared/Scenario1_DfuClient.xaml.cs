@@ -202,7 +202,7 @@ namespace WearhausBluetoothApp
                     {
                         RunButton.IsEnabled = false;
                         RunButton.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-                        ServiceSelector.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                        //ServiceSelector.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
                         TopInstruction.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
 
                         ConnectionProgress.Visibility = Windows.UI.Xaml.Visibility.Visible;
@@ -276,10 +276,12 @@ namespace WearhausBluetoothApp
                         BluetoothWriter = new DataWriter(BluetoothSocket.OutputStream);
 
                         GaiaHandler = new GaiaHelper(); // Create GAIA DFU Helper Object
-                        HttpController = new WearhausHttpController(bluetoothServiceInfo.Id); // Create HttpController object
+                        string hid = WearhausHttpController.ParseHID(bluetoothServiceInfo.Id);
+                        HttpController = new WearhausHttpController();
+                        //HttpController.startServerRegistration();
 
-                        string guestResult = await HttpController.CreateGuest(); // Create a Guest account for basic information to the server
-                        System.Diagnostics.Debug.WriteLine(guestResult);
+                        //string guestResult = await HttpController.CreateGuest(); // Create a Guest account for basic information to the server
+                        //System.Diagnostics.Debug.WriteLine(guestResult);
 
                         DataReader chatReader = new DataReader(BluetoothSocket.InputStream);
                         ReceiveStringLoop(chatReader);
@@ -367,7 +369,7 @@ namespace WearhausBluetoothApp
                         VerifyDfuButton.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
                         RunButton.IsEnabled = false;
                         RunButton.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-                        ServiceSelector.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                        //ServiceSelector.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
                         TopInstruction.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
 
                         ConnectionProgress.Visibility = Windows.UI.Xaml.Visibility.Visible;
@@ -471,103 +473,10 @@ namespace WearhausBluetoothApp
             }
 
         }
-        // ********************* THIS METHOD IS CURRENTLY NOT IN USE AND SHOULD NOT BE CALLED, THERE ARE NO MORE 'SERVICES' ********************
-        /// <summary>
-        /// Method to connect to the selected bluetooth device when clicking/tapping the device
-        /// in the UI ServiceList
-        /// </summary>
-        private async void ServiceList_Tapped(object sender, TappedRoutedEventArgs e)
-        {
-            try
-            {
-                RunButton.IsEnabled = false;
-                RunButton.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-                ServiceSelector.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-                TopInstruction.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-
-                ConnectionProgress.Visibility = Windows.UI.Xaml.Visibility.Visible;
-                ConnectionProgress.IsIndeterminate = true;
-                ConnectionStatus.Visibility = Windows.UI.Xaml.Visibility.Visible;
-
-                var bluetoothServiceInfo = BluetoothServiceInfoCollection[ServiceList.SelectedIndex];
+        
 
 
-                // Potential Bug Fix?? Wrap FromIdAsync call in the UI Thread, as per the instructions of:
-                // http://blogs.msdn.com/b/wsdevsol/archive/2014/11/10/why-doesn-t-the-windows-8-1-bluetooth-rfcomm-chat-sample-work.aspx
-                // EDIT: Actually may not work as all this does is bring the exception thrown outside of this thread, so the exception is unhandled...
 
-                //await Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () =>
-                //{
-                // ONLY WORKS IN WINDOWS 10 RIGHT NOW!?
-                BluetoothService = await RfcommDeviceService.FromIdAsync(bluetoothServiceInfo.Id);
-                //});
-
-
-                if (BluetoothService == null)
-                {
-                    MainPage.Current.NotifyUser(
-                        "Access to the device is denied because the application was not granted access",
-                        NotifyType.StatusMessage);
-                    return;
-                }
-
-                var attributes = await BluetoothService.GetSdpRawAttributesAsync();
-                if (!attributes.ContainsKey(SdpServiceNameAttributeId))
-                {
-                    MainPage.Current.NotifyUser(
-                        "The Chat service is not advertising the Service Name attribute (attribute id=0x100). " +
-                        "Please verify that you are running the BluetoothRfcommChat server.",
-                        NotifyType.ErrorMessage);
-                    return;
-                }
-
-                var attributeReader = DataReader.FromBuffer(attributes[SdpServiceNameAttributeId]);
-                var attributeType = attributeReader.ReadByte();
-                if (attributeType != SdpServiceNameAttributeType)
-                {
-                    MainPage.Current.NotifyUser(
-                        "The Chat service is using an unexpected format for the Service Name attribute. " +
-                        "Please verify that you are running the BluetoothRfcommChat server.",
-                        NotifyType.ErrorMessage);
-                    return;
-                }
-
-                var serviceNameLength = attributeReader.ReadByte();
-
-                // The Service Name attribute requires UTF-8 encoding.
-                attributeReader.UnicodeEncoding = UnicodeEncoding.Utf8;
-                ServiceName.Text = "Connected to: \"" + bluetoothServiceInfo.Name + "\"";
-
-                lock (this)
-                {
-                    BluetoothSocket = new StreamSocket();
-                }
-
-                await BluetoothSocket.ConnectAsync(BluetoothService.ConnectionHostName, BluetoothService.ConnectionServiceName);
-
-                BluetoothWriter = new DataWriter(BluetoothSocket.OutputStream);
-                ChatBox.Visibility = Windows.UI.Xaml.Visibility.Visible;
-
-                GaiaHandler = new GaiaHelper(); // Create GAIA DFU Object
-                HttpController = new WearhausHttpController(bluetoothServiceInfo.Id); // Create HttpController object
-
-                DataReader chatReader = new DataReader(BluetoothSocket.InputStream);
-                ReceiveStringLoop(chatReader);
-
-                ConnectionProgress.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-                ConnectionProgress.IsIndeterminate = false;
-                ConnectionStatus.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-
-                this.Frame.Navigate(typeof(LoginPage));
-
-            }
-            catch (Exception ex)
-            {
-                MainPage.Current.NotifyUser("Error: " + ex.HResult.ToString() + " - " + ex.Message, 
-                    NotifyType.ErrorMessage);
-                Disconnect();
-            }
-        }
 
         /// <summary>
         /// Method to clean up socket resources and disconnect from the bluetooth device
@@ -600,7 +509,7 @@ namespace WearhausBluetoothApp
                 ConnectionStatus.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
 
                 SendDfuButton.IsEnabled = false;
-                ServiceSelector.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
+                //ServiceSelector.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
                 ChatBox.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
                 DfuProgressBar.IsIndeterminate = false;
                 DfuProgressBar.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
@@ -720,7 +629,9 @@ namespace WearhausBluetoothApp
                 DfuProgressBar.Visibility = Windows.UI.Xaml.Visibility.Visible;
                 DfuProgressBar.IsIndeterminate = true;
 
-                string latestFirmwareShortCode = await HttpController.GetLatestFirmwareTable();
+                // TODO parse correctly
+                string latestFirmwareShortCode = "1202";
+                //string latestFirmwareShortCode = await HttpController.GetLatestFirmwareTable();
 
                 // If latest Firmware is empty from the server, then we have disabled firmware updates for now
                 if (latestFirmwareShortCode == "" || latestFirmwareShortCode == null)

@@ -37,7 +37,7 @@
                     </TextBlock>
                     <Button x:Name="RunButton" Content="Run" Margin="0, 20, 20,20" Click="RunButton_Click"/>
                     <Button x:Name="VerifyDfuButton" Content="Verify Update" Margin="0, 20, 20,20" Click="VerifyDfuButton_Click" Visibility="Collapsed"/>
-                    <!-- Service Selector -->
+                    <!-- Service Selector -
                     <Grid x:Name="ServiceSelector" Visibility="Collapsed">
                         <StackPanel Orientation="Vertical">
                             <TextBlock Style="{StaticResource SampleHeaderTextStyle}" Text="Select Your Arc" Margin="0,0,0,10"/>
@@ -49,7 +49,8 @@
                                 </ListBox.Resources>
                             </ListBox>
                         </StackPanel>
-                    </Grid>
+                    </Grid>-->
+                    
                     <TextBlock x:Name="ConnectionStatus" Text="Connecting to your Arc..." Margin="10" Style="{StaticResource SubheaderTextBlockStyle}" Visibility="Collapsed"/>
                     <ProgressBar x:Name="ConnectionProgress" IsIndeterminate="False" Visibility="Collapsed"/>
                     <!-- Chat box -->

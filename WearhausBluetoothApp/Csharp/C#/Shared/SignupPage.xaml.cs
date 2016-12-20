@@ -37,7 +37,7 @@ namespace WearhausBluetoothApp
 
         private async void SignupButton_Click(object sender, RoutedEventArgs e)
         {
-            string resp = await HttpController.CreateNewUser(EmailTextBox.Text, PasswordTextBox.Text);
+            //string resp = await HttpController.CreateNewUser(EmailTextBox.Text, PasswordTextBox.Text);
         }
     }
 }
