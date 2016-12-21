@@ -11,92 +11,167 @@
     <Page.Resources>
         <CollectionViewSource x:Name="cvs" />
     </Page.Resources>
-    <Grid Background="#00bccc">
-        <Grid x:Name="RootGrid" Margin="12,20,12,12">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="39*"/>
-                <ColumnDefinition Width="632*"/>
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="150"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
 
-            <ScrollViewer x:Name="InfoViewer" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto" Grid.ColumnSpan="2" Margin="0" Grid.RowSpan="2" ViewChanged="InfoViewer_ViewChanged">
-                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Top">
+
+    <Grid Background="#00bccc" Width="800" Height="700" >
+        
+        <ScrollViewer x:Name="InfoViewer" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto"
+                          Margin="0" Width="800" Height="700">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Top">
+
+                <!--
                     <Image Source="Assets/logo_wordmark_white_no_bg620x300.png"  Stretch="Uniform" HorizontalAlignment="Center" Height="100" Width="200" Grid.Column="1" Margin="0,0,0,10" Grid.Row="0"/>
-                    <TextBlock x:Name="TopTitle" Style="{StaticResource ScenarioDescriptionTextStyle}" HorizontalAlignment="Center" Margin="10" FontSize="20" TextWrapping="Wrap">
-                    Wearhaus Arc Firmware Update App
+                    <TextBlock x:Name="TopTitle" Style="{StaticResource ScenarioDescriptionTextStyle}" HorizontalAlignment="Center" Margin="10" FontSize="30" TextWrapping="Wrap">
+                        Wearhaus Arc Firmware Update App
                     </TextBlock>
+                    -->
 
-                    <TextBlock x:Name="TopInstruction" Style="{StaticResource ScenarioDescriptionTextStyle}" FontSize="20" TextWrapping="Wrap">
-                        Click Run to start the Update process for your Wearhaus Arc! <LineBreak/>
-                        Please make sure you are connected the internet, and to your Arc in Windows Bluetooth Settings. 
-                        Make sure your Arc is charged. This may take up to 15 minutes.
-                    </TextBlock>
-                    <Button x:Name="RunButton" Content="Run" Margin="0, 20, 20,20" Click="RunButton_Click"/>
-                    <Button x:Name="VerifyDfuButton" Content="Verify Update" Margin="0, 20, 20,20" Click="VerifyDfuButton_Click" Visibility="Collapsed"/>
-                    <!-- Service Selector -
-                    <Grid x:Name="ServiceSelector" Visibility="Collapsed">
-                        <StackPanel Orientation="Vertical">
-                            <TextBlock Style="{StaticResource SampleHeaderTextStyle}" Text="Select Your Arc" Margin="0,0,0,10"/>
-                            <ListBox x:Name="ServiceList" Margin="0,10,0,10" HorizontalAlignment="Left" VerticalAlignment="Top" ScrollViewer.HorizontalScrollBarVisibility="Auto" Tapped="ServiceList_Tapped" MaxHeight="125" ItemsSource="{Binding Source={StaticResource cvs}}">
-                                <ListBox.Resources>
-                                    <Style TargetType="ListBoxItem">
-                                        <Setter Property="Padding" Value="8,10,20,10"/>
-                                    </Style>
-                                </ListBox.Resources>
-                            </ListBox>
-                        </StackPanel>
-                    </Grid>-->
-                    
-                    <TextBlock x:Name="ConnectionStatus" Text="Connecting to your Arc..." Margin="10" Style="{StaticResource SubheaderTextBlockStyle}" Visibility="Collapsed"/>
-                    <ProgressBar x:Name="ConnectionProgress" IsIndeterminate="False" Visibility="Collapsed"/>
-                    <!-- Chat box -->
-                    <Grid x:Name="ChatBox" Visibility="Collapsed" Margin="0,10,0,0">
-                        <StackPanel Orientation="Vertical">
-                            <ListBox x:Name="DummyConversationList"/>
+                <StackPanel Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Top" Orientation="Horizontal" Height="300">
+                    <Image Source="Assets/arc_solo_state_whited.png"  Stretch="Uniform" HorizontalAlignment="Center" Height="200" Width="200" Grid.Column="1" Margin="50,50,80,50" Grid.Row="0"/>
 
-                            <TextBlock x:Name="ServiceName" HorizontalAlignment="Left" Style="{StaticResource SampleHeaderTextStyle}" Text="Current Service Name" TextWrapping="Wrap" Margin="0,0,0,10"/>
-                            <Button x:Name="DisconnectButton" HorizontalAlignment="Left" Content="Disconnect" Click="DisconnectButton_Click"/>
-                            <TextBlock x:Name="Instructions" HorizontalAlignment="Left" Style="{StaticResource SampleHeaderTextStyle}" Text="Please press update when ready to begin firmware update!" Margin="0,10,0,10" TextWrapping="Wrap"/>
-                            <Button x:Name="UpdateButton" HorizontalAlignment="Left" FontSize="20" Content="Update" Click="UpdateButton_Click"/>
-                            <TextBlock x:Name="ProgressStatus" HorizontalAlignment="Left" Style="{StaticResource SubheaderTextBlockStyle}" Margin="10" Visibility="Collapsed"/>
-                            <ProgressBar x:Name="DfuProgressBar" Visibility="Collapsed" Margin="10" Height="15" Value="0"  IsIndeterminate="False" Maximum="100"/>
+                    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Width="400" Orientation="Vertical">
+                        <Button x:Name="ConnectButton" Content="My Arc Is Paired NEW" FontSize="25" Margin="20,20,20,0" 
+                                    Click="ConnectButton_Click" HorizontalAlignment="Center" MinWidth="300"/>
+                        <Button x:Name="HowToButton" Content="How To Pair" FontSize="25" Margin="20,0,20,0" 
+                                    Click="HowToButton_Click" HorizontalAlignment="Center" MinWidth="300"/>
+                        <Button x:Name="DisconnectButton" Content="Disconnect" FontSize="25" Margin="20,0,20,20" 
+                                        Click="DisconnectButton_Click" HorizontalAlignment="Center" MinWidth="300"/>
 
-                            <!-- DEBUG ONLY -->
-                            <Button x:Name="PickFileButton" Visibility="Collapsed" HorizontalAlignment="Left" FontSize="20" Content="Pick DFU File" Click="PickFileButton_Click"/>
-                            <Button x:Name="SendDfuButton" Visibility="Collapsed" HorizontalAlignment="Left" FontSize="20" Content="Send DFU" Click="SendDfuButton_Click" IsEnabled="False"/>
-                            <CheckBox x:Name="DebugCheckBox" Visibility="Collapsed" VerticalAlignment="Bottom" Content="Debug" Click="DebugButton_Click"/>
-                            <Grid x:Name="DebugControlGrid" Visibility="Collapsed">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="Auto" />
-                                    <RowDefinition Height="*" />
-                                </Grid.RowDefinitions>
-                                <TextBlock Grid.ColumnSpan="2" Style="{StaticResource BaseTextBlockStyle}" TextWrapping="Wrap">Enter a message to send:</TextBlock>
-                                <TextBox x:Name="MessageTextBox" Grid.Column="0" Grid.Row="1" Margin="0,10,10,0"/>
-                                <Button x:Name="SendButton" Grid.Column="1" Grid.Row="1" Content="Send" Click="SendButton_Click" Margin="5,10,10,0"/>
-                                <ListBox x:Name="ConversationList" Grid.Row="2" Grid.ColumnSpan="2" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="300" Margin="0,10,0,0" ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.HorizontalScrollMode="Auto"/>
-                            </Grid>
-                            <!-- END DEBUG -->
+                        <ProgressBar x:Name="ConnectionProgress" IsIndeterminate="True" Opacity="0" Width="200"/>
 
-                        </StackPanel>
-                    </Grid>
+                        <TextBlock x:Name="ArcStateText" Style="{StaticResource ScenarioDescriptionTextStyle}" FontSize="20" TextWrapping="Wrap" 
+                                       TextAlignment="Center" Margin="0" Width="350">
+                                ArcState text
+                        </TextBlock>
+
+                    </StackPanel>
+
                 </StackPanel>
-            </ScrollViewer>
+
+                <!-- DashboardLayout-->
+                <StackPanel Visibility="Collapsed" Background="#66e6e6e6" Grid.Row="1" x:Name="DashboardLayout" 
+                                Orientation="Horizontal" Width="760">
+                    <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Margin="0" Width="380">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0">
+                            <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Margin="0">
+                                <TextBlock  Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10" 
+                                                        FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Right"  TextWrapping="Wrap" TextAlignment="Right">
+                                             Firmware Version:
+                                </TextBlock>
+                                <TextBlock  Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10" 
+                                                FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Right"  TextWrapping="Wrap" TextAlignment="Right">
+                                        Arc Generation:
+                                </TextBlock>
+
+                                <TextBlock  x:Name="HeadphoneIdTextLeft" Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10" 
+                                                    FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Right"  TextWrapping="Wrap" TextAlignment="Right">
+                                            Headphone ID:
+                                </TextBlock>
+                                <TextBlock  x:Name="FVStringTextLeft" Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10" 
+                                                    FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Right"  TextWrapping="Wrap" TextAlignment="Right">
+                                            Full Firmware:
+                                </TextBlock>
+                                <Button x:Name="DetailsExpand" Content="Show More" HorizontalAlignment="Center" 
+                                    Click="DetailsExpand_Click" FontSize="15" FontWeight="Bold"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0">
+                                <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Margin="0">
+                                    <TextBlock x:Name="FirmwareText"  Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10" 
+                                            FontWeight="Bold" FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Left"  TextWrapping="Wrap" TextAlignment="Left">
+                                        1.1.0
+                                    </TextBlock>
+                                    <TextBlock x:Name="ProductIdText"  Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10" 
+                                            FontWeight="Bold" FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Left"  TextWrapping="Wrap" TextAlignment="Left">
+                                        Gen 0
+                                    </TextBlock>
+                                    <TextBlock x:Name="HidText"  Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10,14,10,10" 
+                                            Width="150"
+                                               FontSize="15" VerticalAlignment="Center" HorizontalAlignment="Left"  TextWrapping="Wrap" TextAlignment="Left">
+                                        001222334455
+                                    </TextBlock>
+                                    <TextBlock x:Name="FvFullText"  Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10,14,10,10" 
+                                               Width="150"
+                                             FontSize="15" VerticalAlignment="Center" HorizontalAlignment="Left"  TextWrapping="Wrap" TextAlignment="Left">
+                                        000001000AFFFF12020000000000000000
+                                    </TextBlock>
+                                </StackPanel>
+                            </StackPanel>
+
+                        </StackPanel>
 
 
 
-            <!-- Status Block for providing messages to the user.  Use the
-             NotifyUser() method to populate the message -->
+
+                        <TextBlock x:Name="FirmwareDescText"  Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10" 
+                                        FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Left" 
+                                        TextWrapping="Wrap" TextAlignment="Left">
+                                There is a new firmware update available for your Arc. Version 1.2.0 includes new features, blah blah, <LineBreak/><LineBreak/>- New something <LineBreak/>- Other new thing<LineBreak/><LineBreak/>Dec 13th 2016
+                        </TextBlock>
+
+                    </StackPanel>
+                    <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Margin="0" Width="380">
+
+
+                        <Button x:Name="UpdateFV" Content="Update Firmware" Margin="10" HorizontalAlignment="Center" 
+                                    Click="UpdateFV_Click" FontSize="30" FontWeight="Bold"/>
+                        <TextBlock x:Name="FirmwareUpToDate"  Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10" 
+                                           FontSize="30" VerticalAlignment="Center" HorizontalAlignment="Center" 
+                                           TextWrapping="Wrap" TextAlignment="Center" FontWeight="Bold">
+                            Your Arc is up to date
+                        </TextBlock>
+
+                        <Button x:Name="UpdateDbg" Content="UpdateDbg" Margin="10" HorizontalAlignment="Center" 
+                                    Click="UpdateDbg_Click" FontSize="20" FontWeight="Bold"/>
+
+                    </StackPanel>
+                </StackPanel>
+
+
+                <!-- DfuLayout-->
+                <StackPanel Background="#66e6e6e6" Grid.Row="1" x:Name="DfuLayout" 
+                                Orientation="Vertical" Width="760">
+                    <TextBlock x:Name="DfuStateText" Text="Connecting to your Arc..." Margin="20" 
+                               FontSize="20" Style="{StaticResource SubheaderTextBlockStyle}"/>
+                    <ProgressBar x:Name="DfuProgress" IsIndeterminate="False" Margin="20"/>
+                    <Button x:Name="VerifyDfuButton" Content="Verify Update" Margin="30" Click="VerifyDfuButton_Click"
+                            FontSize="25" HorizontalAlignment="Center"/>
+
+                </StackPanel>
+
+
+                <!-- Instructions-->
+                <StackPanel Background="#00e6e6e6" Grid.Row="2" x:Name="InstructionLayout"
+                                MaxWidth="800">
+                    <StackPanel Orientation="Horizontal" FlowDirection="LeftToRight" HorizontalAlignment="Center">
+                        <Button x:Name="PreviousButton" Content="&lt;" Margin="10" HorizontalAlignment="Center" Click="previousItem_Click" />
+                        <Button x:Name="NextButton" Content="&gt;" Margin="10" HorizontalAlignment="Center" Click="nextItem_Click" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0">
+                        <TextBlock x:Name="InstructionText"  Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10" 
+                                       FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Center" 
+                                       TextWrapping="Wrap" Width="300" TextAlignment="Center">
+                        Step 1: Open Windows Bluetooth Settings by searching for Bluetooth Settings in the Windows Search Bar.
+                        </TextBlock>
+                        <Image x:Name="InstructionImage" Source="Assets/arc_update_step1.png" Margin="10" HorizontalAlignment="Center" Height="400" />
+                    </StackPanel>
+
+                </StackPanel>
+
+
+
+
+
+            </StackPanel>
+        </ScrollViewer>
+
+
+        <!-- Status Block for providing messages to the user.  Use the
+             NotifyUser() method to populate the message 
             <Border x:Name="ErrorBorder" Background="Red" Grid.Row="2" Grid.ColumnSpan="2"/>
             <TextBlock x:Name="StatusBlock" Grid.Row="2" FontSize="16" Margin="12,10,12,-10" Visibility="Collapsed" Grid.ColumnSpan="2"/>
-        </Grid>
+            -->
     </Grid>
+
+
 </Page>

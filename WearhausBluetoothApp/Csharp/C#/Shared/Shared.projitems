@@ -48,6 +48,7 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)Assets\arc_solo_state_whited - Copy.png" />
     <Content Include="$(MSBuildThisFileDirectory)Assets\arc_update_1.png" />
     <Content Include="$(MSBuildThisFileDirectory)Assets\arc_update_2.png" />
     <Content Include="$(MSBuildThisFileDirectory)Assets\arc_update_3.png" />
