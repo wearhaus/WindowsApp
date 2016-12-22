@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Runtime.Serialization.Json;
 using Windows.Data.Json;
 using static WearhausBluetoothApp.Scenario1_DfuClient;
+using Windows.UI.Xaml;
 
 namespace WearhausServer
 {
@@ -88,7 +89,6 @@ namespace WearhausServer
             System.Diagnostics.Debug.WriteLine("AccountState has changed: " + MyAccountState);
             AccountStateChanged?.Invoke(this, null);
         }
-
 
 
 

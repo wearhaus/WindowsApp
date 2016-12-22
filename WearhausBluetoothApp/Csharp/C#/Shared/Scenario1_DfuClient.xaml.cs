@@ -68,6 +68,7 @@ namespace WearhausBluetoothApp
         private StorageFile DfuFile;
         private DataReader DfuReader;
         private Boolean DfuIsWaitingForVerification;
+        private Windows.UI.Xaml.DispatcherTimer DfuReconnectTimer;
 
         // ArcLink local vars
         private String MyHid;
@@ -135,8 +136,11 @@ namespace WearhausBluetoothApp
             // internal chip will power cycle, disconnecting Gaia and forc ing us to reconnect;
             // I think Sidd skipped this step on windows???? TODO investigate
             ChipPowerCycle,
-            // This step is needed for Android; does it also need for Windows? the manual power cycle?
+            // 2 minute grace period where we hide this odd fact of DFU
+            AwaitingManualPowerCycleForcedWait,
+            // Now the user has control to try to press VerifyAgain
             AwaitingManualPowerCycle,
+            // Connecting. Next states are AwaitingManualPowerCycle with a temp error, or a success
             ConnectingAfterManualPowerCycle,
             //VerifyingAfterPowerCycle,
             Success,
@@ -496,29 +500,21 @@ namespace WearhausBluetoothApp
                         DfuProgress.Opacity = 1.0;
                         DfuProgress.IsIndeterminate = true;
                         break;
+
                     case DFUStep.UploadingFW:
-                        DfuStateText.Text = "Updating";
-                        DfuProgress.Opacity = 1.0;
-                        DfuProgress.IsIndeterminate = true;
-                        break;
                     case DFUStep.VerifyingImage:
-                        DfuProgress.Opacity = 1.0;
-                        DfuProgress.IsIndeterminate = true;
-                        DfuStateText.Text = "Updating";
-                        break;
                     case DFUStep.ChipPowerCycle:
+                        //DfuStateText.Text = "Your Arc will automatically restart - please listen to your Arc for a double beep sound to indicate a restart. When you hear the beep or have waited 30 seconds, please press the \"Verify Update\" button to verify that the update worked.";
+                    case DFUStep.AwaitingManualPowerCycleForcedWait:
+                        DfuStateText.Text = "Updating";
                         DfuProgress.Opacity = 1.0;
                         DfuProgress.IsIndeterminate = true;
-                        DfuStateText.Text = "Your Arc will automatically restart - please listen to your Arc for a double beep sound to indicate a restart. When you hear the beep or have waited 30 seconds, please press the \"Verify Update\" button to verify that the update worked."; // TODO
                         break;
+
                     case DFUStep.AwaitingManualPowerCycle:
                         DfuProgress.Opacity = 0.0;
                         VerifyDfuButton.IsEnabled = true;
                         VerifyDfuButton.Opacity = 1.0;
-
-                        // trigger for this should start a 2 min timer, with another loading bar
-                        // So we can really just trigger it ourselves over and over again until it succeeds or throws an error
-
                         if (MyErrorString != null && !MyErrorString.Equals("")){
                             // so we can communicate soft recoverable errors here to user
                             DfuStateText.Text = MyErrorString;
@@ -695,8 +691,6 @@ namespace WearhausBluetoothApp
                             UpdateUI();
                         }
                         
-
-
                     }
                     catch (Exception ex)
                     {
@@ -709,7 +703,7 @@ namespace WearhausBluetoothApp
                             if (DfuIsWaitingForVerification) {
                                 // potentially recoverable dfu error
                                 // this occurs for about 2 minutes after the device resets itself. Actually no need for power cycling the arc it seems.
-                                MyErrorString = "Couldn't connect to your Arc. Try again in a few minutes and make sure the updating Arc is connected in Bluetooth Settings.";
+                                MyErrorString = "Make sure the updating Arc is connected in Bluetooth Settings and press Verify below.";
                                 MyDFUStep = DFUStep.AwaitingManualPowerCycle;
                             } else {
                                 MyErrorString = "Couldn't connect to your Arc. Please make sure your Arc is powered on and connected in Bluetooth Settings. Or try turning your Arc off and then on again.";
@@ -725,7 +719,7 @@ namespace WearhausBluetoothApp
 
                     if (DfuIsWaitingForVerification){
                         // potentially recoverable dfu error
-                        MyErrorString = "No Wearhaus Arc found. Please reconnect the Arc that was being updated again.";
+                        MyErrorString = "Please reconnect the Arc that was being updated again.";
                         MyDFUStep = DFUStep.AwaitingManualPowerCycle;
                     } else {
                         MyErrorString = "No Wearhaus Arc found. Please double check you are connected to a Wearhaus Arc in Windows Bluetooth Settings and try again.";
@@ -739,7 +733,7 @@ namespace WearhausBluetoothApp
             {
                 if (DfuIsWaitingForVerification) {
                     // potentially recoverable dfu error
-                    MyErrorString = "No Wearhaus Arc found. Please reconnect the Arc that was being updated again.";
+                    MyErrorString = "Please reconnect the Arc that was being updated again.";
                     MyDFUStep = DFUStep.AwaitingManualPowerCycle;
                 } else {
                     MyErrorString = "No Wearhaus Arc found. Please double check you are connected to a Wearhaus Arc in Windows Bluetooth Settings and try again.";
@@ -1207,21 +1201,35 @@ namespace WearhausBluetoothApp
                 // Buffer / Stream is closed 
                 if (size < frameLen)
                 {
-                    System.Diagnostics.Debug.WriteLine("   size < frameLen");
+                    Debug.WriteLine("   size < frameLen");
 
                     if (GaiaHandler.IsSendingFile)
                     {
 
                         
-                        System.Diagnostics.Debug.WriteLine("TopInstruction.Text = Firmware update complete.Your Arc will...");
+                        Debug.WriteLine("TopInstruction.Text = Firmware update complete.Your Arc will...");
                         //TopInstruction.Text = "HIHI Wait a few more minutes. Once your Arc says 'Device Connected', press the Veriufy Button below";
                         GaiaHandler.IsSendingFile = false;
                         DfuIsWaitingForVerification = true;
 
                         Disconnect();
 
-                        MyDFUStep = DFUStep.AwaitingManualPowerCycle;
+                        // This is the OG MyDFUStep = DFUStep.AwaitingManualPowerCycle;
+                        // all others may set it after a recoverable error is all.
+
+                        MyErrorString = null;
+                        MyDFUStep = DFUStep.AwaitingManualPowerCycleForcedWait;
                         UpdateUI();
+
+                        // Start timer for reconnect attempt; it takes about 2 minutes for current versions.
+                        // After 2 minutes, try an auto reconnect, and if that fails, prompt user to reconnect
+                        // their arc under BT
+                        DfuReconnectTimer = new DispatcherTimer();
+                        DfuReconnectTimer.Interval = TimeSpan.FromSeconds(90);
+                        DfuReconnectTimer.Tick += ReconnectTimerCalled;
+                        DfuReconnectTimer.Start();
+                        Debug.WriteLine("120 sec Timer started before auto-verify attempt");
+
                         return;
                     }
                     else
@@ -1433,6 +1441,18 @@ namespace WearhausBluetoothApp
                 }
             }
         }
+
+
+        //void ReconnectTimerCalled(object sender, EventArgs e)
+        // contrary to advice on stackoverflow, the 2nd param also must be generic object
+        private void ReconnectTimerCalled(object sender, object e)
+        {
+            // try once, see what happens
+            ConnectArc();
+            DfuReconnectTimer.Stop();
+        }
+
+
 
 
         /// //////////////////
