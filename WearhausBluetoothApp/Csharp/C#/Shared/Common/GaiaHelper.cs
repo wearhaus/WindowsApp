@@ -16,7 +16,7 @@ namespace Gaia
 
         //public ThreadPoolTimer PeriodicTimer;
         public bool IsWaitingForResp { get; set; }
-        public bool IsWaitingForVerification { get; set; }
+        //public bool IsWaitingForVerification { get; set; }
 
         public bool IsSendingFile { get; set; }
 
@@ -33,7 +33,7 @@ namespace Gaia
             IsSendingFile = false;
             TotalChunks = 0;
             IsWaitingForResp = false;
-            IsWaitingForVerification = false;
+            //IsWaitingForVerification = false;
         }
 
         /// <summary>

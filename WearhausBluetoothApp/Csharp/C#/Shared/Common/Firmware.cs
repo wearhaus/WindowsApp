@@ -90,5 +90,18 @@ namespace WearhausServer
             }
         }
 
+
+        public static Firmware GetFirmwareFromFullCode(String fv)
+        {
+            if (Firmware.FirmwareTable.ContainsKey(WearhausHttpController.GetUniqueCodeFromFull(fv)))
+            {
+                return Firmware.FirmwareTable[WearhausHttpController.GetUniqueCodeFromFull(fv)];
+            }
+            else
+            {
+                return null;
+            }
+        }
+
     }
 }

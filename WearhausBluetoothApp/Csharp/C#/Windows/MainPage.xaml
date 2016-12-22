@@ -13,7 +13,7 @@
 
     <Grid Background="#00bccc">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="0*"  MinWidth="0" MaxWidth="600"/>
+            <ColumnDefinition Width="0*"  MinWidth="0"/>
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
         <Grid x:Name="LeftPane" Background="#00bccc" Grid.Column="0" Visibility="Collapsed" HorizontalAlignment="Left" Grid.ColumnSpan="2" Width="269">
@@ -58,6 +58,6 @@
                 </StackPanel>
             </StackPanel>
         </Grid>
-        <Frame Grid.Column="1" x:Name="ScenarioFrame" Margin="30,50,30,0" />
+        <Frame Grid.Column="1" x:Name="ScenarioFrame" />
     </Grid>
 </Page>

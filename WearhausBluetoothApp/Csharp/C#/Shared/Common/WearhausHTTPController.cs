@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.Serialization.Json;
 using Windows.Data.Json;
+using static WearhausBluetoothApp.Scenario1_DfuClient;
 
 namespace WearhausServer
 {
@@ -49,9 +50,9 @@ namespace WearhausServer
         private string Hid_token;
 
         // TODO These shouldn't be here, move later when we can
-        public string Old_fv { get; set; }
-        public string Current_fv { get; set; }
-        public string Attempted_fv { get; set; }
+        //public string Old_fv { get; set; }
+        //public string Current_fv { get; set; }
+        //public string Attempted_fv { get; set; }
 
 
 
@@ -66,7 +67,7 @@ namespace WearhausServer
 
 
         // TODO, later, when we can imrpove UI in this branch, include these again.
-        /*public enum AccountState
+        public enum AccountState
         {
             None,
             Loading,
@@ -86,7 +87,7 @@ namespace WearhausServer
         {
             System.Diagnostics.Debug.WriteLine("AccountState has changed: " + MyAccountState);
             AccountStateChanged?.Invoke(this, null);
-        }*/
+        }
 
 
 
@@ -97,7 +98,7 @@ namespace WearhausServer
             User_id = null;
             Acc_token = null;
             Hid_token = null;
-            //MyAccountState = AccountState.None;
+            MyAccountState = AccountState.None;
 
             //Old_fv = null;
             //Current_fv = null;
@@ -109,21 +110,16 @@ namespace WearhausServer
         // returns true if success, false otherwise
         public async Task<Boolean> startServerRegistration(string hid, String fv_full_code)
         {
-            //if (arcLink.MyArcConnState != ArcLink.ArcConnState.Connected)
-            //{
-            //    System.Diagnostics.Debug.WriteLine("Programmer Error: Cannot connect to server until an Arc is fully connected");
-            //    return;
-            //}
 
-            //if (MyAccountState != AccountState.None && MyAccountState != AccountState.Error)
-            //{
-            //    System.Diagnostics.Debug.WriteLine("Programmer Error: Should not attempt another startServerRegistration in current AccountState: " + MyAccountState);
-            //    return;
-            //}
+            if (MyAccountState != AccountState.None && MyAccountState != AccountState.Error)
+            {
+                System.Diagnostics.Debug.WriteLine("Programmer Error: Should not attempt another startServerRegistration in current AccountState: " + MyAccountState);
+                return false;
+            }
 
-            //System.Diagnostics.Debug.WriteLine("HTTPController startServerRegistration");
-            //MyAccountState = AccountState.Loading;
-            //onAccountStateChanged();
+            System.Diagnostics.Debug.WriteLine("HTTPController startServerRegistration");
+            MyAccountState = AccountState.Loading;
+            onAccountStateChanged();
 
 
             try
@@ -173,8 +169,8 @@ namespace WearhausServer
                 Hid_token = x2["hid_token"].GetString();
 
 
-                //MyAccountState = AccountState.ValidGuest;
-                //onAccountStateChanged();
+                MyAccountState = AccountState.ValidGuest;
+                onAccountStateChanged();
                 return true;
 
             }
@@ -193,8 +189,8 @@ namespace WearhausServer
             User_id = null;
             Acc_token = null;
             Hid_token = null;
-            //MyAccountState = AccountState.Error;
-            //onAccountStateChanged();
+            MyAccountState = AccountState.Error;
+            onAccountStateChanged();
 
         }
 
@@ -377,9 +373,9 @@ namespace WearhausServer
         {
             var vals = new Dictionary<string, string>{
                 {"token", Acc_token},
-                {"old_fv_full_code", Old_fv},
-                {"new_fv_full_code", Current_fv},
-                {"attempted_fv_full_code", Attempted_fv},
+                {"old_fv_full_code", "todo"},
+                {"new_fv_full_code", "todo"},
+                {"attempted_fv_full_code", "todo"},
                 {"dfu_status", dfu_status.ToString()},
 #if WINDOWS_PHONE_APP
                 {"device", "windows_phone"}
@@ -440,120 +436,7 @@ namespace WearhausServer
                 }
             }
         }
-
-        // H: to be deprecated; checks for bad statuses can be handled differently
-        // returns status type, 0 = good, 1 = either error or special notif
-        /*
-        public static int ParseJsonResp(string jsonResp)
-        {
-            JsonObject x = JsonObject.Parse(jsonResp);
-            //string tempVal = null;
-            string status = null;
-            try
-            {
-                //tempVal = x[key].GetString();
-                status = x["status"].GetString();
-
-                /*switch (Convert.ToInt32(status))
-                {
-                    case 0:
-                        break;
-
-                    case 1:
-                        return "Error: bad or missing token";
-
-                    case 2:
-                        return "Error: bad or missing user_id";
-
-                    case 3:
-                        return "Error: bad or missing HID";
-
-                    case 4:
-                        return "Error: bad or missing email";
-
-                    case 5:
-                        return "Error: bad or missing session_id";
-
-                    case 6:
-                        return "Error: authentication failed";
-
-                    case 7:
-                        return "Error: email taken";
-
-                    case 8:
-                        return "Error: fb_id taken";
-
-                    case 9:
-                        return "Error: bad song_id";
-
-                    case 10:
-                        return "Error: facebook token failed at being authenticated";
-
-                    case 11:
-                        return "Error: given user_id is a guest! Either requested action is forbidden for guests, or no profile to return";
-
-                    case 12:
-                        return "Error: bad param";
-
-                    case 13:
-                        return "Error: username already taken";
-
-                    case 100:
-                        return "Error: need one or both fb_id and password to be set at all times";
-
-                    case 102:
-                        return "new song object created. please upload image to S3 and call next server endpoint";
-
-                    case 104:
-                        return "Error: bad song metadata. Couldn't create song_id";
-
-                    case 111:
-                        return "Error: fb_id not tied to any account. Use create account";
-
-                    case 131:
-                        return "Error: station not on server";
-
-                    case 132:
-                        return "Error: station in wrong state; is currently idle";
-
-                    case 133:
-                        return "Error: station in wrong state; is currently listening";
-
-                    case 134:
-                        return "station/session exists, but may be stale (4+ hours since last update). Don't render metadata on app";
-
-                    case 140:
-                        return "Error: station is private; either master_user can't be found, or not friends with master_user";
-
-                    case 150:
-                        return "Error: friend request already sent";
-
-                    case 151:
-                        return "Error: already friends";
-
-                    case 180:
-                        return "Error: bad profile_pic_url. Needs to be image on S3 or facebook url";
-
-                    case 181:
-                        return "Error: Can't set password. An email needs to be set first";
-
-                    case 184:
-                        return "Error: No password has been set; use facebook to login to account";
-
-                    default:
-                        return "Error: unknown error";
-
-                }
-            }
-            catch (Exception e)
-            {
-                System.Diagnostics.Debug.WriteLine("Exception in ParseJson: " + e.Message);
-                return null;
-            }
-            return tempVal;
-        }
-        */
-
+        
 
 
 
@@ -620,6 +503,44 @@ namespace WearhausServer
             string firmwareStr = "";
             firmwareStr = BitConverter.ToString(payload).Replace("-", string.Empty);
             return firmwareStr;
+        }
+
+
+
+        public static String GetMessageDfuResult(DFUResultStatus err)
+        {
+            switch (err)
+            {
+                case DFUResultStatus.Aborted:
+                    return "Firmware Update Failed. Try again, and if this error persists, contact customer support at wearhaus.com. Error 1";
+                case DFUResultStatus.IOException:
+                    return "Firmware Update Failed. Try again, and if this error persists, contact customer support at wearhaus.com. Error 2";
+                case DFUResultStatus.VerifyFailed:
+                    return"Verification Failed. Try again, and if this error persists, contact customer support at wearhaus.com. Error 3";
+                case DFUResultStatus.OtherFailure:
+                    return "Firmware Update Failed. Try again, and if this error persists, contact customer support at wearhaus.com. Error 4";
+                case DFUResultStatus.DownloadFailed:
+                    return "Download Failed. Make sure you are connected to the internet and try again. If this error persists, contact customer support at wearhaus.com. Error 5";
+                case DFUResultStatus.FvMismatch:
+                    return "Firmware Update Failed. Try again, and if this error persists, contact customer support at wearhaus.com. Error 6";
+                case DFUResultStatus.DisconnectedDuring:
+                    return "Arc Disconnected. Try again, and if this error persists, contact customer support at wearhaus.com. Error 7";
+                case DFUResultStatus.TimeoutDfuState:
+                    return "Firmware Update Failed. Try again, and if this error persists, contact customer support at wearhaus.com. Error 8";
+                case DFUResultStatus.DfuRequestBadAck:
+                    return "Firmware Update Failed. Try again, and if this error persists, contact customer support at wearhaus.com. Error 9";
+                case DFUResultStatus.CantStartWeirdOldFV:
+                    return "";
+                case DFUResultStatus.TimeoutFinalizing:
+                    return "Firmware Update Failed. Try again, and if this error persists, contact customer support at wearhaus.com. Error 11";
+            }
+            return "";
+
+        }
+
+        public static String GetArcGeneration(int productId)
+        {
+            return "" + (productId + 1);
         }
 
     }
