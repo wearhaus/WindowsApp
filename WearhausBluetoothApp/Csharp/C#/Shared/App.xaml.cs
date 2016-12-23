@@ -165,7 +165,7 @@ namespace SDKTemplate
                 //{
                 //    throw new Exception("Failed to create initial page");
                 //}
-                if (!rootFrame.Navigate(typeof(InstructionsPage), e.Arguments))
+                if (!rootFrame.Navigate(typeof(MainPage), e.Arguments))
                 {
                     throw new Exception("Failed to create initial page");
                 }

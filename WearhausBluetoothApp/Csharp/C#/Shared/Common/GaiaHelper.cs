@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using static WearhausBluetoothApp.Scenario1_DfuClient;
 
 namespace Gaia
 {
@@ -210,18 +211,14 @@ namespace Gaia
                         }
                         else
                         {
-                            resp = GaiaMessage.CreateErrorGaia(@" Firmware Update Failed. Try again, or if this error persists, contact customer support at
-                                support@wearhaus.com. (ERROR 9)", 9);
-                            //TODO: Send DFU Report to Server with Status 9
+                            resp = GaiaMessage.CreateErrorGaia(DFUResultStatus.DfuRequestBadAck);
                         }
                         break;
                     
                     case (ushort)GaiaMessage.GaiaCommand.DFUBegin:
                         if (receievedMessage.PayloadSrc[0] != 0x00)
                         {
-                            resp = GaiaMessage.CreateErrorGaia(@" Firmware Update Failed. Try again, or if this error persists, contact customer support at
-                                support@wearhaus.com. (ERROR 9)", 9);
-                            //TODO: Send DFU Report to Server with Status 9
+                            resp = GaiaMessage.CreateErrorGaia(DFUResultStatus.DfuRequestBadAck);
                         }
                         break;
 
@@ -245,7 +242,7 @@ namespace Gaia
                                 case (byte)GaiaMessage.DfuStatusNotification.Download_Failure:
                                     System.Diagnostics.Debug.WriteLine("DfuStatusNotification.Download_Failure");
 
-                                    resp = GaiaMessage.CreateErrorGaia(" Firmware Download to Arc Failed. Try again, and if this error persists, contact customer support at support@wearhaus.com. Error 1", 1);
+                                    resp = GaiaMessage.CreateErrorGaia(DFUResultStatus.Aborted);
                                     break;
 
                                 case (byte)GaiaMessage.DfuStatusNotification.Verification:
@@ -256,7 +253,7 @@ namespace Gaia
                                 case (byte)GaiaMessage.DfuStatusNotification.Verification_Failure:
                                     System.Diagnostics.Debug.WriteLine("DfuStatusNotification.Verification_Failure");
 
-                                    resp = GaiaMessage.CreateErrorGaia(" Verification Failed. Try again, and if this error persists, contact customer support at support@wearhaus.com. Error 3", 1);
+                                    resp = GaiaMessage.CreateErrorGaia(DFUResultStatus.VerifyFailed);
                                     break;
 
                                 case (byte)GaiaMessage.DfuStatusNotification.Verification_Success:

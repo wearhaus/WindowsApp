@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/2010/manifest" xmlns:m2="http://schemas.microsoft.com/appx/2013/manifest">
-  <Identity Name="Wearhaus.WearhausArc" Publisher="CN=0549E365-B657-4981-93B6-C6C578780710" Version="1.1.0.5" />
+  <Identity Name="Wearhaus.WearhausArc" Publisher="CN=0549E365-B657-4981-93B6-C6C578780710" Version="1.2.0.0" />
   <Properties>
     <DisplayName>Wearhaus Arc</DisplayName>
     <PublisherDisplayName>Wearhaus</PublisherDisplayName>
@@ -23,7 +23,7 @@
           </m2:ShowNameOnTiles>
         </m2:DefaultTile>
         <m2:SplashScreen Image="Assets\logo_wordmark_white_no_bg620x300.png" BackgroundColor="#00bccc" />
-        <m2:ApplicationView MinWidth="width320" />
+        <m2:ApplicationView MinWidth="width500" />
         <m2:InitialRotationPreference>
           <m2:Rotation Preference="landscape" />
         </m2:InitialRotationPreference>

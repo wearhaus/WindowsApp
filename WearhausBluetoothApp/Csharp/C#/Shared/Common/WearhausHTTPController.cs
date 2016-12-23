@@ -199,8 +199,16 @@ namespace WearhausServer
 
 
 
-        public async Task<byte[]> DownloadDfuFile(string url)
+        public async Task<byte[]> DownloadDfuFile(Firmware fv)
         {
+            if (fv == null) return null;
+            String url = fv.url;
+            if (fv.url_mirrors != null && fv.url_mirrors.Length > 0)
+            {
+                // TODO just grab first in the mirror list for now
+                url = fv.url_mirrors[0].url;
+            }
+
             byte[] fileArr;
             using (var client = new HttpClient())
             {
@@ -211,7 +219,7 @@ namespace WearhausServer
                 }
                 catch (Exception e)
                 {
-                    System.Diagnostics.Debug.WriteLine("Exception in HttpGet response:" + e.Message);
+                    System.Diagnostics.Debug.WriteLine("Exception in DownloadDfuFile response:" + e);
                     fileArr = null;
                 }
             }
@@ -369,13 +377,13 @@ namespace WearhausServer
             return resp;
         }*/
 
-        public async Task<string> DfuReport(int dfu_status)
+        public async Task<string> DfuReport(int dfu_status, String old_fv_full_code, String new_fv_full_code, String attempted_fv_full_code)
         {
             var vals = new Dictionary<string, string>{
-                {"token", Acc_token},
-                {"old_fv_full_code", "todo"},
-                {"new_fv_full_code", "todo"},
-                {"attempted_fv_full_code", "todo"},
+                {"hid_token", Hid_token},
+                {"old_fv_full_code", old_fv_full_code},
+                {"new_fv_full_code", new_fv_full_code},
+                {"attempted_fv_full_code", attempted_fv_full_code},
                 {"dfu_status", dfu_status.ToString()},
 #if WINDOWS_PHONE_APP
                 {"device", "windows_phone"}

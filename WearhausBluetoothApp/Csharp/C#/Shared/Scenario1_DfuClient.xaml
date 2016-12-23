@@ -13,11 +13,11 @@
     </Page.Resources>
 
 
-    <Grid Background="#00bccc" Width="800" Height="700" >
+    <Grid Background="#00bccc"  >
         
         <ScrollViewer x:Name="InfoViewer" VerticalScrollMode="Auto" VerticalScrollBarVisibility="Auto"
                           HorizontalScrollMode="Auto" HorizontalScrollBarVisibility="Auto"
-                          Margin="0" Width="800" Height="700">
+                          Margin="0">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Top">
 
                 <!--
@@ -25,13 +25,15 @@
                     <TextBlock x:Name="TopTitle" Style="{StaticResource ScenarioDescriptionTextStyle}" HorizontalAlignment="Center" Margin="10" FontSize="30" TextWrapping="Wrap">
                         Wearhaus Arc Firmware Update App
                     </TextBlock>
+                
+                Width="800" Height="700"
                     -->
 
-                <StackPanel Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Top" Orientation="Horizontal" Height="300">
-                    <Image Source="Assets/arc_solo_state_whited_fu.png"  Stretch="Uniform" HorizontalAlignment="Center" Height="200" Width="200" Grid.Column="1" Margin="50,50,80,50" Grid.Row="0"/>
+                <StackPanel Grid.Row="0" HorizontalAlignment="Center" VerticalAlignment="Top" Orientation="Horizontal" MinHeight="260">
+                    <Image Source="Assets/arc_solo_state_whited_fu.png"  Stretch="Uniform" HorizontalAlignment="Center" Height="200" Width="200" Grid.Column="1" Margin="30,30,80,30" Grid.Row="0"/>
 
                     <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Width="400" Orientation="Vertical">
-                        <Button x:Name="ConnectButton" Content="My Arc Is Paired NEW" FontSize="25" Margin="20,20,20,0" 
+                        <Button x:Name="ConnectButton" Content="My Arc Is Paired" FontSize="25" Margin="20,20,20,0" 
                                     Click="ConnectButton_Click" HorizontalAlignment="Center" MinWidth="300"/>
                         <Button x:Name="HowToButton" Content="How To Pair" FontSize="25" Margin="20,0,20,0" 
                                     Click="HowToButton_Click" HorizontalAlignment="Center" MinWidth="300"/>
@@ -50,7 +52,7 @@
                 </StackPanel>
 
                 <!-- DashboardLayout-->
-                <StackPanel Visibility="Collapsed" Background="#66e6e6e6" Grid.Row="1" x:Name="DashboardLayout" 
+                <StackPanel Visibility="Visible" Background="#66e6e6e6" Grid.Row="1" x:Name="DashboardLayout" 
                                 Orientation="Horizontal" Width="760">
                     <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Margin="0" Width="380">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0">
@@ -72,8 +74,7 @@
                                                     FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Right"  TextWrapping="Wrap" TextAlignment="Right">
                                             Full Firmware:
                                 </TextBlock>
-                                <Button x:Name="DetailsExpand" Content="Show More" HorizontalAlignment="Center" 
-                                    Click="DetailsExpand_Click" FontSize="15" FontWeight="Bold"/>
+
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" Margin="0">
                                 <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Margin="0">
@@ -97,32 +98,38 @@
                                     </TextBlock>
                                 </StackPanel>
                             </StackPanel>
+                            
+                            
 
                         </StackPanel>
+                        <Button x:Name="UpdateDbg" Margin="5" HorizontalAlignment="Center" 
+                                    Click="UpdateDbg_Click" FontSize="15" FontWeight="Bold">
+                            <TextBlock HorizontalAlignment="Center" >Update With File (Advanced)</TextBlock>
+                        </Button>
 
+                        <Button x:Name="DetailsExpand" Content="Show More" HorizontalAlignment="Center" 
+                                    Click="DetailsExpand_Click" FontSize="15" FontWeight="Bold"/>
 
-
-
-                        <TextBlock x:Name="FirmwareDescText"  Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10" 
-                                        FontSize="20" VerticalAlignment="Center" HorizontalAlignment="Left" 
-                                        TextWrapping="Wrap" TextAlignment="Left">
-                                There is a new firmware update available for your Arc. Version 1.2.0 includes new features, blah blah, <LineBreak/><LineBreak/>- New something <LineBreak/>- Other new thing<LineBreak/><LineBreak/>Dec 13th 2016
-                        </TextBlock>
 
                     </StackPanel>
                     <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Margin="0" Width="380">
 
 
-                        <Button x:Name="UpdateFV" Content="Update Firmware" Margin="10" HorizontalAlignment="Center" 
-                                    Click="UpdateFV_Click" FontSize="30" FontWeight="Bold"/>
+
                         <TextBlock x:Name="FirmwareUpToDate"  Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10" 
                                            FontSize="30" VerticalAlignment="Center" HorizontalAlignment="Center" 
                                            TextWrapping="Wrap" TextAlignment="Center" FontWeight="Bold">
                             Your Arc is up to date
                         </TextBlock>
 
-                        <Button x:Name="UpdateDbg" Content="UpdateDbg" Margin="10" HorizontalAlignment="Center" 
-                                    Click="UpdateDbg_Click" FontSize="20" FontWeight="Bold"/>
+                        <TextBlock x:Name="FirmwareDescText"  Style="{StaticResource ScenarioDescriptionTextStyle}" Margin="10" 
+                                        FontSize="15" VerticalAlignment="Center" HorizontalAlignment="Left" 
+                                        TextWrapping="Wrap" TextAlignment="Left">
+                                Version 1.2.0 includes new features, blah blah, <LineBreak/><LineBreak/>- New something <LineBreak/>- Other new thing<LineBreak/><LineBreak/>Dec 13th 2016
+                        </TextBlock>
+
+                        <Button x:Name="UpdateFVButton" Content="Update Firmware" Margin="10" HorizontalAlignment="Center" 
+                                    Click="UpdateFVButton_Click" FontSize="30" FontWeight="Bold"/>
 
                     </StackPanel>
                 </StackPanel>

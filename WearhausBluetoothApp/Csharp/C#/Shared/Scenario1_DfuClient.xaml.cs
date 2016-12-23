@@ -79,6 +79,7 @@ namespace WearhausBluetoothApp
         private Firmware MyFirmwareVersion;
         // will be null when chosen from a file
         private Firmware MyTargetFirmware;
+        private Firmware MyPotentialTargetFirmware;
 
 
 
@@ -87,6 +88,7 @@ namespace WearhausBluetoothApp
         private String MyErrorString;
         // None until dfu reaches an end state that requires restarting arc/app or success.
         private DFUResultStatus MyDfuErrorNum = DFUResultStatus.None;
+        private Boolean ReportedDfuToServer = false;
 
         private WearhausHttpController MyHttpController;
 
@@ -253,7 +255,7 @@ namespace WearhausBluetoothApp
             
             // NOTE: Added post revert try2
             ArcStateText.Text = "";
-            UpdateFV.IsEnabled = false;
+            UpdateFVButton.IsEnabled = false;
             // manually opened by button, so not directly related to UIState
             updateInstructVisibility(false);
             updateDashboardExpandVisibility(false);
@@ -264,7 +266,7 @@ namespace WearhausBluetoothApp
             //InstructionTexts.Add("Step 1: Turn on your Wearhaus Arc. Then open Windows Bluetooth Settings by searching for Bluetooth Settings in the Windows Search Bar.");
             InstructionTexts.Add("Step 1: Turn on your Wearhaus Arc. Then open Windows Bluetooth Settings.");
             InstructionTexts.Add("Step 2: Find Wearhaus Arc and click \"Pair\". Click \"Yes\" to any prompts that ask for permission.");
-            InstructionTexts.Add("Step 3: Wait for the progress bar to complete all the way after clicking Pair. After that, press Connect My Arc above.");
+            InstructionTexts.Add("Step 3: After it connects, press My Arc is Paired above.");
 
             UpdateInstructionFrame(0); // fyi: if called when invisible, doesn't make visible
             UpdateUI();
@@ -400,12 +402,23 @@ namespace WearhausBluetoothApp
                     break;
 
                 case WearhausServer.WearhausHttpController.AccountState.Error:
-                    ArcStateText.Text = "Error connecting to server. Please make sure you have internet access and try again. If this problem continues, try updating this app or contact customer support at wearhaus.com";
+                    // If this error state is hit, redo everything
                     ConnectButton.Content = "Try Again";
-                    ConnectButton.IsEnabled = true;
-                    ConnectButton.Opacity = 1.0;
-                    ConnectionProgress.Opacity = 0.0;
                     updateDashboardVisibility(false);
+                    Disconnect();
+
+                    MyArcConnState = ArcConnState.Error;
+                    MyErrorString = "Error connecting to server. Please make sure you have internet access and try again. If this problem continues, try updating this app or contact customer support at wearhaus.com";
+                    UpdateUI();
+
+
+                    //ArcStateText.Text = "Error connecting to server. Please make sure you have internet access and try again. If this problem continues, try updating this app or contact customer support at wearhaus.com";
+                    //ConnectButton.Content = "Try Again";
+                    //ConnectButton.IsEnabled = true;
+                    //ConnectButton.Opacity = 1.0;
+                    //ConnectionProgress.Opacity = 0.0;
+                    //updateDashboardVisibility(false);
+                    //Disconnect();
                     // try again button should appear
                     break;
 
@@ -448,6 +461,7 @@ namespace WearhausBluetoothApp
                 String uniqueCode = WearhausHttpController.GetUniqueCodeFromFull(MyFvFullCode);
 
                 bool showDfuStartUI = false;
+                MyPotentialTargetFirmware = null;
 
                 if (MyFirmwareVersion != null) {
                     Debug.WriteLine("MyFirmwareVersion != null ");
@@ -461,7 +475,7 @@ namespace WearhausBluetoothApp
                         && Firmware.FirmwareTable[latestUnique] != null && Firmware.FirmwareTable[latestUnique].validBases.Contains(uniqueCode))
                     {
                         Debug.WriteLine("Detected new firmware version available for this Arc: " + latestUnique);
-                        Firmware latest = Firmware.FirmwareTable[latestUnique];
+                        MyPotentialTargetFirmware = Firmware.FirmwareTable[latestUnique];
                         showDfuStartUI = true;
                     }
                 } else {
@@ -472,14 +486,20 @@ namespace WearhausBluetoothApp
 
                 if (showDfuStartUI)
                 {
-                    UpdateFV.Visibility = Visibility.Visible;
-                    UpdateFV.IsEnabled = true;
-                    FirmwareUpToDate.Visibility = Visibility.Collapsed;
+                    UpdateFVButton.Visibility = Visibility.Visible;
+                    UpdateFVButton.IsEnabled = true;
+                    FirmwareUpToDate.Text = "There is a new firmware update available for your Arc";
+                    FirmwareDescText.Text = MyPotentialTargetFirmware.desc;
                 } else  {
-                    UpdateFV.Visibility = Visibility.Collapsed;
-                    UpdateFV.IsEnabled = false;
-                    FirmwareUpToDate.Visibility = Visibility.Visible;
-                    FirmwareDescText.Text = "";
+                    UpdateFVButton.Visibility = Visibility.Collapsed;
+                    UpdateFVButton.IsEnabled = false;
+                    FirmwareUpToDate.Text = "Your Arc is up to date";
+                    // if we are uptodate, then display any inbof aobut our current version
+                    if (MyFirmwareVersion != null){
+                        FirmwareDescText.Text = MyFirmwareVersion.desc;
+                    } else {
+                        FirmwareDescText.Text = "";
+                    }
                 }
 
             }
@@ -542,7 +562,12 @@ namespace WearhausBluetoothApp
 
                     case DFUStep.Success:
                         DfuProgress.Opacity = 0.0;
-                        DfuStateText.Text = "Firmware Update succeeded!"; // TODO
+                        DfuStateText.Text = "Firmware successfully updated to " + MyTargetFirmware.humanName + ". Enjoy your newly updated Arc!";
+                        // TODO consider adding in a show button that shows the MyTargetFirmware.desc here
+                        if (!ReportedDfuToServer && MyTargetFirmware != null) {
+                            MyHttpController.DfuReport((int)DFUResultStatus.Success,
+                                    MyFvOldFullCode, MyFvFullCode, MyTargetFirmware.fullCode);
+                        }
                         break;
                     case DFUStep.SuccessDBG:
                         DfuProgress.Opacity = 0.0;
@@ -554,13 +579,21 @@ namespace WearhausBluetoothApp
                         // first, check if end state error
                         if (MyDfuErrorNum != DFUResultStatus.None)  {
                             DfuStateText.Text =  WearhausHttpController.GetMessageDfuResult(MyDfuErrorNum);
+                            if (!ReportedDfuToServer && MyTargetFirmware != null) {
+                                ReportedDfuToServer = true;
+                                MyHttpController.DfuReport((int)MyDfuErrorNum,
+                                    MyFvOldFullCode, MyFvFullCode, MyTargetFirmware.fullCode);
+                            }
                         } else {
+                            // TODO is it even possible to reach thos code?
                             if (MyErrorString != null && !MyErrorString.Equals("")) {
                                 DfuStateText.Text = MyErrorString;
                             } else {
                                 DfuStateText.Text = "An Error has occured. Please restart your Arc, close this app, and try again.";
                             }
                         }
+                        
+                        
                         break;
 
                 }
@@ -910,8 +943,7 @@ namespace WearhausBluetoothApp
             }
             catch (Exception ex)
             {
-                MainPage.Current.NotifyUser("Error On Disconnect: " + ex.HResult.ToString() + " - " + ex.Message,
-                   NotifyType.ErrorMessage);
+                Debug.WriteLine("Error On Disconnect: " + ex);
                 return;
             }
         }
@@ -929,171 +961,7 @@ namespace WearhausBluetoothApp
 
             MainPage.Current.NotifyUser("Disconnected", NotifyType.StatusMessage);
         }
-
-        /// <summary>
-        /// Button to run the filepicker to select the firmware file to update
-        /// </summary>
-        private async void UpdateDbg_Click(object sender, RoutedEventArgs e)
-        {
-
-            // Open DFU File Buffer and DataReader
-            FileOpenPicker filePicker = new FileOpenPicker();
-            filePicker.SuggestedStartLocation = PickerLocationId.Downloads;
-            filePicker.FileTypeFilter.Clear();
-            filePicker.FileTypeFilter.Add("*");
-#if WINDOWS_PHONE_APP
-            filePicker.PickSingleFileAndContinue();
-#else
-            DfuFile = await filePicker.PickSingleFileAsync();
-#endif
-
-            MainPage.Current.NotifyUser("", NotifyType.StatusMessage);
-            if( DfuFile == null){
-                return;
-            }
-
-
-            // Get CRC first from File
-            var buf = await FileIO.ReadBufferAsync(DfuFile);
-            DfuReader = DataReader.FromBuffer(buf);
-            uint fileSize = buf.Length;
-            byte[] fileBuffer = new byte[fileSize];
-            DfuReader.ReadBytes(fileBuffer);
-            GaiaHandler.SetFileBuffer(fileBuffer);
-
-
-            // Send DFU!
-            DisconnectButton.IsEnabled = false;
-            GaiaMessage startDfuCmd = new GaiaMessage((ushort)GaiaMessage.ArcCommand.StartDfu);
-            SendRawBytes(startDfuCmd.BytesSrc);
-            //DfuProgressBar.Visibility = Windows.UI.Xaml.Visibility.Visible;
-            //DfuProgressBar.IsIndeterminate = true;
-            //DfuStatus.Visibility = Windows.UI.Xaml.Visibility.Visible;
-            //DfuStatus.Text = "Beginning Update...";
-
-            MyDFUStep = DFUStep.StartingUpload;
-            UpdateUI();
-
-            //TopInstruction.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-            //PickFileButton.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-            //SendDfuButton.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-        }
-
-        /// <summary>
-        /// Button to begin checking the server for a DFU File according to which firmware version is the most updated.
-        /// Will continue without further user input (except in the case of an error).
-        /// </summary>
-        /// TODO TODO TODO This is the upodate endpoint for NORMAL muggle update
-        /*private async void UpdateButton_Click(object sender, RoutedEventArgs e)
-        {
-            System.Diagnostics.Debug.WriteLine("UpdateButton_Click()");
-
-            MainPage.Current.NotifyUser("", NotifyType.StatusMessage);
-
-            // NOTE: This not only returns the most recent Firmware ID but it also updates our entire Static Firmware Table in Firmware.cs
-            try
-            {
-                ProgressStatus.Visibility = Windows.UI.Xaml.Visibility.Visible;
-                ProgressStatus.Text = "Checking for updates...";
-                DfuProgressBar.Visibility = Windows.UI.Xaml.Visibility.Visible;
-                DfuProgressBar.IsIndeterminate = true;
-
-                // TODO parse correctly
-                string latestFirmwareShortCode = "1202";
-                //string latestFirmwareShortCode = await HttpController.GetLatestFirmwareTable();
-
-                // If latest Firmware is empty from the server, then we have disabled firmware updates for now
-                if (latestFirmwareShortCode == "" || latestFirmwareShortCode == null)
-                {
-                    Instructions.Text = "It seems the update service is temporarily down. There are no updates for now.";
-                    ProgressStatus.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-                    DfuProgressBar.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-                    DfuProgressBar.IsIndeterminate = false;
-                    return;
-                }
-
-                System.Diagnostics.Debug.WriteLine("LATEST FIRMWARE: " + latestFirmwareShortCode);
-                Firmware firmwareToUpdate = Firmware.FirmwareTable[latestFirmwareShortCode];
-
-                if (firmwareToUpdate.fullCode == HttpController.Current_fv)
-                {
-                    Instructions.Text = "Your Wearhaus Arc is already up to date. You're all done!";
-                    ProgressStatus.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-                    DfuProgressBar.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-                    DfuProgressBar.IsIndeterminate = false;
-                    return;
-                }
-
-                ProgressStatus.Visibility = Windows.UI.Xaml.Visibility.Visible;
-                ProgressStatus.Text = "Downloading Firmware Update...";
-
-                HttpController.Attempted_fv = firmwareToUpdate.fullCode;
-                string currentFV_ShortCode = HttpController.Current_fv.Substring(14, 4);
-                if (!firmwareToUpdate.validBases.Contains(currentFV_ShortCode))
-                {
-                    string text = "Invalid base in update - valid bases are: [";
-                    foreach (string s in firmwareToUpdate.validBases)
-                    {
-                        //textBox3.Text += ("Key = {0}, Value = {1}", kvp.Key, kvp.Value);
-                        text += string.Format("\t{0},", s);
-                    }
-                    text += "]";
-                    System.Diagnostics.Debug.WriteLine(text);
-                    ProgressStatus.Text = "This version of the firmware cannot be directly updated to the latest version. Please contact customer support at support@wearhaus.com ERROR 10";
-                    string response = await HttpController.DfuReport(10);
-                    return;
-                }
-
-                DfuProgressBar.Visibility = Windows.UI.Xaml.Visibility.Visible;
-                DfuProgressBar.IsIndeterminate = true;
-
-                byte[] fileBuffer = await HttpController.DownloadDfuFile(firmwareToUpdate.url);
-
-                
-                if (fileBuffer == null)
-                {
-                    System.Diagnostics.Debug.WriteLine("There was an error / problem downloading the firmware update. Please try again.");
-                    ProgressStatus.Text = "There was an error downloading the firmware update. Please make sure you are connected to the internet.";
-                    DfuProgressBar.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-                    DfuProgressBar.IsIndeterminate = false;
-
-                    string response = await HttpController.DfuReport(2);
-                    return;
-                }
-
-                GaiaHandler.SetFileBuffer(fileBuffer);
-                Instructions.Text = "Downloaded File: " + firmwareToUpdate.desc;
-                // Send DFU!
-                DisconnectButton.IsEnabled = false;
-                UpdateButton.IsEnabled = false;
-                GaiaMessage startDfuCmd = new GaiaMessage((ushort)GaiaMessage.ArcCommand.StartDfu);
-
-                SendRawBytes(startDfuCmd.BytesSrc);
-                DfuProgressBar.Visibility = Windows.UI.Xaml.Visibility.Visible;
-                DfuProgressBar.IsIndeterminate = true;
-                ProgressStatus.Visibility = Windows.UI.Xaml.Visibility.Visible;
-                ProgressStatus.Text = "Finished downloading file. Beginning Update...";
-
-                //Instructions.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-                PickFileButton.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-                SendDfuButton.Visibility = Windows.UI.Xaml.Visibility.Collapsed;
-            }
-            catch (Exception ex)
-            {
-                if (ex.Message.ToLower().Contains("json"))
-                {
-                    Instructions.Text = "Could not reach the server. Your internet may be disconnected or the server is down.";
-                    System.Diagnostics.Debug.WriteLine("Error: " + ex.HResult.ToString() + " - " + ex.Message);
-                    return;
-                }
-                else
-                {
-                    Instructions.Text = "There was an error downloading the update. Please make sure you are connected to the internet and are connected to your Wearhaus Arc. The server may be down. If the problem persists, contact Wearhaus Support support@wearhaus.com";
-                    System.Diagnostics.Debug.WriteLine("Error: " + ex.HResult.ToString() + " - " + ex.Message);
-                    return;
-                }
-            }
-        }*/
+        
 
 
         /// <summary>
@@ -1142,16 +1010,23 @@ namespace WearhausBluetoothApp
                 if (print)
                 {
                     //ConversationList.Items.Add("Sent: " + sendStr);
-                    System.Diagnostics.Debug.WriteLine("Sent: " + sendStr);
+                    Debug.WriteLine("Sent: " + sendStr);
 
                 }
                 //MessageTextBox.Text = "";
             }
             catch (Exception ex)
             {
-                MainPage.Current.NotifyUser("Error: " + ex.HResult.ToString() + " - " + ex.Message,
-                    NotifyType.StatusMessage);
+                Debug.WriteLine("SendRawBytes Error: " + ex);
                 Disconnect();
+                if (MyDFUStep != DFUStep.None) {
+                    MyDFUStep = DFUStep.ErrorUnrecoverable;
+                    MyDfuErrorNum = DFUResultStatus.IOException;
+                } else {
+                    MyErrorString = "Arc Disconnected";
+                    MyArcConnState = ArcConnState.Error;
+                }
+                UpdateUI();
             }
         }
 
@@ -1191,7 +1066,7 @@ namespace WearhausBluetoothApp
         {
             try
             {
-                System.Diagnostics.Debug.WriteLine("ReceiveStringLoop()");
+                Debug.WriteLine("ReceiveStringLoop()");
 
                 byte frameLen = GaiaMessage.GAIA_FRAME_LEN;
 
@@ -1201,7 +1076,7 @@ namespace WearhausBluetoothApp
                 // Buffer / Stream is closed 
                 if (size < frameLen)
                 {
-                    Debug.WriteLine("   size < frameLen");
+                    Debug.WriteLine("Buffer / Stream is closed   (size < frameLen)");
 
                     if (GaiaHandler.IsSendingFile)
                     {
@@ -1214,9 +1089,6 @@ namespace WearhausBluetoothApp
 
                         Disconnect();
 
-                        // This is the OG MyDFUStep = DFUStep.AwaitingManualPowerCycle;
-                        // all others may set it after a recoverable error is all.
-
                         MyErrorString = null;
                         MyDFUStep = DFUStep.AwaitingManualPowerCycleForcedWait;
                         UpdateUI();
@@ -1228,13 +1100,24 @@ namespace WearhausBluetoothApp
                         DfuReconnectTimer.Interval = TimeSpan.FromSeconds(90);
                         DfuReconnectTimer.Tick += ReconnectTimerCalled;
                         DfuReconnectTimer.Start();
-                        Debug.WriteLine("120 sec Timer started before auto-verify attempt");
+                        Debug.WriteLine("90 sec Timer started before auto-verify attempt");
 
                         return;
                     }
                     else
                     {
-                        MainPage.Current.NotifyUser("Disconnected from Stream!", NotifyType.ErrorMessage);
+                        if (MyDFUStep == DFUStep.None) {
+                            // User manually disconnect Arc
+                            MyArcConnState = ArcConnState.Error;
+                            MyErrorString = "Arc Disconnected";
+                            UpdateUI();
+
+                        } else {
+                            MyDFUStep = DFUStep.ErrorUnrecoverable;
+                            MyDfuErrorNum = DFUResultStatus.DisconnectedDuring;
+                            UpdateUI();
+                            // User manually disconnect Arc during the update. May or may not mean update still succeeded.
+                        }
                         Disconnect();
                         return;
                     }
@@ -1301,14 +1184,15 @@ namespace WearhausBluetoothApp
                                 MyDFUStep = DFUStep.Success;
                                 MyDfuErrorNum = DFUResultStatus.Success;
                                 
-                                string response = await MyHttpController.DfuReport(0);
+                                //string response = await MyHttpController.DfuReport(0);
                             }
                             else
                             {
                                 MyDFUStep = DFUStep.ErrorUnrecoverable;
                                 MyDfuErrorNum = DFUResultStatus.FvMismatch;
                                 
-                                string response = await MyHttpController.DfuReport(6);
+                                //string response = await MyHttpController.DfuReport(6);
+                                // let UI send the report
                             }
 
 
@@ -1346,18 +1230,15 @@ namespace WearhausBluetoothApp
                 {
                     Debug.WriteLine(" resp.IsError: " + resp.InfoMessage);
 
-                    MyDFUStep = DFUStep.ErrorUnrecoverable;
-                    MyDfuErrorNum = DFUResultStatus.OtherFailure;
-                    UpdateUI();
 
-                    //DfuStatus.Text = resp.InfoMessage;
-                    //DfuStatus.Visibility = Visibility.Visible;
                     GaiaHandler.IsSendingFile = false;
-                    //DfuProgressBar.IsIndeterminate = false;
 
-                    if (resp.DfuStatus != 0)
-                    {
-                        string response = await MyHttpController.DfuReport(resp.DfuStatus);
+                    if (resp.DfuStatus != DFUResultStatus.None){
+                        MyDFUStep = DFUStep.ErrorUnrecoverable;
+                        MyDfuErrorNum = resp.DfuStatus;
+                        UpdateUI();
+
+                        return;
                     }
                 }
 
@@ -1420,24 +1301,25 @@ namespace WearhausBluetoothApp
                     if (BluetoothSocket == null)
                     {
                         // Do not print anything here -  the user closed the socket.
-                    }
-                    else
-                    {
-                        System.Diagnostics.Debug.WriteLine("Read stream failed with error: " + ex);
-                        Disconnect();
-
-                        if (MyDFUStep == DFUStep.None)
-                        {
+                        // TODO test this area, can this even happen
+                        Debug.WriteLine("the user deliberately closed the socket. " + ex);
+                        if (MyDFUStep == DFUStep.None){
                             MyArcConnState = ArcConnState.Error;
                             MyErrorString = "Error connecting to Arc";
-                            UpdateUI();
-                        } else
-                        {
-                            MyDFUStep = DFUStep.ErrorUnrecoverable;
-                            MyDfuErrorNum = DFUResultStatus.IOException;
                         }
-                        
+                    } else {
+                        Debug.WriteLine("Read stream failed with error: " + ex);
+                        Disconnect();
+
+                        if (MyDFUStep == DFUStep.None) {
+                            MyArcConnState = ArcConnState.Error;
+                            MyErrorString = "Error connecting to Arc";
+                        } else {
+                            MyDFUStep = DFUStep.ErrorUnrecoverable;
+                            MyDfuErrorNum = DFUResultStatus.DisconnectedDuring;
+                        }
                     }
+                    UpdateUI();
                 }
             }
         }
@@ -1450,6 +1332,78 @@ namespace WearhausBluetoothApp
             // try once, see what happens
             ConnectArc();
             DfuReconnectTimer.Stop();
+        }
+
+
+
+
+        private async void UpdateFVButton_Click(object sender, RoutedEventArgs e)
+        {
+            Debug.WriteLine("UpdateFVButton_Click: ");
+            if (MyDFUStep != DFUStep.None) return;
+            if (MyPotentialTargetFirmware == null) return;
+
+            MyTargetFirmware = MyPotentialTargetFirmware;
+            MyDFUStep = DFUStep.StartingUpload;
+            UpdateUI();
+
+            byte[] fileBuffer = await MyHttpController.DownloadDfuFile(MyPotentialTargetFirmware);
+            if (fileBuffer == null) {
+                MyDFUStep = DFUStep.ErrorUnrecoverable;
+                MyDfuErrorNum = DFUResultStatus.DownloadFailed;
+                UpdateUI();
+            } else {
+                StartDfu(fileBuffer);
+            }
+        }
+
+
+
+        /// <summary>
+        /// Button to run the filepicker to select the firmware file to update
+        /// </summary>
+        private async void UpdateDbg_Click(object sender, RoutedEventArgs e)
+        {
+            if (MyDFUStep != DFUStep.None) {
+                return;
+            }
+
+            // Open DFU File Buffer and DataReader
+            FileOpenPicker filePicker = new FileOpenPicker();
+            filePicker.SuggestedStartLocation = PickerLocationId.Downloads;
+            filePicker.FileTypeFilter.Clear();
+            filePicker.FileTypeFilter.Add("*");
+#if WINDOWS_PHONE_APP
+            filePicker.PickSingleFileAndContinue();
+#else
+            DfuFile = await filePicker.PickSingleFileAsync();
+#endif
+
+            if (DfuFile == null) {
+                return;
+            }
+
+
+            // Get CRC first from File
+            var buf = await FileIO.ReadBufferAsync(DfuFile);
+            DfuReader = DataReader.FromBuffer(buf);
+            uint fileSize = buf.Length;
+            byte[] fileBuffer = new byte[fileSize];
+            DfuReader.ReadBytes(fileBuffer);
+            MyTargetFirmware = null;
+            StartDfu(fileBuffer);
+        }
+
+
+        private void StartDfu(byte[] fileBuffer)
+        {
+            GaiaHandler.SetFileBuffer(fileBuffer);
+
+            GaiaMessage startDfuCmd = new GaiaMessage((ushort)GaiaMessage.ArcCommand.StartDfu);
+            SendRawBytes(startDfuCmd.BytesSrc);
+
+            MyDFUStep = DFUStep.StartingUpload;
+            UpdateUI();
         }
 
 
@@ -1506,11 +1460,7 @@ namespace WearhausBluetoothApp
         }
 
 
-
-        private void UpdateFV_Click(object sender, RoutedEventArgs e)
-        {
-            // TODO
-        }
+       
 
         private void HowToButton_Click(object sender, RoutedEventArgs e)
         {
@@ -1556,6 +1506,7 @@ namespace WearhausBluetoothApp
                 FVStringTextLeft.Visibility = Visibility.Visible;
                 HidText.Visibility = Visibility.Visible;
                 FvFullText.Visibility = Visibility.Visible;
+                UpdateDbg.Visibility = Visibility.Visible;
                 DetailsExpand.Content = "Show Less";
             }
             else
@@ -1564,6 +1515,7 @@ namespace WearhausBluetoothApp
                 FVStringTextLeft.Visibility = Visibility.Collapsed;
                 HidText.Visibility = Visibility.Collapsed;
                 FvFullText.Visibility = Visibility.Collapsed;
+                UpdateDbg.Visibility = Visibility.Collapsed;
                 DetailsExpand.Content = "Show More";
             }
         }
