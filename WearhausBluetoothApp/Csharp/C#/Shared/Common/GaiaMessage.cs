@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using static WearhausBluetoothApp.Scenario1_DfuClient;
 
 namespace Gaia
 {
@@ -50,14 +51,15 @@ namespace Gaia
         public byte[] PayloadSrc { get; private set; }
         public byte Checksum { get; private set; }
         public string InfoMessage { get; set; }
-        public int DfuStatus { get; set; }
+        // only set when this discovers a dfu related error. default is None
+        public DFUResultStatus DfuStatus { get; set; }
 
 
         /// <summary>
         /// Constructor for creating an empty message to signify an error only
         /// </summary>
         /// <param name="errorMsg">Error Message to be displayed elsewhere for information purposes</param>
-        public GaiaMessage(string errorMsg, int dfuStatus = 0)
+        public GaiaMessage(string errorMsg, DFUResultStatus dfuStatus = DFUResultStatus.None)
         {
             BytesSrc = null;
             PayloadSrc = null;
@@ -84,6 +86,8 @@ namespace Gaia
             BytesSrc[OFFS_VENDOR_ID_L] = GaiaMessage.GAIA_CSR_VENDOR_ID & 0xff;
             BytesSrc[OFFS_COMMAND_ID_H] = (byte)(usrCmd >> 8);
             BytesSrc[OFFS_COMMAND_ID_L] = (byte)(usrCmd & 0xff);
+            DfuStatus = DFUResultStatus.None;
+
 
             VendorId = GaiaMessage.GAIA_CSR_VENDOR_ID;
             IsFlagSet = false;
@@ -130,6 +134,7 @@ namespace Gaia
             CommandId = IsAck ? (ushort)(CommandId ^ GAIA_ACK_MASK) : CommandId; // Here we re-check the command id and remove the mask if it is an ACK
             IsError = false;
             InfoMessage = null;
+            DfuStatus = DFUResultStatus.None;
 
             if (IsFlagSet)
             {
@@ -151,9 +156,13 @@ namespace Gaia
         {
         }
 
-        public static GaiaMessage CreateErrorGaia(string errMsg, int dfuStatus = 0)
+        public static GaiaMessage CreateErrorGaia(DFUResultStatus dfuStatus)
         {
-            return new GaiaMessage(errMsg, dfuStatus);
+            return new GaiaMessage("A DFU related error occured", dfuStatus);
+        }
+        public static GaiaMessage CreateErrorGaia(String errorMsg)
+        {
+            return new GaiaMessage(errorMsg, DFUResultStatus.None);
         }
 
         public static GaiaMessage CreateAck(ushort usrCmd)

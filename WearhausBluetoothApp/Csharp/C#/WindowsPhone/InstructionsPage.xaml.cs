@@ -117,9 +117,10 @@ namespace WearhausBluetoothApp
             PreviousButton.IsEnabled = false;
 
             Images.Add("logo_wordmark_white_no_bg620x300.png");
-            Images.Add("arc_update_wp8_step1.png");
-            Images.Add("arc_update_wp8_step2.png");
-            Images.Add("arc_update_wp8_step3.png");
+            //Images.Add("arc_update_wp8_step1.png");
+            Images.Add("arc_update_1.png");
+            Images.Add("arc_update_2.png");
+            Images.Add("arc_update_3.png");
             InstructionTexts.Add("Welcome to the Wearhaus Arc Firmware Update App! Please turn on your Arc press Next");
             InstructionTexts.Add("Step 1: If you have not connected to your Arc, open Settings under \"S\" in Apps.");
             InstructionTexts.Add("Step 2: Scroll and tap on Bluetooth");
