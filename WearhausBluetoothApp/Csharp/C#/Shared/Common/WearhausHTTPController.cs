@@ -15,9 +15,9 @@ namespace WearhausServer
 
 
 #if DEBUG
-        private const string WEARHAUS_URI = "http://wearhausapistaging.herokuapp.com/v1.3/";
+        private const string WEARHAUS_URI = "http://wearhausapistaging.herokuapp.com/v1.5/";
 #else
-        private const string WEARHAUS_URI = "http://wearhausapi.herokuapp.com/v1.3/";
+        private const string WEARHAUS_URI = "http://wearhausapi.herokuapp.com/v1.5/";
 #endif
         private const string PATH_ACCOUNT_CREATE = "account/create";
         private const string PATH_ACCOUNT_VERIFY_GUEST = "account/create_guest";
@@ -500,7 +500,7 @@ namespace WearhausServer
         {
             if (fv_full != null && fv_full.Length == FV_Full_code_length)
             {
-                return fv_full.Replace("000001000AFFFF", "").Replace("0000000000000000", "");
+                return fv_full.Replace("000001000AFFFF", "").Replace("000001000AFFFA", "").Replace("000001000AFFFB", "").Replace("0000000000000000", "");
             }
             return null;
         }
