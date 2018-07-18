@@ -1,2 +1,2 @@
-MainPackage=C:\Users\Steven\Documents\wapp\rep0\WindowsApp\WearhausBluetoothApp\Csharp\C#\Windows\bin\Release\WearhausBluetoothApp.Windows_1.2.0.3_AnyCPU.appx
-SymbolPackage=C:\Users\Steven\Documents\wapp\rep0\WindowsApp\WearhausBluetoothApp\Csharp\C#\Windows\AppPackages\WearhausBluetoothApp.Windows_1.2.0.3_Test\WearhausBluetoothApp.Windows_1.2.0.3_AnyCPU.appxsym
+MainPackage=D:\Documents\Code\pulls\Wearhaus\WindowsApp\WearhausBluetoothApp\Csharp\C#\Windows\bin\Release\WearhausBluetoothApp.Windows_1.2.0.4_AnyCPU.appx
+SymbolPackage=D:\Documents\Code\pulls\Wearhaus\WindowsApp\WearhausBluetoothApp\Csharp\C#\Windows\AppPackages\WearhausBluetoothApp.Windows_1.2.0.4_Test\WearhausBluetoothApp.Windows_1.2.0.4_AnyCPU.appxsym

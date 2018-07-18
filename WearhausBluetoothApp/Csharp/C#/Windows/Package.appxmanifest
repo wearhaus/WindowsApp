@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Package xmlns="http://schemas.microsoft.com/appx/2010/manifest" xmlns:m2="http://schemas.microsoft.com/appx/2013/manifest">
-  <Identity Name="Wearhaus.WearhausArc" Publisher="CN=0549E365-B657-4981-93B6-C6C578780710" Version="1.2.0.3" />
+  <Identity Name="Wearhaus.WearhausArc" Publisher="CN=0549E365-B657-4981-93B6-C6C578780710" Version="1.2.0.4" />
   <Properties>
     <DisplayName>Wearhaus Arc</DisplayName>
     <PublisherDisplayName>Wearhaus</PublisherDisplayName>
