@@ -471,7 +471,7 @@ namespace WearhausBluetoothApp
                     String latestUnique = Firmware.LatestByProductId[MyProductId + ""];
                     Debug.WriteLine("latestUnique = " + latestUnique);
 
-                    if (latestUnique != null && latestUnique.Length == 4
+                    if (latestUnique != null && (latestUnique.Length == 4 || latestUnique.Length == 5)
                         && Firmware.FirmwareTable[latestUnique] != null && Firmware.FirmwareTable[latestUnique].validBases.Contains(uniqueCode))
                     {
                         Debug.WriteLine("Detected new firmware version available for this Arc: " + latestUnique);
@@ -562,7 +562,7 @@ namespace WearhausBluetoothApp
 
                     case DFUStep.Success:
                         DfuProgress.Opacity = 0.0;
-                        DfuStateText.Text = "Firmware successfully updated to " + MyTargetFirmware.humanName + ". Enjoy your newly updated Arc!";
+                        DfuStateText.Text = "Firmware successfully updated to " + MyTargetFirmware.humanName + ". Enjoy your newly updated Wearhaus product!";
                         // TODO consider adding in a show button that shows the MyTargetFirmware.desc here
                         if (!ReportedDfuToServer && MyTargetFirmware != null) {
                             MyHttpController.DfuReport((int)DFUResultStatus.Success,
