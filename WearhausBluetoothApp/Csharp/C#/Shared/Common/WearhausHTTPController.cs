@@ -500,7 +500,22 @@ namespace WearhausServer
         {
             if (fv_full != null && fv_full.Length == FV_Full_code_length)
             {
-                return fv_full.Replace("000001000AFFFF", "").Replace("000001000AFFFA", "").Replace("000001000AFFFB", "").Replace("0000000000000000", "");
+                Boolean isArc = fv_full.Contains("000001000AFFFA");
+                Boolean isBeam = fv_full.Contains("000001000AFFFB");
+                String uniqueCodeSuffix = "";
+
+                String version = fv_full.Substring(14, 4);
+
+                if (isArc)
+                {
+                    uniqueCodeSuffix = "A";
+                }
+                else if (isBeam)
+                {
+                    uniqueCodeSuffix = "B";
+                }
+
+                return version + uniqueCodeSuffix;
             }
             return null;
         }
